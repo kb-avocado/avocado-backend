@@ -1,0 +1,110 @@
+# ==============================
+# Gradle
+# ==============================
+.gradle/
+**/build/
+!src/**/build/
+
+gradle-app.setting
+.gradletasknamecache
+
+# Gradle Wrapper must be committed
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+
+# ==============================
+# IntelliJ IDEA
+# ==============================
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# ==============================
+# Visual Studio Code
+# ==============================
+.vscode/
+.history/
+*.vsix
+
+# ==============================
+# Eclipse / STS
+# ==============================
+.project
+.classpath
+.settings/
+.metadata/
+bin/
+.factorypath
+.sts4-cache/
+
+# ==============================
+# Java
+# ==============================
+*.class
+*.log
+*.ctxt
+.mtj.tmp/
+
+hs_err_pid*
+replay_pid*
+*.hprof
+
+# ==============================
+# macOS
+# ==============================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+*.icloud
+
+# ==============================
+# Windows
+# ==============================
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# ==============================
+# Environment and secrets
+# ==============================
+.env
+.env.*
+!.env.example
+
+src/main/resources/application-local.properties
+src/main/resources/application-secret.properties
+src/main/resources/database-local.properties
+src/main/resources/database-secret.properties
+
+!src/main/resources/application-local.properties.example
+!src/main/resources/database-local.properties.example
+
+# ==============================
+# Runtime-generated files
+# ==============================
+logs/
+upload/
+uploads/
+work/
+temp/
