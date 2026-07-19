@@ -1,0 +1,76 @@
+name: '이슈 생성'
+description: 'GitHub 이슈를 생성하며, 생성된 이슈는 Jira와 연동됩니다.'
+title: '이슈 제목을 작성해 주세요'
+labels:
+  - jira
+assignees: []
+
+body:
+  - type: dropdown
+    id: issueType
+    attributes:
+      label: '⚡ Jira 작업 유형'
+      description: 'Jira에서 관리할 작업 유형을 선택해 주세요.'
+      options:
+        - 작업
+        - 스토리
+        - 버그
+    validations:
+      required: true
+
+  - type: dropdown
+    id: branchType
+    attributes:
+      label: '🌿 개발 작업 유형'
+      description: '실제 코드 변경 성격에 맞는 Git 컨벤션을 선택해 주세요.'
+      options:
+        - feat
+        - fix
+        - docs
+        - style
+        - refactor
+        - test
+        - chore
+    validations:
+      required: true
+
+  - type: input
+    id: parentKey
+    attributes:
+      label: '🎟️ 상위 에픽 키'
+      description: '이슈가 생성되면 Jira에 작업이 자동 등록됩니다. 연결할 상위 에픽 키를 정확히 입력해 주세요.'
+      placeholder: '예: AVO-10'
+    validations:
+      required: true
+
+  - type: input
+    id: branchSuffix
+    attributes:
+      label: '🌳 브랜치 식별자'
+      description: '개발 작업 유형과 Jira 작업 키 뒤에 사용할 영문 이름을 작성해 주세요.'
+      placeholder: '예: login-api'
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: '📝 상세 내용'
+      description: '개발할 기능이나 해결할 문제를 설명해 주세요.'
+      placeholder: |
+        사용자가 이메일과 비밀번호를 이용해
+        로그인할 수 있도록 인증 API를 구현합니다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tasks
+    attributes:
+      label: '✅ 체크리스트'
+      description: '이슈에서 수행할 세부 작업을 체크리스트로 작성해 주세요.'
+      value: |
+        - [ ] 
+        - [ ] 
+        - [ ] 
+    validations:
+      required: true
