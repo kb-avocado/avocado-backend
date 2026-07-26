@@ -1,0 +1,689 @@
+name: Sync GitHub Issue to Jira
+
+on:
+  issues:
+    types:
+      - opened
+
+jobs:
+  create-jira-issue:
+    if: contains(github.event.issue.labels.*.name, 'jira')
+
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Parse Issue Form
+        id: parse
+        uses: stefanbuck/github-issue-parser@v3
+        with:
+          template-path: .github/ISSUE_TEMPLATE/feature.yml
+
+      - name: Validate Issue Form
+        env:
+          ISSUE_TYPE: ${{ steps.parse.outputs.issueparser_issueType }}
+          BRANCH_TYPE: ${{ steps.parse.outputs.issueparser_branchType }}
+          PARENT_KEY: ${{ steps.parse.outputs.issueparser_parentKey }}
+          BRANCH_SUFFIX: ${{ steps.parse.outputs.issueparser_branchSuffix }}
+        run: |
+          set -euo pipefail
+
+          case "${ISSUE_TYPE}" in
+            "스토리"|"작업"|"버그")
+              ;;
+            *)
+              echo "지원하지 않는 Jira 작업 유형입니다: ${ISSUE_TYPE}"
+              exit 1
+              ;;
+          esac
+
+          case "${BRANCH_TYPE}" in
+            "feat"|"fix"|"docs"|"style"|"refactor"|"test"|"chore")
+              ;;
+            *)
+              echo "지원하지 않는 개발 작업 유형입니다: ${BRANCH_TYPE}"
+              exit 1
+              ;;
+          esac
+
+          if [[ ! "${PARENT_KEY}" =~ ^AVO-[0-9]+$ ]]; then
+            echo "잘못된 상위 에픽 키입니다: ${PARENT_KEY}"
+            echo "AVCD-15와 같은 형식으로 입력해야 합니다."
+            exit 1
+          fi
+
+          if [[ ! "${BRANCH_SUFFIX}" =~ ^[a-z0-9]+([a-z0-9-]*[a-z0-9])?$ ]]; then
+            echo "잘못된 브랜치 식별자입니다: ${BRANCH_SUFFIX}"
+            echo "영문 소문자, 숫자, 하이픈만 사용할 수 있습니다."
+            echo "예: login-api"
+            exit 1
+          fi
+
+      - name: Create Jira Issue with REST API
+        id: create
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+
+          ISSUE_TYPE: ${{ steps.parse.outputs.issueparser_issueType }}
+          BRANCH_TYPE: ${{ steps.parse.outputs.issueparser_branchType }}
+
+          ISSUE_SUMMARY: ${{ github.event.issue.title }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+
+          PARENT_KEY: ${{ steps.parse.outputs.issueparser_parentKey }}
+          BRANCH_SUFFIX: ${{ steps.parse.outputs.issueparser_branchSuffix }}
+          ISSUE_DESCRIPTION: ${{ steps.parse.outputs.issueparser_description }}
+
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TASKS: ${{ steps.parse.outputs.issueparser_tasks }}
+        run: |
+          set -euo pipefail
+
+          python3 <<'PY'
+          import json
+          import os
+          import re
+          import uuid
+
+          issue_type_mapping = {
+              "스토리": "스토리",
+              "작업": "작업",
+              "버그": "버그"
+          }
+
+          selected_type = os.environ["ISSUE_TYPE"].strip()
+          jira_issue_type = issue_type_mapping.get(
+              selected_type,
+              "작업"
+          )
+
+          branch_type = os.environ["BRANCH_TYPE"].strip()
+          branch_suffix = os.environ["BRANCH_SUFFIX"].strip()
+          parent_key = os.environ["PARENT_KEY"].strip()
+
+          issue_url = os.environ["ISSUE_URL"].strip()
+          issue_number = os.environ["ISSUE_NUMBER"].strip()
+          repository = os.environ["REPOSITORY"].strip()
+
+          issue_description = os.environ.get(
+              "ISSUE_DESCRIPTION",
+              ""
+          ).strip()
+
+          issue_body = os.environ.get(
+              "ISSUE_BODY",
+              ""
+          )
+
+          issue_tasks = os.environ.get(
+              "ISSUE_TASKS",
+              ""
+          ).strip()
+
+          tasks_match = re.search(
+              r"###\s*✅\s*체크리스트\s*\n(.*?)(?=###|$)",
+              issue_body,
+              re.DOTALL
+          )
+
+          if tasks_match:
+              extracted_tasks = tasks_match.group(1).strip()
+
+              if (
+                  extracted_tasks
+                  and extracted_tasks != "_No response_"
+              ):
+                  issue_tasks = extracted_tasks
+
+          def text_node(text, marks=None):
+              node = {
+                  "type": "text",
+                  "text": text
+              }
+
+              if marks:
+                  node["marks"] = marks
+
+              return node
+
+          def paragraph(content=None):
+              return {
+                  "type": "paragraph",
+                  "content": content or []
+              }
+
+          def heading(text, level=3):
+              return {
+                  "type": "heading",
+                  "attrs": {
+                      "level": level
+                  },
+                  "content": [
+                      text_node(text)
+                  ]
+              }
+
+          def strong_text(text):
+              return text_node(
+                  text,
+                  [
+                      {
+                          "type": "strong"
+                      }
+                  ]
+              )
+
+          def code_text(text):
+              return text_node(
+                  text,
+                  [
+                      {
+                          "type": "code"
+                      }
+                  ]
+              )
+
+          def link_text(text, url):
+              return text_node(
+                  text,
+                  [
+                      {
+                          "type": "link",
+                          "attrs": {
+                              "href": url
+                          }
+                      }
+                  ]
+              )
+
+          def paragraph_from_multiline(text):
+              content = []
+              lines = text.splitlines()
+
+              for index, line in enumerate(lines):
+                  if index > 0:
+                      content.append({
+                          "type": "hardBreak"
+                      })
+
+                  content.append(
+                      text_node(
+                          line if line else " "
+                      )
+                  )
+
+              return paragraph(content)
+
+          def description_nodes(text):
+              nodes = []
+
+              blocks = re.split(
+                  r"\n\s*\n",
+                  text
+              )
+
+              for block in blocks:
+                  block = block.strip()
+
+                  if block:
+                      nodes.append(
+                          paragraph_from_multiline(block)
+                      )
+
+              if not nodes:
+                  nodes.append(
+                      paragraph([
+                          text_node(
+                              "상세 내용이 입력되지 않았습니다."
+                          )
+                      ])
+                  )
+
+              return nodes
+
+          def parse_tasks(text):
+              tasks = []
+
+              for raw_line in text.splitlines():
+                  line = raw_line.strip()
+
+                  if (
+                      not line
+                      or line == "_No response_"
+                  ):
+                      continue
+
+                  checkbox_match = re.match(
+                      r"^[-*]\s*\[([ xX])\]\s*(.*)$",
+                      line
+                  )
+
+                  if checkbox_match:
+                      checked = (
+                          checkbox_match.group(1).lower()
+                          == "x"
+                      )
+
+                      task_text = (
+                          checkbox_match.group(2).strip()
+                      )
+
+                      tasks.append({
+                          "checked": checked,
+                          "text": task_text
+                      })
+
+                      continue
+
+                  bullet_match = re.match(
+                      r"^[-*]\s+(.*)$",
+                      line
+                  )
+
+                  if bullet_match:
+                      tasks.append({
+                          "checked": False,
+                          "text": (
+                              bullet_match.group(1).strip()
+                          )
+                      })
+
+                      continue
+
+                  tasks.append({
+                      "checked": False,
+                      "text": line
+                  })
+
+              return tasks
+
+          def task_list_node(tasks):
+              content = []
+
+              for task in tasks:
+                  text_content = (
+                      task["text"]
+                      if task["text"]
+                      else "(내용 없음)"
+                  )
+
+                  content.append({
+                      "type": "taskItem",
+                      "attrs": {
+                          "localId": str(uuid.uuid4()),
+                          "state": (
+                              "DONE"
+                              if task["checked"]
+                              else "TODO"
+                          )
+                      },
+                      "content": [
+                          {
+                              "type": "text",
+                              "text": text_content
+                          }
+                      ]
+                  })
+
+              return {
+                  "type": "taskList",
+                  "attrs": {
+                      "localId": str(uuid.uuid4())
+                  },
+                  "content": content
+              }
+
+          description_content = [
+              heading(
+                  "🔗 GitHub Issue",
+                  3
+              ),
+
+              paragraph([
+                  link_text(
+                      f"{repository} #{issue_number}",
+                      issue_url
+                  )
+              ]),
+
+              heading(
+                  "🎟️ 상위 에픽",
+                  3
+              ),
+
+              paragraph([
+                  code_text(
+                      parent_key
+                  )
+              ]),
+
+              heading(
+                  "🌿 개발 정보",
+                  3
+              ),
+
+              paragraph([
+                  strong_text(
+                      "개발 작업 유형: "
+                  ),
+                  code_text(
+                      branch_type
+                  )
+              ]),
+
+              paragraph([
+                  strong_text(
+                      "브랜치 식별자: "
+                  ),
+                  code_text(
+                      branch_suffix
+                  )
+              ]),
+
+              paragraph([
+                  strong_text(
+                      "기준 브랜치: "
+                  ),
+                  code_text(
+                      "develop"
+                  )
+              ]),
+
+              heading(
+                  "📝 상세 내용",
+                  3
+              )
+          ]
+
+          description_content.extend(
+              description_nodes(
+                  issue_description
+              )
+          )
+
+          parsed_tasks = parse_tasks(
+              issue_tasks
+          )
+
+          description_content.append(
+              heading(
+                  "✅ 체크리스트",
+                  3
+              )
+          )
+
+          if parsed_tasks:
+              description_content.append(
+                  task_list_node(
+                      parsed_tasks
+                  )
+              )
+          else:
+              description_content.append(
+                  paragraph([
+                      text_node(
+                          "등록된 체크리스트가 없습니다."
+                      )
+                  ])
+              )
+
+          fields = {
+              "project": {
+                  "key": os.environ[
+                      "JIRA_PROJECT_KEY"
+                  ]
+              },
+              "issuetype": {
+                  "name": jira_issue_type
+              },
+              "summary": os.environ[
+                  "ISSUE_SUMMARY"
+              ],
+              "description": {
+                  "type": "doc",
+                  "version": 1,
+                  "content": description_content
+              },
+              "parent": {
+                  "key": parent_key
+              }
+          }
+
+          payload = {
+              "fields": fields
+          }
+
+          with open(
+              "jira-payload.json",
+              "w",
+              encoding="utf-8"
+          ) as file:
+              json.dump(
+                  payload,
+                  file,
+                  ensure_ascii=False,
+                  indent=2
+              )
+          PY
+
+          echo "Jira 요청 데이터:"
+          cat jira-payload.json
+
+          HTTP_STATUS=$(curl \
+            --silent \
+            --show-error \
+            --output jira-response.json \
+            --write-out "%{http_code}" \
+            --request POST \
+            --url "${JIRA_BASE_URL%/}/rest/api/3/issue" \
+            --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data @jira-payload.json)
+
+          echo
+          echo "Jira 응답 상태: ${HTTP_STATUS}"
+          cat jira-response.json
+          echo
+
+          if [[ "${HTTP_STATUS}" -lt 200 || "${HTTP_STATUS}" -ge 300 ]]; then
+            echo "Jira 이슈 생성에 실패했습니다."
+            exit 1
+          fi
+
+          JIRA_KEY=$(jq -r '.key' jira-response.json)
+
+          if [[ -z "${JIRA_KEY}" || "${JIRA_KEY}" == "null" ]]; then
+            echo "Jira 응답에서 작업 키를 찾지 못했습니다."
+            exit 1
+          fi
+
+          echo "jira_key=${JIRA_KEY}" >> "${GITHUB_OUTPUT}"
+          echo "생성된 Jira 작업: ${JIRA_KEY}"
+
+      - name: Create GitHub Branch
+        id: branch
+        uses: actions/github-script@v8
+        env:
+          JIRA_KEY: ${{ steps.create.outputs.jira_key }}
+          BRANCH_TYPE: ${{ steps.parse.outputs.issueparser_branchType }}
+          BRANCH_SUFFIX: ${{ steps.parse.outputs.issueparser_branchSuffix }}
+          BASE_BRANCH: develop
+        with:
+          script: |
+            const jiraKey =
+              process.env.JIRA_KEY;
+
+            const branchType =
+              process.env.BRANCH_TYPE;
+
+            const branchSuffix =
+              process.env.BRANCH_SUFFIX;
+
+            const baseBranch =
+              process.env.BASE_BRANCH;
+
+            const branchName =
+              `${branchType}/${jiraKey}-${branchSuffix}`;
+
+            const baseRef =
+              await github.rest.git.getRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${baseBranch}`
+              });
+
+            const baseSha =
+              baseRef.data.object.sha;
+
+            try {
+              await github.rest.git.getRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${branchName}`
+              });
+
+              core.warning(
+                `이미 존재하는 브랜치입니다: ${branchName}`
+              );
+            } catch (error) {
+              if (error.status !== 404) {
+                throw error;
+              }
+
+              await github.rest.git.createRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `refs/heads/${branchName}`,
+                sha: baseSha
+              });
+
+              core.info(
+                `브랜치가 생성되었습니다: ${branchName}`
+              );
+            }
+
+            core.setOutput(
+              "branch_name",
+              branchName
+            );
+
+      # 브랜치 생성이 완료됐음을 별도 워크플로에 전달
+      - name: Dispatch Branch Created Event
+        uses: actions/github-script@v8
+        env:
+          JIRA_KEY: ${{ steps.create.outputs.jira_key }}
+          BRANCH_NAME: ${{ steps.branch.outputs.branch_name }}
+        with:
+          script: |
+            const jiraKey =
+              process.env.JIRA_KEY;
+
+            const branchName =
+              process.env.BRANCH_NAME;
+
+            await github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: "jira-branch-created",
+              client_payload: {
+                jira_key: jiraKey,
+                branch_name: branchName
+              }
+            });
+
+            core.info(
+              `브랜치 생성 이벤트를 전달했습니다: ${branchName}`
+            );
+
+      - name: Update GitHub Issue Title
+        uses: actions/github-script@v8
+        env:
+          JIRA_KEY: ${{ steps.create.outputs.jira_key }}
+          BRANCH_TYPE: ${{ steps.parse.outputs.issueparser_branchType }}
+        with:
+          script: |
+            const currentTitle =
+              context.payload.issue.title;
+
+            const jiraKey =
+              process.env.JIRA_KEY;
+
+            const branchType =
+              process.env.BRANCH_TYPE;
+
+            const prefix =
+              `[${jiraKey}] ${branchType}: `;
+
+            if (!currentTitle.startsWith(prefix)) {
+              await github.rest.issues.update({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `${prefix}${currentTitle}`
+              });
+            }
+
+      - name: Leave Comment on GitHub
+        uses: actions/github-script@v8
+        env:
+          JIRA_KEY: ${{ steps.create.outputs.jira_key }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          BRANCH_NAME: ${{ steps.branch.outputs.branch_name }}
+        with:
+          script: |
+            const jiraKey =
+              process.env.JIRA_KEY;
+
+            const branchName =
+              process.env.BRANCH_NAME;
+
+            const baseUrl =
+              process.env.JIRA_BASE_URL.replace(
+                /\/$/,
+                ""
+              );
+
+            const jiraUrl =
+              `${baseUrl}/browse/${jiraKey}`;
+
+            const encodedBranchName =
+              branchName
+                .split("/")
+                .map(encodeURIComponent)
+                .join("/");
+
+            const branchUrl =
+              `https://github.com/${context.repo.owner}` +
+              `/${context.repo.repo}/tree/${encodedBranchName}`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: [
+                "✅ **Jira 티켓과 작업 브랜치가 자동으로 생성되었습니다.**",
+                "",
+                `- Jira: [${jiraKey}](${jiraUrl})`,
+                `- 브랜치: [\`${branchName}\`](${branchUrl})`,
+                "- 기준 브랜치: `develop`",
+                "",
+                "로컬에서 아래 명령으로 브랜치를 가져오세요.",
+                "",
+                "```bash",
+                "git fetch origin",
+                `git switch --track origin/${branchName}`,
+                "```"
+              ].join("\n")
+            });
