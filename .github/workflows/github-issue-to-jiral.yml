@@ -54,7 +54,7 @@ jobs:
 
           if [[ ! "${PARENT_KEY}" =~ ^AVO-[0-9]+$ ]]; then
             echo "잘못된 상위 에픽 키입니다: ${PARENT_KEY}"
-            echo "AVO-15와 같은 형식으로 입력해야 합니다."
+            echo "AVCD-15와 같은 형식으로 입력해야 합니다."
             exit 1
           fi
 
