@@ -1,0 +1,190 @@
+name: Move Jira Issue to In Progress
+
+on:
+  repository_dispatch:
+    types:
+      - jira-branch-created
+
+jobs:
+  move-jira-to-in-progress:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Validate Dispatch Data
+        id: event
+        env:
+          JIRA_KEY: ${{ github.event.client_payload.jira_key }}
+          BRANCH_NAME: ${{ github.event.client_payload.branch_name }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${JIRA_KEY}" ]]; then
+            echo "전달받은 Jira 키가 없습니다."
+            exit 1
+          fi
+
+          if [[ ! "${JIRA_KEY}" =~ ^AVCD-[0-9]+$ ]]; then
+            echo "잘못된 Jira 키입니다: ${JIRA_KEY}"
+            exit 1
+          fi
+
+          if [[ -z "${BRANCH_NAME}" ]]; then
+            echo "전달받은 브랜치명이 없습니다."
+            exit 1
+          fi
+
+          echo "Jira 티켓: ${JIRA_KEY}"
+          echo "생성된 브랜치: ${BRANCH_NAME}"
+
+          echo "jira_key=${JIRA_KEY}" >> "${GITHUB_OUTPUT}"
+
+      - name: Check Current Jira Status
+        id: status
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_KEY: ${{ steps.event.outputs.jira_key }}
+        run: |
+          set -euo pipefail
+
+          BASE_URL="${JIRA_BASE_URL%/}"
+
+          HTTP_STATUS=$(curl \
+            --silent \
+            --show-error \
+            --output jira-issue.json \
+            --write-out "%{http_code}" \
+            --request GET \
+            --url "${BASE_URL}/rest/api/3/issue/${JIRA_KEY}?fields=status" \
+            --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            --header "Accept: application/json")
+
+          echo "Jira 티켓 조회 응답: ${HTTP_STATUS}"
+          cat jira-issue.json
+          echo
+
+          if [[ "${HTTP_STATUS}" -lt 200 || "${HTTP_STATUS}" -ge 300 ]]; then
+            echo "Jira 티켓을 조회하지 못했습니다: ${JIRA_KEY}"
+            exit 1
+          fi
+
+          CURRENT_STATUS=$(jq -r '.fields.status.name' jira-issue.json)
+
+          echo "현재 Jira 상태: ${CURRENT_STATUS}"
+
+          if [[ "${CURRENT_STATUS}" == "진행 중" || "${CURRENT_STATUS}" == "In Progress" ]]; then
+            echo "already_in_progress=true" >> "${GITHUB_OUTPUT}"
+            echo "이미 진행 중 상태입니다."
+          else
+            echo "already_in_progress=false" >> "${GITHUB_OUTPUT}"
+          fi
+
+      - name: Find In Progress Transition
+        if: steps.status.outputs.already_in_progress != 'true'
+        id: transition
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_KEY: ${{ steps.event.outputs.jira_key }}
+        run: |
+          set -euo pipefail
+
+          BASE_URL="${JIRA_BASE_URL%/}"
+
+          HTTP_STATUS=$(curl \
+            --silent \
+            --show-error \
+            --output jira-transitions.json \
+            --write-out "%{http_code}" \
+            --request GET \
+            --url "${BASE_URL}/rest/api/3/issue/${JIRA_KEY}/transitions" \
+            --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            --header "Accept: application/json")
+
+          echo "Jira 전환 목록 조회 응답: ${HTTP_STATUS}"
+          cat jira-transitions.json
+          echo
+
+          if [[ "${HTTP_STATUS}" -lt 200 || "${HTTP_STATUS}" -ge 300 ]]; then
+            echo "Jira 상태 전환 목록을 조회하지 못했습니다."
+            exit 1
+          fi
+
+          TRANSITION_ID=$(jq -r '
+            [
+              .transitions[]
+              | select(
+                  .to.name == "진행 중"
+                  or .to.name == "In Progress"
+                )
+            ][0].id // empty
+          ' jira-transitions.json)
+
+          if [[ -z "${TRANSITION_ID}" ]]; then
+            echo "현재 상태에서 진행 중으로 이동할 수 없습니다."
+            echo
+            echo "현재 사용할 수 있는 전환:"
+
+            jq -r '
+              .transitions[]
+              | "- \(.name) → \(.to.name) (ID: \(.id))"
+            ' jira-transitions.json
+
+            exit 1
+          fi
+
+          echo "transition_id=${TRANSITION_ID}" >> "${GITHUB_OUTPUT}"
+          echo "진행 중 전환 ID: ${TRANSITION_ID}"
+
+      - name: Transition Jira Issue to In Progress
+        if: steps.status.outputs.already_in_progress != 'true'
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_KEY: ${{ steps.event.outputs.jira_key }}
+          TRANSITION_ID: ${{ steps.transition.outputs.transition_id }}
+        run: |
+          set -euo pipefail
+
+          BASE_URL="${JIRA_BASE_URL%/}"
+
+          jq -n \
+            --arg transitionId "${TRANSITION_ID}" \
+            '{
+              transition: {
+                id: $transitionId
+              }
+            }' > jira-transition-payload.json
+
+          echo "Jira 상태 전환 요청:"
+          cat jira-transition-payload.json
+          echo
+
+          HTTP_STATUS=$(curl \
+            --silent \
+            --show-error \
+            --output jira-transition-response.txt \
+            --write-out "%{http_code}" \
+            --request POST \
+            --url "${BASE_URL}/rest/api/3/issue/${JIRA_KEY}/transitions" \
+            --user "${JIRA_USER_EMAIL}:${JIRA_API_TOKEN}" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data @jira-transition-payload.json)
+
+          echo "Jira 상태 전환 응답: ${HTTP_STATUS}"
+          cat jira-transition-response.txt
+          echo
+
+          if [[ "${HTTP_STATUS}" -lt 200 || "${HTTP_STATUS}" -ge 300 ]]; then
+            echo "Jira 티켓을 진행 중 상태로 변경하지 못했습니다."
+            exit 1
+          fi
+
+          echo "${JIRA_KEY} 티켓을 진행 중 상태로 변경했습니다."
