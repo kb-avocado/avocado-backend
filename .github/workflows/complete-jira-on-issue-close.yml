@@ -7,7 +7,7 @@ on:
 
 jobs:
   complete-jira-issue:
-    if: contains(github.event.issue.labels.*.name, 'jira')
+    if: contains(github.event.issue.labels.*.name, '🎟️ jira')
 
     runs-on: ubuntu-latest
 
