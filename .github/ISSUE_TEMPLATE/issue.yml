@@ -2,7 +2,7 @@ name: '이슈 생성'
 description: 'GitHub 이슈를 생성하며, 생성된 이슈는 Jira와 연동됩니다.'
 title: '이슈 제목을 작성해 주세요'
 labels:
-  - jira
+  - 🎟️ jira
 assignees: []
 
 body:
