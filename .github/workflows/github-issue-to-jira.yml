@@ -7,7 +7,7 @@ on:
 
 jobs:
   create-jira-issue:
-    if: contains(github.event.issue.labels.*.name, 'jira')
+    if: contains(github.event.issue.labels.*.name, '🎟️ jira')
 
     runs-on: ubuntu-latest
 
@@ -52,7 +52,7 @@ jobs:
               ;;
           esac
 
-          if [[ ! "${PARENT_KEY}" =~ ^AVO-[0-9]+$ ]]; then
+          if [[ ! "${PARENT_KEY}" =~ ^AVCD-[0-9]+$ ]]; then
             echo "잘못된 상위 에픽 키입니다: ${PARENT_KEY}"
             echo "AVCD-15와 같은 형식으로 입력해야 합니다."
             exit 1
