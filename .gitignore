@@ -92,13 +92,13 @@ $RECYCLE.BIN/
 .env.*
 !.env.example
 
-src/main/resources/application-local.properties
-src/main/resources/application-secret.properties
-src/main/resources/database-local.properties
-src/main/resources/database-secret.properties
+src/main/resources/config/application-local.properties
+src/main/resources/config/application-secret.properties
+src/main/resources/config/database-local.properties
+src/main/resources/config/database-secret.properties
 
-!src/main/resources/application-local.properties.example
-!src/main/resources/database-local.properties.example
+!src/main/resources/config/application-local.properties.example
+!src/main/resources/config/database-local.properties.example
 
 # ==============================
 # Runtime-generated files
