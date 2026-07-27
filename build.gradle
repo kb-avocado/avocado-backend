@@ -124,6 +124,7 @@ dependencies {
     testImplementation "org.springframework:spring-test:${springVersion}"
     testImplementation "org.springframework.security:spring-security-test:${springSecurityVersion}"
     testImplementation "org.junit.jupiter:junit-jupiter:${junitVersion}"
+    testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.assertj:assertj-core:${assertjVersion}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
 }
