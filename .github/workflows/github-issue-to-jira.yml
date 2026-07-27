@@ -23,7 +23,7 @@ jobs:
         id: parse
         uses: stefanbuck/github-issue-parser@v3
         with:
-          template-path: .github/ISSUE_TEMPLATE/feature.yml
+          template-path: .github/ISSUE_TEMPLATE/issue.yml
 
       - name: Validate Issue Form
         env:
