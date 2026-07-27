@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration
+        PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+
+    <settings>
+        <!-- snake_case 컬럼명을 camelCase 필드명으로 자동 변환 -->
+        <setting
+                name="mapUnderscoreToCamelCase"
+                value="true"
+        />
+
+        <!-- MyBatis 로그를 SLF4J로 출력 -->
+        <setting
+                name="logImpl"
+                value="SLF4J"
+        />
+    </settings>
+
+</configuration>
