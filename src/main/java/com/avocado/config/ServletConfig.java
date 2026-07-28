@@ -2,10 +2,7 @@ package com.avocado.config;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+import org.springframework.web.servlet.config.annotation.*;
 
 @Configuration
 @EnableWebMvc
@@ -25,10 +22,18 @@ public class ServletConfig implements WebMvcConfigurer {
                 .maxAge(3600);
     }
 
-    // 정적 파일을 제공할 때 사용
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 정적 자원 경로 매핑
         registry.addResourceHandler("/resources/**")
                 .addResourceLocations("/resources/");
+
+        // Swagger UI HTML 화면 리소스 매핑
+        registry.addResourceHandler("/swagger-ui/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/springfox-swagger-ui/");
+
+        // Swagger가 사용하는 JS, CSS 등 정적 파일 매핑
+        registry.addResourceHandler("/webjars/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/");
     }
 }
