@@ -5,16 +5,16 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.PropertySource;
 
 import javax.sql.DataSource;
 
 @Configuration
-@PropertySource(
-        value = {
-                "classpath:config/application-local.properties"
-        }
-)
+@PropertySource("classpath:config/application-local.properties")
+@Import({
+        MyBatisConfig.class
+})
 public class RootConfig {
 
     @Value("${db.driver}")
@@ -31,6 +31,7 @@ public class RootConfig {
 
     /**
      * MySQL 연결에 사용할 HikariCP DataSource를 생성.
+     *
      * @return 구현체 HikariDataSource
      */
     @Bean
