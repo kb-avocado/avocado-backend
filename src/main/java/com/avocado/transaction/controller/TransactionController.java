@@ -1,0 +1,4 @@
+package com.avocado.transaction.controller;
+
+public class TransactionController {
+}
