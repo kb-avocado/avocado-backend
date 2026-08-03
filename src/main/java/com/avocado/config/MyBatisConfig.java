@@ -16,23 +16,18 @@ import javax.sql.DataSource;
 @Configuration
 // 트랜잭션 관리 활성화
 @EnableTransactionManagement
-// com.avocado 하위에서 @Mapper가 붙은 인터페이스만 등록
+// 매퍼 등록
 @MapperScan({
         "com.avocado.account.mapper",
         "com.avocado.merchant.mapper",
         "com.avocado.user.mapper",
         "com.avocado.wallet.mapper",
+        "com.avocado.notification.mapper",
+        "com.avocado.wallet.mapper",
 })
 public class MyBatisConfig {
 
-    /**
-     * MyBatis가 사용할 SqlSessionFactory를 등록.
-     *
-     * @param dataSource
-     * @param applicationContext
-     * @return
-     * @throws Exception
-     */
+    // MyBatis가 사용할 SqlSessionFactory를 등록
     @Bean
     public SqlSessionFactory sqlSessionFactory(
             DataSource dataSource,
@@ -58,9 +53,7 @@ public class MyBatisConfig {
         return sessionFactoryBean.getObject();
     }
 
-    /**
-     * DataSource 기반의 트랜잭션 매니저를 등록.
-     */
+    // DataSource 기반의 트랜잭션 매니저를 등록
     @Bean
     public PlatformTransactionManager transactionManager(
             DataSource dataSource
