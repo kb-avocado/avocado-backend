@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.*;
 @Configuration
 @EnableWebMvc
 @ComponentScan(basePackages = {
-        "com.avocado.home.controller"
+        "com.avocado"
 })
 public class ServletConfig implements WebMvcConfigurer {
 
