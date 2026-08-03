@@ -1,13 +1,15 @@
 package com.avocado.wallet.controller;
 
 import com.avocado.common.response.ApiResponse;
-import com.avocado.wallet.dto.response.WalletResponse;
+import com.avocado.wallet.dto.response.WalletResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/wallets")
@@ -19,14 +21,14 @@ public class WalletController {
             value = "아이 선불 지갑 조회",
             notes = "특정 아이의 선불지갑 정보(상태, 잔액 등)를 조회합니다."
     )
-    public ApiResponse<WalletResponse> getChildWallet(@PathVariable Long childId) {
-        WalletResponse mockWalletResponse = WalletResponse.builder()
-                .id(1L)
+    public ApiResponse<WalletResponseDto> getChildWallet(@PathVariable Long childId) {
+        WalletResponseDto mockWalletResponse = WalletResponseDto.builder()
+                .walletId(1L)
                 .childId(childId)
-                .balance(35000)
+                .balance(35000L)
                 .status("ACTIVE")
-                .createdAt("2026-07-29 10:49:06.123456")
-                .updatedAt("2026-07-29 10:49:06.123456")
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
 
         return ApiResponse.success(

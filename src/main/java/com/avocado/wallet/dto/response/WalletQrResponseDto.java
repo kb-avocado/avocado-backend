@@ -9,7 +9,7 @@ import lombok.Getter;
 @Getter
 @Builder
 @ApiModel(description = "아이 선불 지갑 결제용 QR 코드 발급 응답 데이터")
-public class WalletQrResponse {
+public class WalletQrResponseDto {
 
     @ApiModelProperty(value = "바코드 ID", example = "1")
     private Long id;

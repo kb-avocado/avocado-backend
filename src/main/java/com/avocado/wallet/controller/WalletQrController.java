@@ -1,7 +1,7 @@
 package com.avocado.wallet.controller;
 
 import com.avocado.common.response.ApiResponse;
-import com.avocado.wallet.dto.response.WalletQrResponse;
+import com.avocado.wallet.dto.response.WalletQrResponseDto;
 import io.swagger.annotations.Api;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class WalletQrController {
 
     @PostMapping("/qr")
-    public ApiResponse<WalletQrResponse> createWalletQr(@PathVariable Long walletId) {
-        WalletQrResponse mockData = WalletQrResponse.builder()
+    public ApiResponse<WalletQrResponseDto> createWalletQr(@PathVariable Long walletId) {
+        WalletQrResponseDto mockData = WalletQrResponseDto.builder()
                 .id(1L)
                 .walletId(walletId)
                 .token("QR_8f24dbfa7c934f20a3bc91e7")
