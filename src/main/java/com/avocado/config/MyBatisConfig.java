@@ -17,14 +17,17 @@ import javax.sql.DataSource;
 // 트랜잭션 관리 활성화
 @EnableTransactionManagement
 // com.avocado 하위에서 @Mapper가 붙은 인터페이스만 등록
-@MapperScan(
-        basePackages = "com.avocado",
-        annotationClass = Mapper.class
-)
+@MapperScan({
+        "com.avocado.account.mapper",
+        "com.avocado.merchant.mapper",
+        "com.avocado.user.mapper",
+        "com.avocado.wallet.mapper",
+})
 public class MyBatisConfig {
 
     /**
      * MyBatis가 사용할 SqlSessionFactory를 등록.
+     *
      * @param dataSource
      * @param applicationContext
      * @return
