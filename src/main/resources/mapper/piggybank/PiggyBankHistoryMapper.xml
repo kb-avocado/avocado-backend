@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 저금통 저축 내역 조회 -->
+<mapper namespace="com.avocado.piggybank.mapper.PiggyBankHistoryMapper">
+
+    <select id="selectDepositsByPiggyBankId"
+            resultType="com.avocado.piggybank.dto.response.PiggyBankDepositResponseDto">
+        SELECT
+        history_id AS depositId,
+        amount,
+        balance_after AS balanceAfter,
+        created_at AS depositedAt
+        FROM piggy_bank_histories
+        WHERE piggy_bank_id = #{piggyBankId}
+        AND history_type = 'DEPOSIT'
+        ORDER BY created_at DESC
+    </select>
+
+</mapper>
