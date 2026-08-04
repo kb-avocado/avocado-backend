@@ -8,7 +8,7 @@ import lombok.Setter;
 @Getter
 @Setter
 @ApiModel(description = "선불지갑 거래 기본 내역 조회 요청 파라미터")
-public class WalletTransactionListRequestDto {
+public class WalletTxListRequestDto {
 
     @ApiModelProperty(
             value = "페이지 번호",

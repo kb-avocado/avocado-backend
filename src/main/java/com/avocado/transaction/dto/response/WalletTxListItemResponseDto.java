@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 @ApiModel(description = "지갑 거래 내역 리스트 단일 항목")
-public class WalletTransactionListItemDto {
+public class WalletTxListItemResponseDto {
 
     @JsonProperty("history_id")
     @ApiModelProperty(
