@@ -1,5 +1,6 @@
 package com.avocado.piggybank.service;
 
+import com.avocado.piggybank.dto.response.PiggyBankDetailResponseDto;
 import com.avocado.piggybank.dto.response.PiggyBankListResponseDto;
 // 저금통 비즈니스 로직 인터페이스
 public interface PiggyBankService {
@@ -9,4 +10,7 @@ public interface PiggyBankService {
      * @param status   탭 구분 (IN_PROGRESS / CLOSED)
      */
     PiggyBankListResponseDto getList(Long walletId, String status);
+
+    // 저금통 상세 조회
+    PiggyBankDetailResponseDto getDetail(Long piggyBankId);
 }
