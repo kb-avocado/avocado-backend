@@ -43,7 +43,11 @@ public class SecurityConfig {
             "/swagger-ui/**",
             "/swagger-resources/**",
             "/v2/api-docs",
-            "/webjars/**"
+            "/webjars/**",
+
+            // TODO: 개발 편의용 임시 허용. 각 도메인이 인증 연동을 마치면 제거할 것
+            "/api/wallets/**",
+            "/api/piggybanks/**"
     };
 
     private final ObjectMapper objectMapper = new ObjectMapper();
