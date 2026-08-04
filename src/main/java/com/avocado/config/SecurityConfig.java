@@ -37,8 +37,6 @@ public class SecurityConfig {
     private static final String[] PERMIT_ALL_PATHS = {
             // 로그인, 회원가입
             "/api/auth/**",
-            // 서버 상태 확인
-            "/api/home",
             // Swagger
             "/swagger-ui/**",
             "/swagger-resources/**",
@@ -46,8 +44,16 @@ public class SecurityConfig {
             "/webjars/**",
 
             // TODO: 개발 편의용 임시 허용. 각 도메인이 인증 연동을 마치면 제거할 것
-            "/api/wallets/**",
-            "/api/piggybanks/**"
+            "/api/home/**",         // 홈
+            "/api/wallets/**",      // 전자지갑
+            "/api/transfers/**",    // 송금하기
+            "/api/allowances/**",   // 용돈 보내기
+            "/api/transactions/**", // 거래내역
+            "/api/payments/**",     // 결제&결제 환불
+            "/api/piggybanks/**",   // 저금통
+            "/api/news/**",         // 뉴스
+            "/api/reports/**",      // 리포트
+            "/api/notifications/**" // 알림
     };
 
     private final ObjectMapper objectMapper = new ObjectMapper();
