@@ -1,40 +1,22 @@
 package com.avocado.common.response;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-import lombok.Builder;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
 
 @Getter
-@Builder
-@ApiModel(description = "API 공통 응답 포맷")
+@JsonPropertyOrder({"success", "code", "message", "data"})
 public class ApiResponse<T> {
 
-    @ApiModelProperty(
-            value = "성공 여부",
-            example = "true",
-            required = true
-    )
     private final boolean success;
 
-    @ApiModelProperty(
-            value = "응답 코드",
-            example = "SUCCESS",
-            required = true
-    )
     private final String code;
 
-    @ApiModelProperty(
-            value = "응답 메시지",
-            example = "요청이 성공적으로 처리되었습니다.",
-            required = true
-    )
     private final String message;
 
-    @ApiModelProperty(value = "응답 데이터 (없을 시 NULL)")
     private final T data;
 
-    public ApiResponse(
+    // 외부에서 생성자 호출 제한
+    private ApiResponse(
             boolean success,
             String code,
             String message,
@@ -52,12 +34,12 @@ public class ApiResponse<T> {
             String message,
             T data
     ) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .code(code)
-                .message(message)
-                .data(data)
-                .build();
+        return new ApiResponse<>(
+                true,
+                code,
+                message,
+                data
+        );
     }
 
     // 데이터가 없는 성공 응답
@@ -65,11 +47,39 @@ public class ApiResponse<T> {
             String code,
             String message
     ) {
-        return ApiResponse.<T>builder()
-                .success(true)
-                .code(code)
-                .message(message)
-                .data(null)
-                .build();
+        return new ApiResponse<>(
+                true,
+                code,
+                message,
+                null
+        );
     }
+
+    // 기본 실패 응답
+    public static <T> ApiResponse<T> failure(
+            String code,
+            String message
+    ) {
+        return new ApiResponse<>(
+                false,
+                code,
+                message,
+                null
+        );
+    }
+
+    // 상세 데이터를 포함하는 실패 응답
+    public static <T> ApiResponse<T> failure(
+            String code,
+            String message,
+            T data
+    ) {
+        return new ApiResponse<>(
+                false,
+                code,
+                message,
+                data
+        );
+    }
+
 }
