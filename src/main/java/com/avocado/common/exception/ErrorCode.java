@@ -33,6 +33,26 @@ public enum ErrorCode {
             "접근 권한이 없습니다."
     ),
 
+    // 로그인
+    // 계정 존재 여부가 드러나지 않도록 이메일 오류와 비밀번호 오류를 같은 코드로 응답한다.
+    INVALID_CREDENTIALS(
+            HttpStatus.UNAUTHORIZED,
+            "INVALID_CREDENTIALS",
+            "이메일 또는 비밀번호가 올바르지 않습니다."
+    ),
+
+    USER_SUSPENDED(
+            HttpStatus.FORBIDDEN,
+            "USER_SUSPENDED",
+            "이용이 정지된 계정입니다. 고객센터에 문의해주세요."
+    ),
+
+    USER_DELETED(
+            HttpStatus.FORBIDDEN,
+            "USER_DELETED",
+            "탈퇴한 계정입니다."
+    ),
+
     // 저금통
     PIGGY_BANK_NOT_FOUND(
             HttpStatus.NOT_FOUND,
