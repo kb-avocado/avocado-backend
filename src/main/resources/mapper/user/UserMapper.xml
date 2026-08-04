@@ -6,6 +6,21 @@
 
 <mapper namespace="com.avocado.user.mapper.UserMapper">
 
-
+    <select id="selectByEmail" resultType="com.avocado.user.domain.User">
+        SELECT user_id,
+               email,
+               password,
+               name,
+               phone,
+               birth,
+               user_type,
+               role,
+               status,
+               invite_code,
+               created_at,
+               updated_at
+          FROM users
+         WHERE email = #{email}
+    </select>
 
 </mapper>

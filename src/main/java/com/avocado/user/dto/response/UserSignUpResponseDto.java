@@ -46,9 +46,8 @@ public class UserSignUpResponseDto {
     @ApiModelProperty(
             value = "회원 상태",
             example = "ACTIVE",
-            allowableValues = "ACTIVE, INACTIVE, WITHDRAWN",
+            allowableValues = "PENDING, ACTIVE, SUSPENDED, DELETED",
             required = true
     )
     private final UserStatus status;
-
 }

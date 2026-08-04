@@ -20,6 +20,19 @@ public enum ErrorCode {
             "서버 내부 오류가 발생했습니다."
     ),
 
+    // 인증/인가
+    UNAUTHORIZED(
+            HttpStatus.UNAUTHORIZED,
+            "UNAUTHORIZED",
+            "인증이 필요합니다."
+    ),
+
+    FORBIDDEN(
+            HttpStatus.FORBIDDEN,
+            "FORBIDDEN",
+            "접근 권한이 없습니다."
+    ),
+
     // 저금통
     PIGGY_BANK_NOT_FOUND(
             HttpStatus.NOT_FOUND,
