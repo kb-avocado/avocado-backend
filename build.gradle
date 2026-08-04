@@ -127,6 +127,9 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.assertj:assertj-core:${assertjVersion}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
+
+    // RSS/Atom 피드 파싱
+    implementation 'com.rometools:rome:2.1.0'
 }
 
 tasks.named('test') {
