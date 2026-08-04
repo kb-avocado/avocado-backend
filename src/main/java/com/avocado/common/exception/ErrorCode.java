@@ -27,6 +27,13 @@ public enum ErrorCode {
             "저금통을 찾을 수 없습니다."
     ),
 
+    // 저금통 보너스 설정 시
+    PIGGY_BANK_BONUS_ALREADY_SET(
+            HttpStatus.CONFLICT,
+            "PIGGY_BANK_BONUS_ALREADY_SET",
+            "이미 보너스가 설정된 저금통입니다."
+    ),
+
     // 선불지갑
     WALLET_NOT_FOUND(
             HttpStatus.NOT_FOUND,
