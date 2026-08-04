@@ -23,7 +23,7 @@ import javax.sql.DataSource;
         "com.avocado.user.mapper",
         "com.avocado.wallet.mapper",
         "com.avocado.notification.mapper",
-        "com.avocado.wallet.mapper",
+        "com.avocado.piggybank.mapper", // 추가
 })
 public class MyBatisConfig {
 
