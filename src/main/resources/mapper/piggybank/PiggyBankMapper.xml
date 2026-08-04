@@ -44,4 +44,26 @@
             #{s}
         </foreach>
     </select>
+
+<!--단건 조회(컬럼 순서 = 도메인 생성자 순서) -->
+    <select id="selectById" resultType="com.avocado.piggybank.domain.PiggyBank">
+        SELECT
+        piggy_bank_id       AS id,
+        wallet_id,
+        name,
+        target_amount,
+        balance,
+        bonus_type,
+        bonus_value,
+        status,
+        is_favorite,
+        first_deposited_at,
+        target_reached_at,
+        achieved_at,
+        canceled_at,
+        created_at,
+        updated_at
+        FROM piggy_banks
+        WHERE piggy_bank_id = #{id}
+    </select>
 </mapper>

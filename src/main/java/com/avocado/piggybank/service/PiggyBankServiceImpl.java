@@ -1,6 +1,9 @@
 package com.avocado.piggybank.service;
 
+import com.avocado.common.exception.BusinessException;
+import com.avocado.common.exception.ErrorCode;
 import com.avocado.piggybank.domain.PiggyBank;
+import com.avocado.piggybank.dto.response.PiggyBankDetailResponseDto;
 import com.avocado.piggybank.dto.response.PiggyBankListResponseDto;
 import com.avocado.piggybank.dto.response.PiggyBankResponseDto;
 import com.avocado.piggybank.mapper.PiggyBankMapper;
@@ -69,6 +72,34 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .savedAmount(saved)
                 .targetAmount(target)
                 .progressRate(rate)
+                .build();
+    }
+
+    // 저금통 상세 조회
+    @Override
+    public PiggyBankDetailResponseDto getDetail(Long piggyBankId) {
+        PiggyBank p = piggyBankMapper.selectById(piggyBankId);
+        // 팀 공용 예외 처리
+        if (p == null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        long target = p.getTargetAmount() == null ? 0 : p.getTargetAmount();
+        long saved = p.getBalance() == null ? 0 : p.getBalance();
+        int rate = target == 0 ? 0 : (int) (saved * 100 / target);
+        long remaining = Math.max(0, target - saved);
+
+        return PiggyBankDetailResponseDto.builder()
+                .piggyBankId(p.getId())
+                .name(p.getName())
+                .status(p.getStatus())
+                .favorite(p.getIsFavorite())
+                .savedAmount(saved)
+                .targetAmount(target)
+                .progressRate(rate)
+                .remainingAmount(remaining)
+                .bonusType(p.getBonusType() == null ? "NONE" : p.getBonusType().name())
+                .bonusValue(p.getBonusValue())
                 .build();
     }
 }
