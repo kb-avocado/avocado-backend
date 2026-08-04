@@ -25,6 +25,7 @@ public class WalletController {
         WalletResponseDto mockWalletResponse = WalletResponseDto.builder()
                 .walletId(1L)
                 .childId(childId)
+                .walletNumber("12345678901234")
                 .balance(35000L)
                 .status("ACTIVE")
                 .createdAt(LocalDateTime.now())

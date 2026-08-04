@@ -1,5 +1,6 @@
 package com.avocado.wallet.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -13,7 +14,6 @@ import java.time.LocalDateTime;
 @Builder
 @ApiModel(description = "아이 선불지갑 조회 응답 데이터")
 public class WalletResponseDto {
-
     @JsonProperty("wallet_id")
     @ApiModelProperty(
             value = "아이 선불 지갑 ID",
@@ -24,14 +24,14 @@ public class WalletResponseDto {
     @JsonProperty("child_id")
     @ApiModelProperty(
             value = "아이 ID",
-            example = "10"
+            example = "15"
     )
     private Long childId;
 
     @JsonProperty("wallet_number")
     @ApiModelProperty(
             value = "서비스 내부 지갑 식별번호",
-            example = "202608-003-000001"
+            example = "12345678901234"
     )
     private String walletNumber;
 
@@ -48,16 +48,26 @@ public class WalletResponseDto {
     private String status;
 
     @JsonProperty("created_at")
+    @JsonFormat(
+            shape = JsonFormat.Shape.STRING,
+            pattern = "yyyy-MM-dd HH:mm:ss",
+            timezone = "Asia/Seoul"
+    )
     @ApiModelProperty(
             value = "생성 일시",
-            example = "2026-07-29 10:49:06.123456"
+            example = "2026-08-03 17:37:25"
     )
     private LocalDateTime createdAt;
 
     @JsonProperty("updated_at")
+    @JsonFormat(
+            shape = JsonFormat.Shape.STRING,
+            pattern = "yyyy-MM-dd HH:mm:ss",
+            timezone = "Asia/Seoul"
+    )
     @ApiModelProperty(
             value = "수정 일시",
-            example = "2026-07-29 10:49:06.123456"
+            example = "2026-08-03 17:37:25"
     )
     private LocalDateTime updatedAt;
 }

@@ -5,6 +5,8 @@ import com.avocado.piggybank.domain.PiggyBank;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 @Mapper
 public interface PiggyBankMapper {
 
@@ -15,4 +17,16 @@ public interface PiggyBankMapper {
             @Param("bonusType") BonusType bonusType,
             @Param("bonusValue") Long bonusValue
     );
+
+    // 지갑 + 상태(여러 개)로 저금통 목록 조회 (진행중/완료 탭 공용)
+    List<PiggyBank> selectByWalletIdAndStatuses(
+            @Param("walletId") Long walletId,
+            @Param("statuses") List<String> statuses
+    );
+    //지갑 + 상태(여러 개)에 해당하는 저금통 개수 (진행중 개수 카운트용)
+    int countByWalletIdAndStatuses(
+            @Param("walletId") Long walletId,
+            @Param("statuses") List<String> statuses
+    );
+
 }

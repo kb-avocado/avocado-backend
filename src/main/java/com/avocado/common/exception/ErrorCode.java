@@ -60,6 +60,13 @@ public enum ErrorCode {
             "저금통을 찾을 수 없습니다."
     ),
 
+    // 저금통 보너스 설정 시
+    PIGGY_BANK_BONUS_ALREADY_SET(
+            HttpStatus.CONFLICT,
+            "PIGGY_BANK_BONUS_ALREADY_SET",
+            "이미 보너스가 설정된 저금통입니다."
+    ),
+
     // 선불지갑
     WALLET_NOT_FOUND(
             HttpStatus.NOT_FOUND,
@@ -109,6 +116,13 @@ public enum ErrorCode {
             HttpStatus.CONFLICT,
             "DUPLICATE_PAYMENT_REQUEST",
             "이미 처리된 결제 요청입니다."
+    ),
+
+    //신문
+    NEWS_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "NEWS_NOT_FOUND",
+            "신문 기사를 찾을 수 없습니다."
     );
 
     private final HttpStatus httpStatus;

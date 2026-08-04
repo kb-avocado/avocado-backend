@@ -136,6 +136,8 @@ dependencies {
     implementation "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
     implementation "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
+    // RSS/Atom 피드 파싱
+    implementation 'com.rometools:rome:2.1.0'
 }
 
 tasks.named('test') {
