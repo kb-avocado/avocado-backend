@@ -45,10 +45,10 @@
         </foreach>
     </select>
 
-<!--단건 조회(컬럼 순서 = 도메인 생성자 순서) -->
+    <!--  저금통 보너스  -->
     <select id="selectById" resultType="com.avocado.piggybank.domain.PiggyBank">
         SELECT
-        piggy_bank_id       AS id,
+        piggy_bank_id AS id,
         wallet_id,
         name,
         target_amount,
@@ -66,4 +66,13 @@
         FROM piggy_banks
         WHERE piggy_bank_id = #{id}
     </select>
+
+    <!--  지정 저금통 보너스 설정  -->
+    <update id="updateBonus">
+        UPDATE piggy_banks
+        SET bonus_type = #{bonusType},
+        bonus_value = #{bonusValue},
+        updated_at = NOW()
+        WHERE piggy_bank_id = #{id}
+    </update>
 </mapper>
