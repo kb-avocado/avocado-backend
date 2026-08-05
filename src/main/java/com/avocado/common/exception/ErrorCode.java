@@ -128,6 +128,13 @@ public enum ErrorCode {
             HttpStatus.NOT_FOUND,
             "NEWS_NOT_FOUND",
             "신문 기사를 찾을 수 없습니다."
+    ),
+
+    // 송금
+    TRANSFER_RECIPIENT_NOT_FOUND(
+            HttpStatus.NOT_FOUND,
+            "TRANSFER_RECIPIENT_NOT_FOUND",
+            "송금 대상을 찾을 수 없습니다."
     );
 
     private final HttpStatus httpStatus;
