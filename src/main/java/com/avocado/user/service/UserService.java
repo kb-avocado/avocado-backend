@@ -1,7 +1,7 @@
 package com.avocado.user.service;
 
 import com.avocado.common.exception.BusinessException;
-import com.avocado.common.exception.ErrorCode;
+import com.avocado.common.response.code.ErrorCode;
 import com.avocado.user.domain.User;
 import com.avocado.user.domain.UserStatus;
 import com.avocado.user.domain.UserType;

@@ -1,7 +1,7 @@
 package com.avocado.transfer.service;
 
 import com.avocado.common.exception.BusinessException;
-import com.avocado.common.exception.ErrorCode;
+import com.avocado.common.response.code.ErrorCode;
 import com.avocado.transfer.dto.request.TransferRecipientSearchType;
 import com.avocado.transfer.dto.response.TransferRecipientResponseDto;
 import com.avocado.transfer.mapper.TransferRecipientMapper;

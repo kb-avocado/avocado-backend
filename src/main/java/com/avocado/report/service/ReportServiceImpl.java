@@ -2,7 +2,7 @@
 package com.avocado.report.service;
 
 import com.avocado.common.exception.BusinessException;
-import com.avocado.common.exception.ErrorCode;
+import com.avocado.common.response.code.ErrorCode;
 import com.avocado.report.domain.MonthlySpentRow;
 import com.avocado.report.domain.TopSpotRow;
 import com.avocado.report.dto.response.*;
