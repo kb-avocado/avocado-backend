@@ -5,8 +5,6 @@ import com.avocado.common.response.code.SuccessCode;
 import com.avocado.jwt.component.JwtTokenProvider;
 import com.avocado.jwt.component.JwtUtil;
 import com.avocado.user.domain.LoginResultCode;
-import com.avocado.user.domain.UserRole;
-import com.avocado.user.domain.UserStatus;
 import com.avocado.user.dto.request.UserLoginRequestDto;
 import com.avocado.user.dto.request.UserSignUpRequestDto;
 import com.avocado.user.dto.response.LoginUserDto;
@@ -42,15 +40,23 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserSignUpResponseDto>> signUp(
             @Valid
             @RequestBody
-            UserSignUpRequestDto request
+            UserSignUpRequestDto request,
+            HttpServletResponse response
     ) {
-        UserSignUpResponseDto responseDto = UserSignUpResponseDto.builder()
-                .userId(101L)
-                .name(request.getName())
-                .type(request.getType())
-                .role(UserRole.USER)
-                .status(UserStatus.ACTIVE)
-                .build();
+        UserSignUpResponseDto responseDto = userService.signUp(request);
+
+        // 토큰 발급과 쿠키 전달은 HTTP 계층의 관심사라 컨트롤러에서 처리한다.
+        String accessToken = jwtTokenProvider.createAccessToken(
+                responseDto.getUserId(),
+                responseDto.getRole(),
+                responseDto.getType()
+        );
+
+        jwtUtil.addAccessTokenCookie(
+                response,
+                accessToken,
+                jwtTokenProvider.getAccessTokenValidity()
+        );
 
         return ResponseEntity
                 .status(SIGNUP_SUCCESS.getHttpStatus())
