@@ -14,6 +14,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.avocado.piggybank.domain.BonusType;
 import com.avocado.piggybank.dto.response.PiggyBankDetailResponseDto;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.any;
+import com.avocado.piggybank.dto.request.PiggyBankCreateRequestDto;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -141,5 +144,41 @@ class PiggyBankServiceImplTest {
         PiggyBankDetailResponseDto result = piggyBankService.getDetail(6L);
 
         assertThat(result.getProgressRate()).isEqualTo(0);  // 0/0 → 0 처리
+    }
+
+    @Test
+    @DisplayName("생성 - 정상 생성")
+    void create_success() {
+        PiggyBankCreateRequestDto req = new PiggyBankCreateRequestDto();
+        req.setName("게임기");
+        req.setTargetAmount(120000L);
+
+        List<String> inProgress = List.of("ACTIVE", "PENDING_ACHIEVE");
+        when(piggyBankMapper.countByWalletIdAndStatuses(1L, inProgress)).thenReturn(2);
+        when(piggyBankMapper.selectLastInsertId()).thenReturn(10L);
+        when(piggyBankMapper.selectById(10L)).thenReturn(
+                PiggyBank.builder().id(10L).walletId(1L).name("게임기")
+                        .targetAmount(120000L).balance(0L).status("ACTIVE")
+                        .isFavorite(false).bonusType(BonusType.NONE).bonusValue(0L).build());
+
+        PiggyBankDetailResponseDto result = piggyBankService.create(1L, req);
+
+        assertThat(result.getPiggyBankId()).isEqualTo(10L);
+        assertThat(result.getName()).isEqualTo("게임기");
+        verify(piggyBankMapper).insert(any(PiggyBank.class));
+    }
+
+    @Test
+    @DisplayName("생성 - 3개 초과면 예외")
+    void create_limitExceeded() {
+        PiggyBankCreateRequestDto req = new PiggyBankCreateRequestDto();
+        req.setName("초과");
+        req.setTargetAmount(10000L);
+        when(piggyBankMapper.countByWalletIdAndStatuses(1L, List.of("ACTIVE", "PENDING_ACHIEVE")))
+                .thenReturn(3);
+
+        assertThatThrownBy(() -> piggyBankService.create(1L, req))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PIGGY_BANK_LIMIT_EXCEEDED);
     }
 }
