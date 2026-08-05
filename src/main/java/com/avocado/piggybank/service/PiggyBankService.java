@@ -17,4 +17,7 @@ public interface PiggyBankService {
 
     // 저금통 생성
     PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request);
+
+    // 저금통 삭제
+    void close(Long piggyBankId);
 }

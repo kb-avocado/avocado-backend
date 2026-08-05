@@ -77,6 +77,13 @@ public enum ErrorCode {
             "PIGGY_BANK_LIMIT_EXCEEDED",
             "저금 목표는 최대 3개까지 만들 수 있습니다."
     ),
+    // 저금통 삭제(중도포기)
+    PIGGY_BANK_ALREADY_CLOSED(
+            HttpStatus.CONFLICT,
+            "PIGGY_BANK_ALREADY_CLOSED",
+            "이미 종료된 저금통입니다."
+    ),
+
     // 저금통 보너스 설정 시
     PIGGY_BANK_BONUS_ALREADY_SET(
             HttpStatus.CONFLICT,

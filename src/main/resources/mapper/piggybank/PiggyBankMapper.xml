@@ -56,6 +56,15 @@
         </foreach>
     </select>
 
+    <!-- 중도 포기 (상태만 변경, 환급은 후속) -->
+    <update id="cancel">
+        UPDATE piggy_banks
+        SET status = 'CANCEL',
+        canceled_at = NOW(),
+        updated_at = NOW()
+        WHERE piggy_bank_id = #{id}
+    </update>
+
     <!--  저금통 보너스  -->
     <select id="selectById" resultType="com.avocado.piggybank.domain.PiggyBank">
         SELECT
