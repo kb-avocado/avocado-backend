@@ -26,6 +26,7 @@ import javax.sql.DataSource;
         "com.avocado.news.mapper",
         "com.avocado.piggybank.mapper",
         "com.avocado.report.mapper",
+        "com.avocado.transfer.mapper",
 })
 public class MyBatisConfig {
 
