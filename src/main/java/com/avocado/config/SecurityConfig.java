@@ -1,7 +1,7 @@
 package com.avocado.config;
 
-import com.avocado.common.exception.ErrorCode;
 import com.avocado.common.response.ErrorResponse;
+import com.avocado.common.response.code.ErrorCode;
 import com.avocado.jwt.filter.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.annotation.Bean;
