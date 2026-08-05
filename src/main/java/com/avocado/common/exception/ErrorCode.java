@@ -71,6 +71,18 @@ public enum ErrorCode {
             "PIGGY_BANK_GOAL_NOT_ACHIEVED",
             "목표를 아직 달성하지 못했습니다."
     ),
+    // 저금통 입금 시 (진행중 상태 아닐 경우)
+    PIGGY_BANK_NOT_ACTIVE(
+            HttpStatus.CONFLICT,
+            "PIGGY_BANK_NOT_ACTIVE",
+            "진행중인 저금통에만 입금할 수 있습니다."
+    ),
+    // 저금통 입금 시 (목표금액 초과)
+    PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET(
+            HttpStatus.BAD_REQUEST,
+            "PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET",
+            "입금 가능한 금액을 초과했습니다. 목표 금액까지 남은 금액만 입금할 수 있습니다."
+    ),
     // 저금통 생성시(최대 3개 제한)
     PIGGY_BANK_LIMIT_EXCEEDED(
             HttpStatus.CONFLICT,
@@ -83,7 +95,6 @@ public enum ErrorCode {
             "PIGGY_BANK_ALREADY_CLOSED",
             "이미 종료된 저금통입니다."
     ),
-
     // 저금통 보너스 설정 시
     PIGGY_BANK_BONUS_ALREADY_SET(
             HttpStatus.CONFLICT,

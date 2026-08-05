@@ -95,4 +95,15 @@
         updated_at = NOW()
         WHERE piggy_bank_id = #{id}
     </update>
+
+    <!-- 저금통 입금: 잔액/상태/목표달성시각 갱신 -->
+    <update id="increaseBalance">
+        UPDATE piggy_banks
+        SET balance = #{balance},
+        status = #{status},
+        first_deposited_at = #{firstDepositedAt},
+        target_reached_at = #{targetReachedAt},
+        updated_at = NOW()
+        WHERE piggy_bank_id = #{id}
+    </update>
 </mapper>
