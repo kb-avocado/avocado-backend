@@ -1,8 +1,6 @@
 package com.avocado.transaction.controller;
 
-import com.avocado.common.response.ApiResponse;
-import com.avocado.common.response.PageResponse;
-import com.avocado.transaction.dto.response.WalletTxListItemResponseDto;
+import com.avocado.transaction.service.WalletTxService;
 import io.swagger.annotations.Api;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,9 +12,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class WalletTxController {
 
-    //
-    @RequestMapping("/transactions")
-    public ApiResponse<PageResponse<WalletTxListItemResponseDto>> getTransactions() {
+    private final WalletTxService service;
 
-    }
+//    @GetMapping("/transactions")
+//    public ApiResponse<PageResponse<WalletTxListItemResponseDto>> getTransactions() {
+//    }
 }
