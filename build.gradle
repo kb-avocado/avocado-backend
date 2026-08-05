@@ -46,6 +46,9 @@ ext {
     junitVersion = '5.10.3'
     assertjVersion = '3.26.3'
     mockitoVersion = '5.12.0'
+
+    // JWT
+    jjwtVersion = '0.12.6'
 }
 
 java {
@@ -127,6 +130,11 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.assertj:assertj-core:${assertjVersion}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
+
+    // JWT
+    implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+    implementation "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+    implementation "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
 
     // RSS/Atom 피드 파싱
     implementation 'com.rometools:rome:2.1.0'
