@@ -6,6 +6,12 @@
 
 <mapper namespace="com.avocado.wallet.mapper.WalletMapper">
 
+    <!--  사용자의 ID로 등록된 지갑의 정보를 조회  -->
+    <select id="findWalletIdByUserId" resultType="long">
+        SELECT wallet_id
+        FROM wallets
+        WHERE child_id = #{child_id}
+    </select>
 
 
 </mapper>
