@@ -1,5 +1,6 @@
 package com.avocado.piggybank.service;
 
+import com.avocado.piggybank.dto.request.PiggyBankCreateRequestDto;
 import com.avocado.piggybank.dto.response.PiggyBankDetailResponseDto;
 import com.avocado.piggybank.dto.response.PiggyBankListResponseDto;
 // 저금통 비즈니스 로직 인터페이스
@@ -13,4 +14,7 @@ public interface PiggyBankService {
 
     // 저금통 상세 조회
     PiggyBankDetailResponseDto getDetail(Long piggyBankId);
+
+    // 저금통 생성
+    PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request);
 }

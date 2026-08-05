@@ -3,12 +3,18 @@ package com.avocado.piggybank.service;
 import com.avocado.common.exception.BusinessException;
 import com.avocado.common.exception.ErrorCode;
 import com.avocado.piggybank.domain.PiggyBank;
+
 import com.avocado.piggybank.dto.response.PiggyBankDetailResponseDto;
 import com.avocado.piggybank.dto.response.PiggyBankListResponseDto;
 import com.avocado.piggybank.dto.response.PiggyBankResponseDto;
 import com.avocado.piggybank.mapper.PiggyBankMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import com.avocado.common.exception.BusinessException;
+import com.avocado.common.exception.ErrorCode;
+import com.avocado.piggybank.dto.request.PiggyBankCreateRequestDto;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -101,5 +107,27 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .bonusType(p.getBonusType() == null ? "NONE" : p.getBonusType().name())
                 .bonusValue(p.getBonusValue())
                 .build();
+    }
+    @Override
+    @Transactional
+    public PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request) {
+        // 1) 최대 개수(3) 체크 — 진행중 개수로 판단
+        int activeCount = piggyBankMapper.countByWalletIdAndStatuses(
+                walletId, List.of("ACTIVE", "PENDING_ACHIEVE"));
+        if (activeCount >= MAX_COUNT) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_LIMIT_EXCEEDED);
+        }
+
+        // 2) 저금통 생성 (나머지 컬럼은 DB 기본값)
+        PiggyBank piggyBank = PiggyBank.builder()
+                .walletId(walletId)
+                .name(request.getName())
+                .targetAmount(request.getTargetAmount())
+                .build();
+        piggyBankMapper.insert(piggyBank);
+
+        // 3) 생성된 id로 상세 반환
+        Long newId = piggyBankMapper.selectLastInsertId();
+        return getDetail(newId);
     }
 }

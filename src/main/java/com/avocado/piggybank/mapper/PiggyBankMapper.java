@@ -4,6 +4,7 @@ import com.avocado.piggybank.domain.BonusType;
 import com.avocado.piggybank.domain.PiggyBank;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import com.avocado.piggybank.domain.PiggyBank;
 
 import java.util.List;
 
@@ -29,4 +30,8 @@ public interface PiggyBankMapper {
             @Param("statuses") List<String> statuses
     );
 
+    //저금통 생성 추가
+    int insert(PiggyBank piggyBank);
+
+    Long selectLastInsertId();
 }

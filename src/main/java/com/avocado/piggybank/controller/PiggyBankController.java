@@ -1,6 +1,7 @@
 package com.avocado.piggybank.controller;
 
 import com.avocado.common.response.ApiResponse;
+import com.avocado.piggybank.dto.request.PiggyBankCreateRequestDto;
 import com.avocado.piggybank.dto.response.PiggyBankDetailResponseDto;
 import com.avocado.piggybank.dto.response.PiggyBankListResponseDto;
 import com.avocado.piggybank.service.PiggyBankService;
@@ -8,6 +9,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/piggybanks")
@@ -30,10 +33,22 @@ public class PiggyBankController {
 
         return ApiResponse.success("PIGGYBANK_LIST_FETCHED", "저금통 목록 조회에 성공했습니다.", response);
     }
+
     @GetMapping("/{piggyBankId}")
     @ApiOperation(value = "저금통 상세 조회", notes = "저금통 하나의 상세 정보를 조회합니다.")
     public ApiResponse<PiggyBankDetailResponseDto> getDetail(@PathVariable Long piggyBankId) {
         PiggyBankDetailResponseDto response = piggyBankService.getDetail(piggyBankId);
         return ApiResponse.success("PIGGYBANK_DETAIL_FETCHED", "저금통 상세 조회에 성공했습니다.", response);
+    }
+
+    //저금통 생성
+    @PostMapping
+    @ApiOperation(value = "저금통 생성", notes = "새 저금통을 생성합니다. (최대 3개)")
+    public ApiResponse<PiggyBankDetailResponseDto> create(
+            @RequestParam Long walletId,   // TODO: 인증 붙으면 로그인 사용자 walletId로 교체
+            @Valid @RequestBody PiggyBankCreateRequestDto request
+    ) {
+        PiggyBankDetailResponseDto response = piggyBankService.create(walletId, request);
+        return ApiResponse.success("PIGGY_BANK_CREATED", "저금통이 생성되었습니다.", response);
     }
 }
