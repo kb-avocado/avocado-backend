@@ -17,5 +17,32 @@ services:
       - --collation-server=utf8mb4_unicode_ci
       - --default-time-zone=+09:00
     restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mysqladmin ping --protocol=tcp -h 127.0.0.1 -P 3306 -u root -p$${MYSQL_ROOT_PASSWORD} --silent"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+  flyway:
+    image: flyway/flyway:13.1.0
+    container_name: avocado-flyway
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command:
+      - -url=jdbc:mysql://mysql:3306/${MYSQL_DATABASE}?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=Asia/Seoul
+      - -user=${MYSQL_USER}
+      - -password=${MYSQL_PASSWORD}
+      - -locations=filesystem:/flyway/migrations
+      - -connectRetries=30
+      - -validateMigrationNaming=true
+      - migrate
+    volumes:
+      - ./src/main/resources/db/migration:/flyway/migrations:ro
+    restart: "no"
 volumes:
   mysql-data:
