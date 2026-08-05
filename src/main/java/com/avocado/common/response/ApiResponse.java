@@ -1,5 +1,6 @@
 package com.avocado.common.response;
 
+import com.avocado.common.response.code.ResponseCode;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.Getter;
 
@@ -29,55 +30,41 @@ public class ApiResponse<T> {
     }
 
     // 데이터가 있는 성공 응답
-    public static <T> ApiResponse<T> success(
-            String code,
-            String message,
-            T data
-    ) {
+    public static <T> ApiResponse<T> success(ResponseCode responseCode, T data) {
         return new ApiResponse<>(
                 true,
-                code,
-                message,
+                responseCode.getCode(),
+                responseCode.getMessage(),
                 data
         );
     }
 
     // 데이터가 없는 성공 응답
-    public static <T> ApiResponse<T> success(
-            String code,
-            String message
-    ) {
+    public static <T> ApiResponse<T> success(ResponseCode responseCode) {
         return new ApiResponse<>(
                 true,
-                code,
-                message,
+                responseCode.getCode(),
+                responseCode.getMessage(),
                 null
         );
     }
 
     // 기본 실패 응답
-    public static <T> ApiResponse<T> failure(
-            String code,
-            String message
-    ) {
+    public static <T> ApiResponse<T> failure(ResponseCode responseCode) {
         return new ApiResponse<>(
                 false,
-                code,
-                message,
+                responseCode.getCode(),
+                responseCode.getMessage(),
                 null
         );
     }
 
     // 상세 데이터를 포함하는 실패 응답
-    public static <T> ApiResponse<T> failure(
-            String code,
-            String message,
-            T data
-    ) {
+    public static <T> ApiResponse<T> failure(ResponseCode responseCode, T data) {
         return new ApiResponse<>(
                 false,
-                code,
-                message,
+                responseCode.getCode(),
+                responseCode.getMessage(),
                 data
         );
     }
