@@ -59,6 +59,18 @@ public enum ErrorCode {
             "PIGGY_BANK_NOT_FOUND",
             "저금통을 찾을 수 없습니다."
     ),
+    // 저금통 보너스 X
+    PIGGY_BANK_BONUS_NOT_SET(
+            HttpStatus.BAD_REQUEST,
+            "PIGGY_BANK_BONUS_NOT_SET",
+            "설정된 보너스가 없는 저금통입니다."
+    ),
+    // 저금통 목표 미달성 시
+    PIGGY_BANK_GOAL_NOT_ACHIEVED(
+            HttpStatus.BAD_REQUEST,
+            "PIGGY_BANK_GOAL_NOT_ACHIEVED",
+            "목표를 아직 달성하지 못했습니다."
+    ),
     // 저금통 생성시(최대 3개 제한)
     PIGGY_BANK_LIMIT_EXCEEDED(
             HttpStatus.CONFLICT,
