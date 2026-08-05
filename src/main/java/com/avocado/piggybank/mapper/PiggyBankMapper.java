@@ -34,4 +34,8 @@ public interface PiggyBankMapper {
     int insert(PiggyBank piggyBank);
 
     Long selectLastInsertId();
+
+    //저금통 삭제 추가
+    int cancel(@Param("id") Long id);
+
 }

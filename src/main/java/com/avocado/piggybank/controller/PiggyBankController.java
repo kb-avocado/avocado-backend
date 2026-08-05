@@ -51,4 +51,12 @@ public class PiggyBankController {
         PiggyBankDetailResponseDto response = piggyBankService.create(walletId, request);
         return ApiResponse.success("PIGGY_BANK_CREATED", "저금통이 생성되었습니다.", response);
     }
+
+    //저금통 삭제
+    @PostMapping("/{piggyBankId}/close")
+    @ApiOperation(value = "저금통 중도 포기", notes = "목표 달성 전 저금통을 중도 포기합니다. (환급은 후속 예정)")
+    public ApiResponse<Void> close(@PathVariable Long piggyBankId) {
+        piggyBankService.close(piggyBankId);
+        return ApiResponse.success("PIGGY_BANK_CLOSED", "저금통을 중도 포기했습니다.");
+    }
 }

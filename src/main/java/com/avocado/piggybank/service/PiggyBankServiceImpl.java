@@ -130,4 +130,27 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         Long newId = piggyBankMapper.selectLastInsertId();
         return getDetail(newId);
     }
+    // 저금통 삭제
+    @Override
+    @Transactional
+    public void close(Long piggyBankId) {
+        PiggyBank p = piggyBankMapper.selectById(piggyBankId);
+        if (p == null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        // 이미 최종 달성(ACHIEVE) or 취소(CANCEL)면 중도 포기 불가
+        String status = p.getStatus();
+        if ("ACHIEVE".equals(status) || "CANCEL".equals(status)) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_ALREADY_CLOSED);
+        }
+
+        // 중도 포기 = 상태만 CANCEL로 변경 (balance 유지)
+        piggyBankMapper.cancel(piggyBankId);
+
+        // TODO: 지갑 환급 (돈 이동 인프라 완성 후)
+        //   1) wallet.balance += p.getBalance()  (이자 제외)
+        //   2) piggy_banks.balance = 0
+        //   3) 거래 이력 기록 (piggy_bank_histories WITHDRAWAL, wallet_histories/ledger)
+    }
 }

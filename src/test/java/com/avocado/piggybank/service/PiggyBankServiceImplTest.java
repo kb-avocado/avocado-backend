@@ -181,4 +181,26 @@ class PiggyBankServiceImplTest {
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PIGGY_BANK_LIMIT_EXCEEDED);
     }
+
+    @Test
+    @DisplayName("중도 포기 - 정상 처리")
+    void close_success() {
+        PiggyBank p = PiggyBank.builder().id(1L).status("ACTIVE").build();
+        when(piggyBankMapper.selectById(1L)).thenReturn(p);
+
+        piggyBankService.close(1L);
+
+        verify(piggyBankMapper).cancel(1L);
+    }
+
+    @Test
+    @DisplayName("중도 포기 - 이미 종료된 저금통이면 예외")
+    void close_alreadyClosed() {
+        PiggyBank p = PiggyBank.builder().id(1L).status("CANCEL").build();
+        when(piggyBankMapper.selectById(1L)).thenReturn(p);
+
+        assertThatThrownBy(() -> piggyBankService.close(1L))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode").isEqualTo(ErrorCode.PIGGY_BANK_ALREADY_CLOSED);
+    }
 }
