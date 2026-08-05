@@ -49,7 +49,6 @@ public enum ErrorCode implements ResponseCode {
     TRANSFER_RECIPIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "TRF-001", "송금 대상을 찾을 수 없습니다."),
 
     // 회원 (USR)
-    // 가입 여부를 숨기는 로그인과 달리, 가입은 무엇이 중복인지 알려줘야 사용자가 진행할 수 있다.
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USR-001", "이미 가입된 이메일입니다."),
     DUPLICATE_PHONE(HttpStatus.CONFLICT, "USR-002", "이미 가입된 전화번호입니다.");
 
