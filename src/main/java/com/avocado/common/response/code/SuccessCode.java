@@ -1,0 +1,68 @@
+package com.avocado.common.response.code;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@RequiredArgsConstructor
+public enum SuccessCode implements ResponseCode {
+
+    // 공통 성공 (COM)
+    OK(HttpStatus.OK, "COM-000", "요청이 성공적으로 처리되었습니다."),
+    CREATED(HttpStatus.CREATED, "COM-001", "리소스가 성공적으로 생성되었습니다."),
+    NO_CONTENT(HttpStatus.NO_CONTENT, "COM-002", "성공적으로 삭제되었습니다."),
+
+    // 인증 / 로그인 (AUT)
+    LOGIN_SUCCESS(HttpStatus.OK, "AUT-000", "로그인에 성공했습니다."),
+    LOGOUT_SUCCESS(HttpStatus.OK, "AUT-001", "로그아웃 되었습니다."),
+    TOKEN_REFRESHED(HttpStatus.OK, "AUT-002", "토큰이 성공적으로 갱신되었습니다."),
+    SIGNUP_SUCCESS(HttpStatus.CREATED, "AUT-003", "회원가입 성공"),
+    ACCOUNT_LINK_REQUIRED(HttpStatus.OK, "AUT-004", "로그인에 성공했습니다. 계좌 연결이 필요합니다."),
+    FAMILY_LINK_REQUIRED(HttpStatus.OK, "AUT-005", "로그인에 성공했습니다. 가족 연결이 필요합니다."),
+
+    // 저금통 (PIG)
+    PIGGY_BANK_CREATED(HttpStatus.CREATED, "PIG-000", "저금통이 성공적으로 생성되었습니다."),
+    PIGGY_BANK_DELETED(HttpStatus.NO_CONTENT, "PIG-001", "저금통이 성공적으로 삭제되었습니다."),
+    PIGGY_BANK_BONUS_SET(HttpStatus.OK, "PIG-002", "보너스가 설정되었습니다."),
+    PIGGY_BANK_BONUS_PAID(HttpStatus.OK, "PIG-003", "보너스 지급 처리가 완료되었습니다."),
+    PIGGY_BANK_LIST_FETCHED(HttpStatus.OK, "PIG-004", "저금통 목록 조회에 성공했습니다."),
+    PIGGY_BANK_DETAIL_FETCHED(HttpStatus.OK, "PIG-005", "저금통 상세 조회에 성공했습니다."),
+    PIGGY_BANK_CLOSED(HttpStatus.OK, "PIG-006", "저금통을 중도 포기했습니다."),
+
+    // 선불지갑 (WAL)
+    WALLET_CHARGED(HttpStatus.OK, "WAL-000", "선불지갑이 성공적으로 충전되었습니다."),
+
+    // 가맹점 (MER)
+    MERCHANT_REGISTERED(HttpStatus.CREATED, "MER-000", "가맹점 등록이 완료되었습니다."),
+
+    // 결제 (PAY)
+    PAYMENT_SUCCESS(HttpStatus.OK, "PAY-000", "결제가 성공적으로 완료되었습니다."),
+
+    // 송금 (TRF)
+    TRANSFER_SUCCESS(HttpStatus.OK, "TRF-000", "송금이 완료되었습니다."),
+    TRANSFER_RECIPIENT_FOUND(HttpStatus.OK, "TRF-001", "송금 대상을 조회했습니다."),
+
+    // 거래(TXN)
+    DEPOSIT_HISTORY_FETCHED(HttpStatus.OK, "TXN-000", "거래 내역 조회에 성공했습니다."),
+
+    // 응원 메시지(CHE)
+    CHEER_MESSAGE_SENT(HttpStatus.CREATED, "CHE-000", "응원 메시지가 전송되었습니다."),
+    CHEER_MESSAGE_FETCHED(HttpStatus.OK, "CHE-001", "응원 메시지 조회에 성공했습니다."),
+    CHEER_MESSAGE_DELETED(HttpStatus.OK, "CHE-002", "응원 메시지가 삭제되었습니다."),
+
+    // 리포트(RPT)
+    REPORT_FOUND(HttpStatus.OK, "RPT-000", "월별 리포트를 조회했습니다."),
+
+    // 경제 신문(NWS)
+    NEWS_LIST_FOUND(HttpStatus.OK, "NWS-000", "신문 목록을 조회했습니다."),
+    NEWS_DETAIL_FOUND(HttpStatus.OK, "NWS-001", "신문 상세 정보를 조회했습니다."),
+    NEWS_ANSWER_SAVED(HttpStatus.OK, "NWS-002", "챌린지 답변이 저장되었습니다.");
+
+    private final HttpStatus httpStatus;
+
+    private final String code;
+
+    private final String message;
+
+}
