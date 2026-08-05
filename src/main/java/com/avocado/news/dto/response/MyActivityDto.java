@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 @Builder
 public class MyActivityDto {
     private String childAnswer;
-    private Boolean isCompleted;
     private LocalDateTime viewedAt;
     private LocalDateTime completedAt;
 }

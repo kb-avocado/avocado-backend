@@ -41,12 +41,14 @@ public class PiggyBankDepositController {
 
     @PostMapping
     @ApiOperation(value = "저금통 입금", notes = "저금통에 자유롭게 입금합니다. 지갑 잔액 차감 연동은 추후 반영됩니다.")
-    public ApiResponse<PiggyBankDepositResultResponseDto> deposit(
+    public ResponseEntity<ApiResponse<PiggyBankDepositResultResponseDto>> deposit(
             @PathVariable Long piggyBankId,
             @Valid @RequestBody PiggyBankDepositRequestDto request
     ) {
         PiggyBankDepositResultResponseDto response = piggyBankDepositService.deposit(piggyBankId, request);
 
-        return ApiResponse.success("PIGGY_BANK_DEPOSITED", "입금이 완료되었습니다.", response);
+        return ResponseEntity
+                .status(SuccessCode.PIGGY_BANK_DEPOSITED.getHttpStatus())
+                .body(ApiResponse.success(SuccessCode.PIGGY_BANK_DEPOSITED, response));
     }
 }

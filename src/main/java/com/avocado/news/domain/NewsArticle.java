@@ -15,7 +15,7 @@ public class NewsArticle {
     private String title;
     private String subtitle;
     private String link;
-    private String challengeQuestion;
+    private String todayChallenge;
     private LocalDateTime publishedAt;
     private LocalDateTime createdAt;
 }

@@ -7,7 +7,7 @@ import com.avocado.news.dto.response.NewsDetailResponseDto;
 import com.avocado.news.dto.response.NewsListResponseDto;
 
 public interface NewsService {
-    NewsListResponseDto getNewsList(int page, int size);
+    NewsListResponseDto getNewsList(int page, int size, Long childId);
     NewsDetailResponseDto getNewsDetail(Long newsId, Long childId);
     NewsAnswerResponseDto saveAnswer(Long newsId, Long childId, NewsAnswerRequestDto request);
 }

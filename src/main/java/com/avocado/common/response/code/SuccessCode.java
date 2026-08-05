@@ -29,6 +29,7 @@ public enum SuccessCode implements ResponseCode {
     PIGGY_BANK_LIST_FETCHED(HttpStatus.OK, "PIG-004", "저금통 목록 조회에 성공했습니다."),
     PIGGY_BANK_DETAIL_FETCHED(HttpStatus.OK, "PIG-005", "저금통 상세 조회에 성공했습니다."),
     PIGGY_BANK_CLOSED(HttpStatus.OK, "PIG-006", "저금통을 중도 포기했습니다."),
+    PIGGY_BANK_DEPOSITED(HttpStatus.OK, "PIG-007", "저금통에 성공적으로 입금되었습니다."),
 
     // 선불지갑 (WAL)
     WALLET_CHARGED(HttpStatus.OK, "WAL-000", "선불지갑이 성공적으로 충전되었습니다."),

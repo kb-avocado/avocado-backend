@@ -13,7 +13,7 @@ public class NewsConverter {
 
     private static final int NEW_BADGE_DAYS = 3;
 
-    public NewsListItemDto toListItemDto(NewsArticle article) {
+    public NewsListItemDto toListItemDto(NewsArticle article, NewsActivity activity) {
         boolean isNew = article.getPublishedAt()
                 .isAfter(LocalDateTime.now().minusDays(NEW_BADGE_DAYS));
 
@@ -22,6 +22,8 @@ public class NewsConverter {
                 .title(article.getTitle())
                 .subtitle(article.getSubtitle())
                 .isNew(isNew)
+                .isRead(activity != null && activity.getViewedAt() != null)
+                .isCompleted(activity != null && activity.getCompletedAt() != null)
                 .publishedAt(article.getPublishedAt())
                 .build();
     }
@@ -32,7 +34,7 @@ public class NewsConverter {
                 .title(article.getTitle())
                 .subtitle(article.getSubtitle())
                 .link(article.getLink())
-                .challengeQuestion(article.getChallengeQuestion())
+                .todayChallenge(article.getTodayChallenge())
                 .publishedAt(article.getPublishedAt())
                 .myActivity(activity.getChildAnswer() == null ? null : toMyActivityDto(activity))
                 .build();
@@ -41,7 +43,6 @@ public class NewsConverter {
     private MyActivityDto toMyActivityDto(NewsActivity activity) {
         return MyActivityDto.builder()
                 .childAnswer(activity.getChildAnswer())
-                .isCompleted(activity.getIsCompleted())
                 .viewedAt(activity.getViewedAt())
                 .completedAt(activity.getCompletedAt())
                 .build();
@@ -51,7 +52,6 @@ public class NewsConverter {
         return NewsAnswerResponseDto.builder()
                 .newsId(activity.getArticleId())
                 .childAnswer(activity.getChildAnswer())
-                .isCompleted(activity.getIsCompleted())
                 .completedAt(activity.getCompletedAt())
                 .build();
     }

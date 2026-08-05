@@ -23,14 +23,14 @@ import static com.avocado.common.response.code.SuccessCode.*;
 @RequiredArgsConstructor
 public class NewsController {
     private final NewsService newsService;
-    private static final Long TEMP_CHILD_ID = 12L; // TODO: 로그인 붙으면 제거
+    private static final Long TEMP_CHILD_ID = 1L; // TODO: 로그인 붙으면 제거
 
     @GetMapping
     public ResponseEntity<ApiResponse<NewsListResponseDto>> getNewsList(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        NewsListResponseDto data = newsService.getNewsList(page, size);
+        NewsListResponseDto data = newsService.getNewsList(page, size, TEMP_CHILD_ID);
 
         return ResponseEntity
                 .status(NEWS_LIST_FOUND.getHttpStatus())
