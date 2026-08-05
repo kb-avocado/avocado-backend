@@ -1,8 +1,10 @@
 package com.avocado.wallet.controller;
 
 import com.avocado.common.response.ApiResponse;
+import com.avocado.common.response.code.SuccessCode;
 import com.avocado.wallet.dto.response.WalletQrResponseDto;
 import io.swagger.annotations.Api;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class WalletQrController {
 
     @PostMapping("/qr")
-    public ApiResponse<WalletQrResponseDto> createWalletQr(@PathVariable Long walletId) {
+    public ResponseEntity<ApiResponse<WalletQrResponseDto>> createWalletQr(@PathVariable Long walletId) {
         WalletQrResponseDto mockData = WalletQrResponseDto.builder()
                 .id(1L)
                 .walletId(walletId)
@@ -24,10 +26,8 @@ public class WalletQrController {
                 .createdAt("2026-07-28T12:32:00")
                 .build();
 
-        return ApiResponse.success(
-                "WALLET_QR_CREATED",
-                "결제용 QR코드를 발급했습니다.",
-                mockData
-        );
+        return ResponseEntity
+                .status(SuccessCode.OK.getHttpStatus())
+                .body(ApiResponse.success(SuccessCode.OK, mockData));
     }
 }

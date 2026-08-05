@@ -1,9 +1,11 @@
 package com.avocado.wallet.controller;
 
 import com.avocado.common.response.ApiResponse;
+import com.avocado.common.response.code.SuccessCode;
 import com.avocado.wallet.dto.response.WalletResponseDto;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,7 +23,7 @@ public class WalletController {
             value = "아이 선불 지갑 조회",
             notes = "특정 아이의 선불지갑 정보(상태, 잔액 등)를 조회합니다."
     )
-    public ApiResponse<WalletResponseDto> getChildWallet(@PathVariable Long childId) {
+    public ResponseEntity<ApiResponse<WalletResponseDto>> getChildWallet(@PathVariable Long childId) {
         WalletResponseDto mockWalletResponse = WalletResponseDto.builder()
                 .walletId(1L)
                 .childId(childId)
@@ -32,12 +34,8 @@ public class WalletController {
                 .updatedAt(LocalDateTime.now())
                 .build();
 
-        return ApiResponse.success(
-                "CHILD_WALLET_FOUND",
-                "아이의 선불 지갑을 조회했습니다.",
-                mockWalletResponse
-        );
+        return ResponseEntity
+                .status(SuccessCode.OK.getHttpStatus())
+                .body(ApiResponse.success(SuccessCode.OK, mockWalletResponse));
     }
-
-
 }

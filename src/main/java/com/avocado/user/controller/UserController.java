@@ -1,6 +1,7 @@
 package com.avocado.user.controller;
 
 import com.avocado.common.response.ApiResponse;
+import com.avocado.common.response.code.SuccessCode;
 import com.avocado.jwt.component.JwtTokenProvider;
 import com.avocado.jwt.component.JwtUtil;
 import com.avocado.user.domain.LoginResultCode;
@@ -15,10 +16,13 @@ import com.avocado.user.service.UserService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
+
+import static com.avocado.common.response.code.SuccessCode.*;
 
 @Api(tags = "회원 API")
 @RestController
@@ -35,7 +39,7 @@ public class UserController {
             notes = "사용자의 회원가입 요청을 처리합니다."
     )
     @PostMapping("/auth/signup")
-    public ApiResponse<UserSignUpResponseDto> signUp(
+    public ResponseEntity<ApiResponse<UserSignUpResponseDto>> signUp(
             @Valid
             @RequestBody
             UserSignUpRequestDto request
@@ -48,11 +52,9 @@ public class UserController {
                 .status(UserStatus.ACTIVE)
                 .build();
 
-        return ApiResponse.success(
-                "SIGNUP_SUCCESS",
-                "회원가입 성공",
-                responseDto
-        );
+        return ResponseEntity
+                .status(SIGNUP_SUCCESS.getHttpStatus())
+                .body(ApiResponse.success(SIGNUP_SUCCESS, responseDto));
     }
 
     @ApiOperation(
@@ -62,7 +64,7 @@ public class UserController {
                     + "계정이 PENDING이면 로그인은 성공하되 code가 달라집니다."
     )
     @PostMapping("/auth/login")
-    public ApiResponse<UserLoginResponseDto> login(
+    public ResponseEntity<ApiResponse<UserLoginResponseDto>> login(
             @Valid
             @RequestBody
             UserLoginRequestDto request,
@@ -86,11 +88,10 @@ public class UserController {
 
         LoginResultCode result = LoginResultCode.of(user.getType(), user.getStatus());
 
-        return ApiResponse.success(
-                result.getCode(),
-                result.getMessage(),
-                responseDto
-        );
+        // 이부분 검토 필요
+        return ResponseEntity
+                .status(LOGIN_SUCCESS.getHttpStatus())
+                .body(ApiResponse.success(LOGIN_SUCCESS,responseDto));
     }
 
     @ApiOperation(
@@ -99,13 +100,12 @@ public class UserController {
                     + "무상태 JWT라 서버에 남는 정보가 없으므로 쿠키 삭제만으로 로그아웃이 완료됩니다."
     )
     @PostMapping("/auth/logout")
-    public ApiResponse<Void> logout(HttpServletResponse response) {
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
         // 토큰이 이미 만료된 상태에서도 쿠키는 지울 수 있어야 하므로 인증을 요구하지 않는다.
         jwtUtil.expireAccessTokenCookie(response);
 
-        return ApiResponse.success(
-                "LOGOUT_SUCCESS",
-                "로그아웃되었습니다."
-        );
+        return ResponseEntity
+                .status(LOGOUT_SUCCESS.getHttpStatus())
+                .body(ApiResponse.success(LOGOUT_SUCCESS));
     }
 }

@@ -1,6 +1,7 @@
 package com.avocado.transfer.controller;
 
 import com.avocado.common.response.ApiResponse;
+import com.avocado.common.response.code.SuccessCode;
 import com.avocado.transfer.dto.request.TransferRecipientSearchType;
 import com.avocado.transfer.dto.response.TransferRecipientResponseDto;
 import com.avocado.transfer.service.TransferRecipientService;
@@ -35,12 +36,8 @@ public class TransferRecipientController {
                 keyword
         );
 
-        return ResponseEntity.ok(
-                ApiResponse.success(
-                        "TRANSFER_RECIPIENT_FOUND",
-                        "송금 대상을 조회했습니다.",
-                        response
-                )
-        );
+        return ResponseEntity
+                .status(SuccessCode.TRANSFER_RECIPIENT_FOUND.getHttpStatus())
+                .body(ApiResponse.success(SuccessCode.TRANSFER_RECIPIENT_FOUND, response));
     }
 }

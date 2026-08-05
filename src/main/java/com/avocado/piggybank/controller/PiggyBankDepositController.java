@@ -1,6 +1,7 @@
 package com.avocado.piggybank.controller;
 
 import com.avocado.common.response.ApiResponse;
+import com.avocado.common.response.code.SuccessCode;
 import com.avocado.piggybank.dto.request.PiggyBankDepositRequestDto;
 import com.avocado.piggybank.dto.response.PiggyBankDepositResponseDto;
 import com.avocado.piggybank.dto.response.PiggyBankDepositResultResponseDto;
@@ -8,6 +9,11 @@ import com.avocado.piggybank.service.PiggyBankDepositService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -23,12 +29,14 @@ public class PiggyBankDepositController {
 
     @GetMapping
     @ApiOperation(value = "저금통 거래내역 조회", notes = "저금통의 입금 내역을 조회합니다.")
-    public ApiResponse<List<PiggyBankDepositResponseDto>> getDeposits(
+    public ResponseEntity<ApiResponse<List<PiggyBankDepositResponseDto>>> getDeposits(
             @PathVariable Long piggyBankId
     ) {
         List<PiggyBankDepositResponseDto> deposits = piggyBankDepositService.getDeposits(piggyBankId);
 
-        return ApiResponse.success("DEPOSIT_HISTORY_FETCHED", "거래 내역 조회에 성공했습니다.", deposits);
+        return ResponseEntity
+                .status(SuccessCode.DEPOSIT_HISTORY_FETCHED.getHttpStatus())
+                .body(ApiResponse.success(SuccessCode.DEPOSIT_HISTORY_FETCHED, deposits));
     }
 
     @PostMapping
