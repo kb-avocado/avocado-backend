@@ -1,7 +1,6 @@
 package com.avocado.user.controller;
 
 import com.avocado.common.response.ApiResponse;
-import com.avocado.common.response.code.SuccessCode;
 import com.avocado.jwt.component.JwtTokenProvider;
 import com.avocado.jwt.component.JwtUtil;
 import com.avocado.user.domain.LoginResultCode;
