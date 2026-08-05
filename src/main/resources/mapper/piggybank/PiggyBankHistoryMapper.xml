@@ -19,4 +19,11 @@
         ORDER BY created_at DESC
     </select>
 
+    <!-- 저금통 입금 내역 기록 -->
+    <insert id="insertDeposit">
+        INSERT INTO piggy_bank_histories
+        (piggy_bank_id, history_type, amount, balance_before, balance_after, trace_id, created_at)
+        VALUES
+        (#{piggyBankId}, 'DEPOSIT', #{amount}, #{balanceBefore}, #{balanceAfter}, #{traceId}, NOW())
+    </insert>
 </mapper>

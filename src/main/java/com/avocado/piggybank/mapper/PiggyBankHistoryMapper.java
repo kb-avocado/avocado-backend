@@ -10,4 +10,12 @@ import java.util.List;
 public interface PiggyBankHistoryMapper {
 
     List<PiggyBankDepositResponseDto> selectDepositsByPiggyBankId(@Param("piggyBankId") Long piggyBankId);
+
+    int insertDeposit(
+            @Param("piggyBankId") Long piggyBankId,
+            @Param("amount") Long amount,
+            @Param("balanceBefore") Long balanceBefore,
+            @Param("balanceAfter") Long balanceAfter,
+            @Param("traceId") String traceId
+    );
 }
