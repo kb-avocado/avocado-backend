@@ -9,6 +9,5 @@ import java.time.LocalDateTime;
 public class NewsAnswerResponseDto {
     private Long newsId;
     private String childAnswer;
-    private Boolean isCompleted;
     private LocalDateTime completedAt;
 }

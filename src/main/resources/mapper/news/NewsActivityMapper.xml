@@ -3,11 +3,10 @@
 <mapper namespace="com.avocado.news.mapper.NewsActivityMapper">
 
     <resultMap id="newsActivityResultMap" type="com.avocado.news.domain.NewsActivity">
-        <id property="id" column="id"/>
+        <id property="id" column="activity_id"/>
         <result property="childId" column="child_id"/>
         <result property="articleId" column="article_id"/>
         <result property="childAnswer" column="child_answer"/>
-        <result property="isCompleted" column="is_completed"/>
         <result property="viewedAt" column="viewed_at"/>
         <result property="completedAt" column="completed_at"/>
         <result property="createdAt" column="created_at"/>
@@ -15,26 +14,35 @@
     </resultMap>
 
     <select id="findByChildIdAndArticleId" resultMap="newsActivityResultMap">
-        SELECT id, child_id, article_id, child_answer, is_completed, viewed_at, completed_at, created_at, updated_at
+        SELECT activity_id, child_id, article_id, child_answer, viewed_at, completed_at, created_at, updated_at
         FROM news_activities
         WHERE child_id = #{childId} AND article_id = #{articleId}
     </select>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+    <select id="findByChildIdAndArticleIds" resultMap="newsActivityResultMap">
+        SELECT activity_id, child_id, article_id, child_answer, viewed_at, completed_at, created_at, updated_at
+        FROM news_activities
+        WHERE child_id=#{childId}
+        AND article_id IN
+        <foreach item="articleId" collection="articleIds" open="(" separator="," close=")">
+            #{articleId}
+        </foreach>
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="activity_id">
         INSERT INTO news_activities
-        (child_id, article_id, child_answer, is_completed, viewed_at, completed_at, created_at, updated_at)
+        (child_id, article_id, child_answer, viewed_at, completed_at, created_at, updated_at)
         VALUES
-            (#{childId}, #{articleId}, #{childAnswer}, #{isCompleted}, #{viewedAt}, #{completedAt}, #{createdAt}, #{updatedAt})
+            (#{childId}, #{articleId}, #{childAnswer}, #{viewedAt}, #{completedAt}, #{createdAt}, #{updatedAt})
     </insert>
 
     <update id="update">
         UPDATE news_activities
         SET child_answer = #{childAnswer},
-            is_completed = #{isCompleted},
             viewed_at = #{viewedAt},
             completed_at = #{completedAt},
             updated_at = #{updatedAt}
-        WHERE id = #{id}
+        WHERE activity_id = #{id}
     </update>
 
 </mapper>

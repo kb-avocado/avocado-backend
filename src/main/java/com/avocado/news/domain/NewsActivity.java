@@ -13,7 +13,6 @@ public class NewsActivity {
     private Long childId;
     private Long articleId;
     private String childAnswer;
-    private Boolean isCompleted = false;
     private LocalDateTime viewedAt;
     private LocalDateTime completedAt;
     private LocalDateTime createdAt;
@@ -27,7 +26,6 @@ public class NewsActivity {
 
     public void saveAnswer(String childAnswer){
         this.childAnswer = childAnswer;
-        this.isCompleted = true;
         this.completedAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
     }

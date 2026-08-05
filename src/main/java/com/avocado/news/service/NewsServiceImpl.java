@@ -16,7 +16,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -28,13 +32,25 @@ public class NewsServiceImpl implements NewsService {
     private final NewsConverter newsConverter;
 
     @Override
-    public NewsListResponseDto getNewsList(int page, int size) {
+    public NewsListResponseDto getNewsList(int page, int size, Long childId) {
         int offset = page * size;
         List<NewsArticle> articles = newsArticleMapper.findList(offset, size);
         long totalCount = newsArticleMapper.countAll();
 
+        List<Long> articleIds = articles.stream()
+                .map(NewsArticle::getId)
+                .toList();
+
+        Map<Long, NewsActivity> activityByArticleId = articleIds.isEmpty()
+                ? Collections.emptyMap()
+                : newsActivityMapper.findByChildIdAndArticleIds(childId, articleIds).stream()
+                .collect(Collectors.toMap(NewsActivity::getArticleId, Function.identity()));
+
         List<NewsListItemDto> items = articles.stream()
-                .map(newsConverter::toListItemDto)
+                .map(article -> newsConverter.toListItemDto(
+                        article,
+                        activityByArticleId.get(article.getId())
+                ))
                 .toList();
 
         return NewsListResponseDto.builder()

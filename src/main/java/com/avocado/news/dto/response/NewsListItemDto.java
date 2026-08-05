@@ -11,5 +11,7 @@ public class NewsListItemDto {
     private String title;
     private String subtitle;
     private Boolean isNew;
+    private Boolean isRead;
+    private Boolean isCompleted;
     private LocalDateTime publishedAt;
 }
