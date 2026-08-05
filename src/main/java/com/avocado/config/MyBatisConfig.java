@@ -24,6 +24,7 @@ import javax.sql.DataSource;
         "com.avocado.wallet.mapper",
         "com.avocado.notification.mapper",
         "com.avocado.wallet.mapper",
+        "com.avocado.transaction.mapper"
 })
 public class MyBatisConfig {
 
