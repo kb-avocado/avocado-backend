@@ -2,12 +2,15 @@ package com.avocado.common.response;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.util.List;
 
 @Getter
-@JsonPropertyOrder({"page", "size", "total_elements", "total_pages", "has_next", "items"})
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@JsonPropertyOrder({"page", "size", "total_elements", "total_pages", "items"})
 public class PageResponse<T> {
 
     private final int page;
@@ -20,44 +23,32 @@ public class PageResponse<T> {
     @JsonProperty("total_pages")
     private final long totalPages;
 
-    @JsonProperty("has_next")
-    private final boolean hasNext;
 
     private final List<T> items;
-
-    // 외부에서 생성자 호출 제한
-    private PageResponse(
-            int page,
-            int size,
-            long totalElements,
-            long totalPages,
-            boolean hasNext,
-            List<T> items
-    ) {
-        this.page = page;
-        this.size = size;
-        this.totalElements = totalElements;
-        this.totalPages = totalPages;
-        this.hasNext = hasNext;
-        this.items = items;
-    }
 
     // 정적 팩토리 메서드
     public static <T> PageResponse<T> of(
             int page,
             int size,
             long totalElements,
-            int totalPages,
-            boolean hasNext,
             List<T> items
     ) {
+        long totalPages = calculateTotalPages(totalElements, size);
+
         return new PageResponse<>(
                 page,
                 size,
                 totalElements,
                 totalPages,
-                hasNext,
                 items
         );
+    }
+
+    // 총 페이지 수 계산
+    private static long calculateTotalPages(
+            long totalElements,
+            int size
+    ) {
+        return (totalElements + size - 1) / size;
     }
 }
