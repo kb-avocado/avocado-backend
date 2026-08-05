@@ -6,6 +6,81 @@
 
 <mapper namespace="com.avocado.user.mapper.UserMapper">
 
+    <sql id="userColumns">
+        user_id,
+        email,
+        password,
+        name,
+        phone,
+        birth,
+        user_type,
+        role,
+        status,
+        invite_code,
+        created_at,
+        updated_at
+    </sql>
 
+    <select id="selectByEmail" resultType="com.avocado.user.domain.User">
+        SELECT <include refid="userColumns"/>
+          FROM users
+         WHERE email = #{email}
+    </select>
+
+    <!-- 계좌가 여러 개일 수 있어 먼저 연동한 ACTIVE 계좌 하나를 대표로 사용한다. -->
+    <select id="selectAccountIdByParentId" resultType="java.lang.Long">
+        SELECT account_id
+          FROM accounts
+         WHERE user_id = #{parentId}
+           AND status = 'ACTIVE'
+         ORDER BY account_id
+         LIMIT 1
+    </select>
+
+    <!--
+        연결이 확정된(ACTIVE) 아이만 내려준다. 연결 대기 중인 아이는 목록에 포함하지 않는다.
+        status는 가족 관계 상태가 아니라 아이 계정 자체의 상태(users.status)다.
+        지갑이 아직 없을 수 있어 LEFT JOIN 한다.
+    -->
+    <select id="selectChildrenByParentId" resultType="com.avocado.user.dto.response.LoginChildDto">
+        SELECT u.user_id   AS id,
+               u.name      AS name,
+               u.status    AS status,
+               w.wallet_id AS walletId
+          FROM family_relations fr
+          JOIN users u
+            ON u.user_id = fr.child_id
+          LEFT JOIN wallets w
+            ON w.child_id = u.user_id
+         WHERE fr.parent_id = #{parentId}
+           AND fr.status = 'ACTIVE'
+         ORDER BY u.user_id
+    </select>
+
+    <!-- 지갑 상태(SUSPENDED, CLOSED)와 무관하게 내려준다. 정지 안내는 프론트에서 처리한다. -->
+    <select id="selectWalletIdByChildId" resultType="java.lang.Long">
+        SELECT wallet_id
+          FROM wallets
+         WHERE child_id = #{childId}
+    </select>
+
+    <select id="selectParentIdByChildId" resultType="java.lang.Long">
+        SELECT parent_id
+          FROM family_relations
+         WHERE child_id = #{childId}
+           AND status = 'ACTIVE'
+         ORDER BY relation_id
+         LIMIT 1
+    </select>
+
+    <!-- 요청이 여러 번 있었다면 가장 최근 요청을 기준으로 한다. -->
+    <select id="selectFamilyByChildId" resultType="com.avocado.user.dto.response.LoginFamilyDto">
+        SELECT status      AS status,
+               relation_id AS requestId
+          FROM family_relations
+         WHERE child_id = #{childId}
+         ORDER BY relation_id DESC
+         LIMIT 1
+    </select>
 
 </mapper>

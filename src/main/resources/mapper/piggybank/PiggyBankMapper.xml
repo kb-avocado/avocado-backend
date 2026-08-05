@@ -6,6 +6,93 @@
 
 <mapper namespace="com.avocado.piggybank.mapper.PiggyBankMapper">
 
+    <!-- 저금통 생성 -->
+    <insert id="insert">
+        INSERT INTO piggy_banks (wallet_id, name, target_amount)
+        VALUES (#{walletId}, #{name}, #{targetAmount})
+    </insert>
 
+    <!-- 방금 생성된 id 조회 -->
+    <select id="selectLastInsertId" resultType="Long">
+        SELECT LAST_INSERT_ID()
+    </select>
 
+    <!--저금통 목록 조회 추가-->
+    <select id="selectByWalletIdAndStatuses"
+            resultType="com.avocado.piggybank.domain.PiggyBank">
+        SELECT
+        piggy_bank_id AS id,
+        wallet_id,
+        name,
+        target_amount,
+        balance,
+        bonus_type,
+        bonus_value,
+        status,
+        is_favorite,
+        first_deposited_at,
+        target_reached_at,
+        achieved_at,
+        canceled_at,
+        created_at,
+        updated_at
+        FROM piggy_banks
+        WHERE wallet_id = #{walletId}
+        AND status IN
+        <!-- statuses 리스트를 (?, ?, ...) 형태로 펼침 -->
+        <foreach item="s" collection="statuses" open="(" separator="," close=")">
+            #{s}
+        </foreach>
+        ORDER BY created_at DESC
+    </select>
+    <!-- 진행중 개수 카운트 (canCreate 판단용) -->
+    <select id="countByWalletIdAndStatuses" resultType="int">
+        SELECT COUNT(*)
+        FROM piggy_banks
+        WHERE wallet_id = #{walletId}
+        AND status IN
+        <foreach item="s" collection="statuses" open="(" separator="," close=")">
+            #{s}
+        </foreach>
+    </select>
+
+    <!-- 중도 포기 (상태만 변경, 환급은 후속) -->
+    <update id="cancel">
+        UPDATE piggy_banks
+        SET status = 'CANCEL',
+        canceled_at = NOW(),
+        updated_at = NOW()
+        WHERE piggy_bank_id = #{id}
+    </update>
+
+    <!--  저금통 보너스  -->
+    <select id="selectById" resultType="com.avocado.piggybank.domain.PiggyBank">
+        SELECT
+        piggy_bank_id AS id,
+        wallet_id,
+        name,
+        target_amount,
+        balance,
+        bonus_type,
+        bonus_value,
+        status,
+        is_favorite,
+        first_deposited_at,
+        target_reached_at,
+        achieved_at,
+        canceled_at,
+        created_at,
+        updated_at
+        FROM piggy_banks
+        WHERE piggy_bank_id = #{id}
+    </select>
+
+    <!--  지정 저금통 보너스 설정  -->
+    <update id="updateBonus">
+        UPDATE piggy_banks
+        SET bonus_type = #{bonusType},
+        bonus_value = #{bonusValue},
+        updated_at = NOW()
+        WHERE piggy_bank_id = #{id}
+    </update>
 </mapper>
