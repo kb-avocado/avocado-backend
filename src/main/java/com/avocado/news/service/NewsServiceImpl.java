@@ -1,7 +1,7 @@
 package com.avocado.news.service;
 
 import com.avocado.common.exception.BusinessException;
-import com.avocado.common.exception.ErrorCode;
+import com.avocado.common.response.code.ErrorCode;
 import com.avocado.news.domain.NewsActivity;
 import com.avocado.news.domain.NewsArticle;
 import com.avocado.news.dto.request.NewsAnswerRequestDto;

@@ -1,7 +1,7 @@
 package com.avocado.piggybank.service;
 
 import com.avocado.common.exception.BusinessException;
-import com.avocado.common.exception.ErrorCode;
+import com.avocado.common.response.code.ErrorCode;
 import com.avocado.piggybank.domain.PiggyBank;
 import com.avocado.piggybank.dto.request.PiggyBankDepositRequestDto;
 import com.avocado.piggybank.dto.response.PiggyBankDepositResponseDto;

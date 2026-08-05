@@ -1,7 +1,7 @@
 package com.avocado.piggybank.service;
 
 import com.avocado.common.exception.BusinessException;
-import com.avocado.common.exception.ErrorCode;
+import com.avocado.common.response.code.ErrorCode;
 import com.avocado.piggybank.domain.PiggyBank;
 
 import com.avocado.piggybank.dto.response.PiggyBankDetailResponseDto;
@@ -11,8 +11,6 @@ import com.avocado.piggybank.mapper.PiggyBankMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import com.avocado.common.exception.BusinessException;
-import com.avocado.common.exception.ErrorCode;
 import com.avocado.piggybank.dto.request.PiggyBankCreateRequestDto;
 import org.springframework.transaction.annotation.Transactional;
 
