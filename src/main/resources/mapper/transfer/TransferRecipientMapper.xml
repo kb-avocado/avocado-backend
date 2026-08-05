@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.avocado.transfer.mapper.TransferRecipientMapper">
+
+    <select id="findByUserCode"
+            resultType="com.avocado.transfer.dto.response.TransferRecipientResponseDto">
+        SELECT
+            'WALLET' AS recipient_type,
+            w.wallet_id AS recipient_id,
+            u.name AS recipient_name,
+            w.wallet_number AS account_number,
+            u.invite_code AS user_code
+        FROM users u
+        JOIN wallets w
+            ON w.child_id = u.user_id
+        WHERE u.invite_code = #{keyword}
+          AND u.status = 'ACTIVE'
+          AND w.status = 'ACTIVE'
+    </select>
+
+    <select id="findByAccountNumber"
+            resultType="com.avocado.transfer.dto.response.TransferRecipientResponseDto">
+        SELECT
+            'WALLET' AS recipient_type,
+            w.wallet_id AS recipient_id,
+            u.name AS recipient_name,
+            w.wallet_number AS account_number,
+            u.invite_code AS user_code
+        FROM wallets w
+        JOIN users u
+            ON u.user_id = w.child_id
+        WHERE w.wallet_number = #{keyword}
+          AND u.status = 'ACTIVE'
+          AND w.status = 'ACTIVE'
+    </select>
+
+</mapper>
