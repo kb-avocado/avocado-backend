@@ -7,7 +7,6 @@ import org.springframework.http.HttpStatus;
 @Getter
 @RequiredArgsConstructor
 public enum SuccessCode implements ResponseCode {
-
     // 공통 성공 (COM)
     OK(HttpStatus.OK, "COM-000", "요청이 성공적으로 처리되었습니다."),
     CREATED(HttpStatus.CREATED, "COM-001", "리소스가 성공적으로 생성되었습니다."),
