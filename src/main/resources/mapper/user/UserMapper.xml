@@ -83,4 +83,56 @@
          LIMIT 1
     </select>
 
+    <select id="existsByEmail" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+              FROM users
+             WHERE email = #{email}
+        )
+    </select>
+
+    <select id="existsByPhone" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+              FROM users
+             WHERE phone = #{phone}
+        )
+    </select>
+
+    <select id="existsByInviteCode" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+              FROM users
+             WHERE invite_code = #{inviteCode}
+        )
+    </select>
+
+    <!--
+        role, status, invite_code는 DB 기본값이 있지만 가입 정책을 코드에서 드러내기 위해 명시한다. (수정하기)
+        created_at, updated_at은 DB 기본값을 그대로 사용한다.
+    -->
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="userId" keyColumn="user_id">
+        INSERT INTO users (
+            email,
+            password,
+            name,
+            phone,
+            birth,
+            user_type,
+            role,
+            status,
+            invite_code
+        ) VALUES (
+            #{email},
+            #{password},
+            #{name},
+            #{phone},
+            #{birth},
+            #{userType},
+            #{role},
+            #{status},
+            #{inviteCode}
+        )
+    </insert>
+
 </mapper>

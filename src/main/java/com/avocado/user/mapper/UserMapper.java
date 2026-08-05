@@ -32,4 +32,16 @@ public interface UserMapper {
 
     // [CHILD] 가족 연결 요청 정보 (PENDING 응답용)
     LoginFamilyDto selectFamilyByChildId(@Param("childId") Long childId);
+
+    // 회원가입 시 이메일 중복 검사 (email은 UNIQUE)
+    boolean existsByEmail(@Param("email") String email);
+
+    // 회원가입 시 전화번호 중복 검사 (phone은 UNIQUE)
+    boolean existsByPhone(@Param("phone") String phone);
+
+    // [PARENT] 초대 코드 중복 검사 (invite_code는 UNIQUE)
+    boolean existsByInviteCode(@Param("inviteCode") String inviteCode);
+
+    // 회원가입
+    void insertUser(User user);
 }
