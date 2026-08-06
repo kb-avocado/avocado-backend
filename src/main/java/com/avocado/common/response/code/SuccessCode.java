@@ -20,6 +20,10 @@ public enum SuccessCode implements ResponseCode {
     ACCOUNT_LINK_REQUIRED(HttpStatus.OK, "AUT-004", "로그인에 성공했습니다. 계좌 연결이 필요합니다."),
     FAMILY_LINK_REQUIRED(HttpStatus.OK, "AUT-005", "로그인에 성공했습니다. 가족 연결이 필요합니다."),
 
+    // 선불지갑 (WAL)
+    WALLET_CHARGED(HttpStatus.OK, "WAL-000", "선불지갑이 성공적으로 충전되었습니다."),
+    CHILD_WALLET_FOUND(HttpStatus.OK, "WAL-001", "아이의 선불지갑을 조회했습니다."),
+
     // 저금통 (PIG)
     PIGGY_BANK_CREATED(HttpStatus.CREATED, "PIG-000", "저금통이 성공적으로 생성되었습니다."),
     PIGGY_BANK_DELETED(HttpStatus.NO_CONTENT, "PIG-001", "저금통이 성공적으로 삭제되었습니다."),
@@ -29,9 +33,6 @@ public enum SuccessCode implements ResponseCode {
     PIGGY_BANK_DETAIL_FETCHED(HttpStatus.OK, "PIG-005", "저금통 상세 조회에 성공했습니다."),
     PIGGY_BANK_CLOSED(HttpStatus.OK, "PIG-006", "저금통을 중도 포기했습니다."),
     PIGGY_BANK_DEPOSITED(HttpStatus.OK, "PIG-007", "저금통에 성공적으로 입금되었습니다."),
-
-    // 선불지갑 (WAL)
-    WALLET_CHARGED(HttpStatus.OK, "WAL-000", "선불지갑이 성공적으로 충전되었습니다."),
 
     // 가맹점 (MER)
     MERCHANT_REGISTERED(HttpStatus.CREATED, "MER-000", "가맹점 등록이 완료되었습니다."),
