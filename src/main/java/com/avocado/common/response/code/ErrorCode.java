@@ -18,6 +18,9 @@ public enum ErrorCode implements ResponseCode {
     USER_SUSPENDED(HttpStatus.FORBIDDEN, "AUT-004", "이용이 정지된 계정입니다. 고객센터에 문의해주세요."),
     USER_DELETED(HttpStatus.FORBIDDEN, "AUT-005", "탈퇴한 계정입니다."),
 
+    // 사용자 (USR)
+    CHILD_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "자녀를 찾을 수 없습니다."),
+
     // 저금통 (PIG)
     PIGGY_BANK_NOT_FOUND(HttpStatus.NOT_FOUND, "PIG-001", "저금통을 찾을 수 없습니다."),
     PIGGY_BANK_BONUS_NOT_SET(HttpStatus.BAD_REQUEST, "PIG-002", "설정된 보너스가 없는 저금통입니다."),
