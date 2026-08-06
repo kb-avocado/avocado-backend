@@ -33,6 +33,7 @@
         first_deposited_at,
         target_reached_at,
         achieved_at,
+        bonus_paid_at,
         canceled_at,
         created_at,
         updated_at
@@ -79,6 +80,7 @@
         first_deposited_at,
         target_reached_at,
         achieved_at,
+        bonus_paid_at,
         canceled_at,
         created_at,
         updated_at
@@ -91,6 +93,14 @@
         UPDATE piggy_banks
         SET bonus_type = #{bonusType},
         bonus_value = #{bonusValue},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+    <!-- 보너스 지급 완료 처리 -->
+    <update id="markBonusPaid">
+        UPDATE piggy_banks
+        SET bonus_paid_at = #{bonusPaidAt},
         updated_at = NOW()
         WHERE id = #{id}
     </update>

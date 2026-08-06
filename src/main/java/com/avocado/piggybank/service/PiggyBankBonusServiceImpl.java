@@ -10,6 +10,7 @@ import com.avocado.piggybank.dto.response.PiggyBankBonusResponseDto;
 import com.avocado.piggybank.mapper.PiggyBankMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
@@ -43,6 +44,7 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
     }
 
     @Override
+    @Transactional
     public PiggyBankBonusPayResponseDto payBonus(Long piggyBankId) {
         PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
 
@@ -58,14 +60,19 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
             throw new BusinessException(ErrorCode.PIGGY_BANK_GOAL_NOT_ACHIEVED);
         }
 
-        // TODO: bonus_paid_at 컬럼 추가되면 (1) 이미 지급됐는지 확인 (2) UPDATE piggy_banks SET bonus_paid_at = NOW() 로 교체
-        // TODO: 실제 송금(부모 계좌 → 아이 지갑)은 지갑 담당자 로직과 연동 필요 — 이 API는 "지급 완료 표시"만 담당
+        if (piggyBank.getBonusPaidAt() != null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_BONUS_ALREADY_PAID);
+        }
+
+        // TODO: 실제 송금(부모 계좌 → 아이 지갑)은 지갑 담당자 로직과 연동 필요, 이 API는 "지급 완료 표시"만 담당
+        LocalDateTime paidAt = LocalDateTime.now();
+        piggyBankMapper.markBonusPaid(piggyBankId, paidAt);
 
         return PiggyBankBonusPayResponseDto.builder()
                 .piggyBankId(piggyBankId)
                 .bonusType(piggyBank.getBonusType())
                 .bonusValue(piggyBank.getBonusValue())
-                .paidAt(LocalDateTime.now())
+                .paidAt(paidAt)
                 .build();
     }
 
