@@ -17,7 +17,7 @@ public class NewsActivity {
     private LocalDateTime completedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-
+;
     public void markViewed() {
         if (this.viewedAt == null){
             this.viewedAt = LocalDateTime.now();
