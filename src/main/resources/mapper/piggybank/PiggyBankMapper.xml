@@ -21,7 +21,7 @@
     <select id="selectByWalletIdAndStatuses"
             resultType="com.avocado.piggybank.domain.PiggyBank">
         SELECT
-        piggy_bank_id AS id,
+        id,
         wallet_id,
         name,
         target_amount,
@@ -39,7 +39,6 @@
         FROM piggy_banks
         WHERE wallet_id = #{walletId}
         AND status IN
-        <!-- statuses 리스트를 (?, ?, ...) 형태로 펼침 -->
         <foreach item="s" collection="statuses" open="(" separator="," close=")">
             #{s}
         </foreach>
@@ -62,13 +61,13 @@
         SET status = 'CANCEL',
         canceled_at = NOW(),
         updated_at = NOW()
-        WHERE piggy_bank_id = #{id}
+        WHERE id = #{id}
     </update>
 
     <!--  저금통 보너스  -->
     <select id="selectById" resultType="com.avocado.piggybank.domain.PiggyBank">
         SELECT
-        piggy_bank_id AS id,
+        id,
         wallet_id,
         name,
         target_amount,
@@ -84,7 +83,7 @@
         created_at,
         updated_at
         FROM piggy_banks
-        WHERE piggy_bank_id = #{id}
+        WHERE id = #{id}
     </select>
 
     <!--  지정 저금통 보너스 설정  -->
@@ -93,10 +92,10 @@
         SET bonus_type = #{bonusType},
         bonus_value = #{bonusValue},
         updated_at = NOW()
-        WHERE piggy_bank_id = #{id}
+        WHERE id = #{id}
     </update>
 
-    <!-- 저금통 입금: 잔액/상태/목표달성시각 갱신 -->
+    <!-- 입금: 잔액/상태/목표달성시각 갱신 -->
     <update id="increaseBalance">
         UPDATE piggy_banks
         SET balance = #{balance},
@@ -104,6 +103,6 @@
         first_deposited_at = #{firstDepositedAt},
         target_reached_at = #{targetReachedAt},
         updated_at = NOW()
-        WHERE piggy_bank_id = #{id}
+        WHERE id = #{id}
     </update>
 </mapper>

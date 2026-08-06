@@ -17,19 +17,19 @@
 
     <select id="selectByPiggyBankId" resultType="com.avocado.piggybank.dto.response.PiggyBankCheerMessageResponseDto">
         SELECT
-        m.message_id AS cheerMessageId,
+        m.id AS cheerMessageId,
         u.name AS senderName,
         m.content AS message,
         m.created_at AS createdAt
         FROM piggy_bank_cheer_messages m
-        JOIN users u ON m.parent_id = u.user_id
+        JOIN users u ON m.parent_id = u.id
         WHERE m.piggy_bank_id = #{piggyBankId}
         ORDER BY m.created_at DESC
     </select>
 
     <delete id="deleteById">
         DELETE FROM piggy_bank_cheer_messages
-        WHERE message_id = #{messageId}
+        WHERE id = #{messageId}
     </delete>
 
 </mapper>

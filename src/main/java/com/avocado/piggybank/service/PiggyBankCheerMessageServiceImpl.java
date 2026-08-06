@@ -20,7 +20,7 @@ public class PiggyBankCheerMessageServiceImpl implements PiggyBankCheerMessageSe
     @Override
     public PiggyBankCheerMessageResponseDto sendMessage(Long piggyBankId, PiggyBankCheerMessageCreateRequestDto request) {
         // TODO: parentId는 로그인 붙으면 토큰에서 가져와야 함. 인증 전까지 임시 고정값
-        Long parentId = 1L;
+        Long parentId = 101L;
 
         PiggyBankCheerMessage cheerMessage = PiggyBankCheerMessage.builder()
                 .piggyBankId(piggyBankId)
