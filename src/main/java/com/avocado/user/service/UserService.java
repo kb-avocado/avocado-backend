@@ -84,20 +84,20 @@ public class UserService {
     // 부모는 계좌가 연동되지 않았으면 PENDING이므로 accountId가 비어 있을 수 있다.
     private LoginUserDto toParentInfo(User user) {
         return baseInfo(user)
-                .accountId(userMapper.selectAccountIdByParentId(user.getUserId()))
-                .child(userMapper.selectChildrenByParentId(user.getUserId()))
+                .accountId(userMapper.selectAccountIdByParentId(user.getId()))
+                .child(userMapper.selectChildrenByParentId(user.getId()))
                 .build();
     }
 
     // 아이는 부모와 연결되지 않았으면 PENDING이므로, 부모 ID 대신 연결 요청 정보를 내려준다.
     private LoginUserDto toChildInfo(User user) {
         LoginUserDto.LoginUserDtoBuilder builder = baseInfo(user)
-                .walletId(userMapper.selectWalletIdByChildId(user.getUserId()));
+                .walletId(userMapper.selectWalletIdByChildId(user.getId()));
 
         if (user.getStatus() == UserStatus.PENDING) {
-            builder.family(userMapper.selectFamilyByChildId(user.getUserId()));
+            builder.family(userMapper.selectFamilyByChildId(user.getId()));
         } else {
-            builder.parentId(userMapper.selectParentIdByChildId(user.getUserId()));
+            builder.parentId(userMapper.selectParentIdByChildId(user.getId()));
         }
 
         return builder.build();
@@ -105,7 +105,7 @@ public class UserService {
 
     private LoginUserDto.LoginUserDtoBuilder baseInfo(User user) {
         return LoginUserDto.builder()
-                .userId(user.getUserId())
+                .userId(user.getId())
                 .name(user.getName())
                 .type(user.getUserType())
                 .role(user.getRole())
@@ -151,7 +151,7 @@ public class UserService {
         insertUser(user);
 
         return UserSignUpResponseDto.builder()
-                .userId(user.getUserId())
+                .userId(user.getId())
                 .name(user.getName())
                 .type(user.getUserType())
                 .role(user.getRole())
