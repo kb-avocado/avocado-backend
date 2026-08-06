@@ -122,13 +122,14 @@ public class UserService {
     @Transactional
     public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
         String email = normalizeEmail(request.getEmail());
+        String phone = normalizePhone(request.getPhone());
 
         // 이메일과 전화번호는 UNIQUE라 탈퇴한 회원이 쓰던 값도 다시 쓸 수 없다.
         if (userMapper.existsByEmail(email)) {
             throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
-        if (userMapper.existsByPhone(request.getPhone())) {
+        if (userMapper.existsByPhone(phone)) {
             throw new BusinessException(ErrorCode.DUPLICATE_PHONE);
         }
 
@@ -136,7 +137,7 @@ public class UserService {
                 .email(email)
                 .password(passwordEncoder.encode(request.getPassword()))
                 .name(request.getName())
-                .phone(request.getPhone())
+                .phone(phone)
                 .birth(request.getBirth())
                 .userType(request.getType())
                 // 가입 단계에서는 권한을 선택할 수 없다. 요청 값을 받지 않고 USER로 고정한다.
@@ -162,6 +163,12 @@ public class UserService {
     // 언어 설정에 따라 I가 다른 문자로 바뀌는 것을 막기 위해 Locale.ROOT를 지정한다.
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
+    }
+
+    // 하이픈은 화면에서 보기 좋으라고 넣는 표시용이라 숫자만 남겨서 저장한다.
+    // 표기만 다른 같은 번호가 UNIQUE를 통과해 두 번 가입되는 것을 막는다.
+    private String normalizePhone(String phone) {
+        return phone.replaceAll("\\D", "");
     }
 
     // invite_code는 UNIQUE라 이미 쓰이는 값이면 다시 뽑는다.
