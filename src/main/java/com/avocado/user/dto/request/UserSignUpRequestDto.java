@@ -5,7 +5,6 @@ import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.apache.logging.log4j.core.config.plugins.validation.constraints.NotBlank;
 import javax.validation.constraints.*;
 import java.time.LocalDate;
 
@@ -57,12 +56,12 @@ public class UserSignUpRequestDto {
 
     @NotBlank(message = "전화번호를 필수로 입력해주세요.")
     @Pattern(
-            regexp = "^01[016789]-\\d{3,4}-\\d{4}$",
-            message = "전화번호는 010-1234-5678 형식으로 입력해주세요."
+            regexp = "^01[016789]-?\\d{3,4}-?\\d{4}$",
+            message = "전화번호 형식이 올바르지 않습니다. (예: 01012345678 또는 010-1234-5678)"
     )
     @ApiModelProperty(
             value = "휴대전화 번호",
-            example = "010-1234-5678",
+            example = "01012345678",
             required = true
     )
     private String phone;
