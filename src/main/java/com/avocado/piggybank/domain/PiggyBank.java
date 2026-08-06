@@ -23,6 +23,7 @@ public class PiggyBank {
     private final LocalDateTime firstDepositedAt;
     private final LocalDateTime targetReachedAt;
     private final LocalDateTime achievedAt;
+    private final LocalDateTime bonusPaidAt;
     private final LocalDateTime canceledAt;
     private final LocalDateTime createdAt;
     private final LocalDateTime updatedAt;
