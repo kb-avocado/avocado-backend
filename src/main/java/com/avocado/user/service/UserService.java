@@ -9,7 +9,6 @@ import com.avocado.user.domain.UserType;
 import com.avocado.user.dto.request.UserLoginRequestDto;
 import com.avocado.user.dto.request.UserSignUpRequestDto;
 import com.avocado.user.dto.response.LoginUserDto;
-import com.avocado.user.dto.response.UserLoginResponseDto;
 import com.avocado.user.dto.response.UserSignUpResponseDto;
 import com.avocado.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +48,7 @@ public class UserService {
      * @throws BusinessException 인증 실패 또는 로그인할 수 없는 계정 상태인 경우
      */
     @Transactional(readOnly = true)
-    public UserLoginResponseDto login(UserLoginRequestDto request) {
+    public LoginUserDto login(UserLoginRequestDto request) {
         User user = userMapper.selectByEmail(request.getEmail());
 
         // 가입되지 않은 이메일과 비밀번호 불일치를 구분해서 응답하지 않는다.
@@ -61,13 +60,9 @@ public class UserService {
 
         validateLoginable(user);
 
-        LoginUserDto loginUser = user.getUserType() == UserType.PARENT
+        return user.getUserType() == UserType.PARENT
                 ? toParentInfo(user)
                 : toChildInfo(user);
-
-        return UserLoginResponseDto.builder()
-                .user(loginUser)
-                .build();
     }
 
     // PENDING은 로그인은 되지만 진입 화면이 다른 상태라 여기서 막지 않는다.

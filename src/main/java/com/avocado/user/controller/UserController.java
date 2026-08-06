@@ -7,7 +7,6 @@ import com.avocado.user.domain.LoginResultCode;
 import com.avocado.user.dto.request.UserLoginRequestDto;
 import com.avocado.user.dto.request.UserSignUpRequestDto;
 import com.avocado.user.dto.response.LoginUserDto;
-import com.avocado.user.dto.response.UserLoginResponseDto;
 import com.avocado.user.dto.response.UserSignUpResponseDto;
 import com.avocado.user.service.UserService;
 import io.swagger.annotations.Api;
@@ -69,14 +68,13 @@ public class UserController {
                     + "계정이 PENDING이면 로그인은 성공하되 code가 달라집니다."
     )
     @PostMapping("/auth/login")
-    public ResponseEntity<ApiResponse<UserLoginResponseDto>> login(
+    public ResponseEntity<ApiResponse<LoginUserDto>> login(
             @Valid
             @RequestBody
             UserLoginRequestDto request,
             HttpServletResponse response
     ) {
-        UserLoginResponseDto responseDto = userService.login(request);
-        LoginUserDto user = responseDto.getUser();
+        LoginUserDto user = userService.login(request);
 
         // 토큰 발급과 쿠키 전달은 HTTP 계층의 관심사라 컨트롤러에서 처리한다.
         String accessToken = jwtTokenProvider.createAccessToken(
@@ -96,7 +94,7 @@ public class UserController {
         // 이부분 검토 필요
         return ResponseEntity
                 .status(LOGIN_SUCCESS.getHttpStatus())
-                .body(ApiResponse.success(LOGIN_SUCCESS,responseDto));
+                .body(ApiResponse.success(LOGIN_SUCCESS, user));
     }
 
     @ApiOperation(
