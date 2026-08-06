@@ -3,7 +3,6 @@ package com.avocado.user.mapper;
 import com.avocado.user.domain.User;
 import com.avocado.user.dto.response.LoginChildDto;
 import com.avocado.user.dto.response.LoginFamilyDto;
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.List;
  * 로그인 응답을 한 번에 구성하기 위해 accounts, wallets, family_relations 조회도 이곳에 둔다.
  * 각 도메인 매퍼는 다른 담당자의 작업 범위라 수정하지 않는다.
  */
-@Mapper
 public interface UserMapper {
 
     // 로그인 시 이메일로 회원 조회 (email은 UNIQUE)
