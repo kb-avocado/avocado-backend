@@ -40,6 +40,9 @@ public interface UserMapper {
     // [PARENT] 초대 코드 중복 검사 (invite_code는 UNIQUE)
     boolean existsByInviteCode(@Param("inviteCode") String inviteCode);
 
+    // [PARENT] 부모 계정 활성화 여부 검사
+    boolean existsActiveParentById(@Param("userId") Long userId);
+
     // 회원가입
     void insertUser(User user);
 }
