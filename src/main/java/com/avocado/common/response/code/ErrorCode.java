@@ -32,6 +32,7 @@ public enum ErrorCode implements ResponseCode {
     WALLET_NOT_FOUND(HttpStatus.NOT_FOUND, "WAL-001", "선불지갑을 찾을 수 없습니다."),
     WALLET_INACTIVE(HttpStatus.CONFLICT, "WAL-002", "사용할 수 없는 선불지갑입니다."),
     INSUFFICIENT_BALANCE(HttpStatus.CONFLICT, "WAL-003", "선불지갑 잔액이 부족합니다."),
+    WALLET_ALREADY_EXISTS(HttpStatus.CONFLICT, "WAL-004", "이미 선불지갑이 있는 계정입니다."),
 
     // 가맹점 (MER)
     MERCHANT_NOT_FOUND(HttpStatus.NOT_FOUND, "MER-001", "가맹점을 찾을 수 없습니다."),

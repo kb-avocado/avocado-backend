@@ -11,6 +11,7 @@ import com.avocado.family.dto.request.FamilyRequestDecisionRequestDto;
 import com.avocado.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.family.mapper.FamilyRelationMapper;
+import com.avocado.family.mapper.FamilyWalletMapper;
 import com.avocado.jwt.dto.AuthUser;
 import com.avocado.user.domain.User;
 import com.avocado.user.domain.UserStatus;
@@ -27,6 +28,7 @@ import java.util.Locale;
 public class FamilyRequestService {
 
     private final FamilyRelationMapper familyRelationMapper;
+    private final FamilyWalletMapper familyWalletMapper;
     private final UserMapper userMapper;
 
     /**
@@ -192,6 +194,7 @@ public class FamilyRequestService {
         // 연결이 끝나야 아이가 서비스를 쓸 수 있다. 취소한 경우에는 PENDING으로 남는다.
         if (confirmed == FamilyRelationStatus.ACTIVE) {
             userMapper.updateStatus(relation.getChildId(), UserStatus.ACTIVE);
+            createWallet(relation.getChildId());
         }
 
         return FamilyRequestResponseDto.builder()
@@ -199,6 +202,25 @@ public class FamilyRequestService {
                 .status(confirmed)
                 .parentName(relation.getParentName())
                 .build();
+    }
+
+    /**
+     * 아이의 선불지갑을 만든다.
+     * 확정과 같은 트랜잭션이라 여기서 실패하면 관계와 계정 상태까지 함께 되돌아간다.
+     */
+    private void createWallet(Long childId) {
+        if (familyWalletMapper.existsByChildId(childId)) {
+            throw new BusinessException(ErrorCode.WALLET_ALREADY_EXISTS);
+        }
+
+        familyWalletMapper.insertWallet(childId, temporaryWalletNumber(childId));
+    }
+
+    /**
+     * TODO: 지갑 번호 규칙은 지갑 담당자가 정한다. 지금은 UNIQUE 제약만 지키는 임시값이다.
+     */
+    private String temporaryWalletNumber(Long childId) {
+        return "WALLET-" + childId;
     }
 
     private void requireAuthenticated(AuthUser requester) {
