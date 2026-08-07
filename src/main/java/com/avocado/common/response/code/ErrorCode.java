@@ -33,6 +33,11 @@ public enum ErrorCode implements ResponseCode {
     WALLET_INACTIVE(HttpStatus.CONFLICT, "WAL-002", "사용할 수 없는 선불지갑입니다."),
     INSUFFICIENT_BALANCE(HttpStatus.CONFLICT, "WAL-003", "선불지갑 잔액이 부족합니다."),
 
+    // 계좌 (ACC)
+    ACTIVE_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ACC-001", "활성 상태인 부모 회원을 찾을 수 없습니다."),
+    DUPLICATE_ACCOUNT(HttpStatus.CONFLICT, "ACC-002", "이미 등록된 계좌입니다."),
+    ACCOUNT_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ACC-003", "계좌 등록에 실패했습니다."),
+
     // 가맹점 (MER)
     MERCHANT_NOT_FOUND(HttpStatus.NOT_FOUND, "MER-001", "가맹점을 찾을 수 없습니다."),
     MERCHANT_INACTIVE(HttpStatus.CONFLICT, "MER-002", "현재 이용할 수 없는 가맹점입니다."),

@@ -33,6 +33,9 @@ public enum SuccessCode implements ResponseCode {
     // 선불지갑 (WAL)
     WALLET_CHARGED(HttpStatus.OK, "WAL-000", "선불지갑이 성공적으로 충전되었습니다."),
 
+    // 계좌 (ACC)
+    ACCOUNT_CREATED(HttpStatus.CREATED, "ACC-000", "계좌가 성공적으로 등록되었습니다."),
+
     // 가맹점 (MER)
     MERCHANT_REGISTERED(HttpStatus.CREATED, "MER-000", "가맹점 등록이 완료되었습니다."),
 
