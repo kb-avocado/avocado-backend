@@ -5,6 +5,8 @@ import com.avocado.common.response.code.ErrorCode;
 import com.avocado.family.domain.FamilyRelation;
 import com.avocado.family.domain.FamilyRelationStatus;
 import com.avocado.family.dto.request.FamilyRequestCreateRequestDto;
+import com.avocado.family.dto.request.FamilyRequestDecision;
+import com.avocado.family.dto.request.FamilyRequestDecisionRequestDto;
 import com.avocado.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.family.mapper.FamilyRelationMapper;
@@ -99,6 +101,50 @@ public class FamilyRequestService {
         return FamilyRequestCheckResponseDto.builder()
                 .requestId(relation.getId())
                 .status(relation.getStatus())
+                .childName(relation.getChildName())
+                .createdAt(relation.getCreatedAt())
+                .build();
+    }
+
+    /**
+     * 보호자가 자기에게 온 요청을 승인하거나 거절한다.
+     *
+     * @throws BusinessException 요청이 없거나(404), 본인에게 온 요청이 아니거나(403),
+     *                           이미 처리된 요청인 경우(409)
+     */
+    @Transactional
+    public FamilyRequestCheckResponseDto decide(
+            AuthUser requester,
+            Long requestId,
+            FamilyRequestDecisionRequestDto request
+    ) {
+        requireAuthenticated(requester);
+
+        FamilyRelation relation = findRelation(requestId);
+        requireOwner(requester, relation.getParentId());
+
+        if (relation.getStatus() != FamilyRelationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.FAMILY_REQUEST_ALREADY_HANDLED);
+        }
+
+        FamilyRelationStatus decided = request.getDecision() == FamilyRequestDecision.APPROVE
+                ? FamilyRelationStatus.APPROVED
+                : FamilyRelationStatus.REJECTED;
+
+        // 조회와 수정 사이에 다른 요청이 먼저 처리했을 수 있다. 바뀐 행이 없으면 그 경우다.
+        int updated = familyRelationMapper.updateStatus(
+                relation.getId(),
+                FamilyRelationStatus.PENDING,
+                decided
+        );
+
+        if (updated == 0) {
+            throw new BusinessException(ErrorCode.FAMILY_REQUEST_ALREADY_HANDLED);
+        }
+
+        return FamilyRequestCheckResponseDto.builder()
+                .requestId(relation.getId())
+                .status(decided)
                 .childName(relation.getChildName())
                 .createdAt(relation.getCreatedAt())
                 .build();

@@ -2,6 +2,7 @@ package com.avocado.family.controller;
 
 import com.avocado.common.response.ApiResponse;
 import com.avocado.family.dto.request.FamilyRequestCreateRequestDto;
+import com.avocado.family.dto.request.FamilyRequestDecisionRequestDto;
 import com.avocado.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.family.service.FamilyRequestService;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_CREATED;
+import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_DECIDED;
 import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_FOUND;
 
 @Api(tags = "가족 연결 API")
@@ -89,5 +92,29 @@ public class FamilyRequestController {
         return ResponseEntity
                 .status(FAMILY_REQUEST_FOUND.getHttpStatus())
                 .body(ApiResponse.success(FAMILY_REQUEST_FOUND, responseDto));
+    }
+
+    @ApiOperation(
+            value = "[보호자] 가족 연결 요청 승인·거절",
+            notes = "보호자가 자기에게 온 요청을 처리합니다. "
+                    + "승인해도 바로 연결되지 않고, 아이가 보호자를 확인해야 확정됩니다. "
+                    + "이미 처리한 요청을 다시 처리하면 409입니다."
+    )
+    @PatchMapping("/{requestId}")
+    public ResponseEntity<ApiResponse<FamilyRequestCheckResponseDto>> decideRequest(
+            @AuthenticationPrincipal
+            AuthUser authUser,
+            @PathVariable
+            Long requestId,
+            @Valid
+            @RequestBody
+            FamilyRequestDecisionRequestDto request
+    ) {
+        FamilyRequestCheckResponseDto responseDto =
+                familyRequestService.decide(authUser, requestId, request);
+
+        return ResponseEntity
+                .status(FAMILY_REQUEST_DECIDED.getHttpStatus())
+                .body(ApiResponse.success(FAMILY_REQUEST_DECIDED, responseDto));
     }
 }
