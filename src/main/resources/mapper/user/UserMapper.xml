@@ -135,4 +135,16 @@
         )
     </insert>
 
+    <!-- 해당 사용자가 활성화된 부모 계정인지 체크  -->
+    <select id="existsActiveParentById" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM users
+            WHERE id = #{userId}
+                AND role = 'USER'
+                AND user_type = 'PARENT'
+                AND status = 'ACTIVE'
+        )
+    </select>
+
 </mapper>
