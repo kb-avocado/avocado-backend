@@ -24,7 +24,7 @@ import static com.avocado.common.response.code.SuccessCode.*;
 @RequiredArgsConstructor
 public class NewsController {
     private final NewsService newsService;
-    private static final Long TEMP_CHILD_ID = 1L; // TODO: 로그인 붙으면 제거
+    private static final Long TEMP_CHILD_ID = 102L; // TODO: 로그인 붙으면 제거
     private final NewsRssCrawlService newsRssCrawlService;
 
     @GetMapping

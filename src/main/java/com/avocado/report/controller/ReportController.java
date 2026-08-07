@@ -21,7 +21,7 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    private static final Long TEMP_CHILD_ID = 12L; // TODO: 로그인 붙으면 제거
+    private static final Long TEMP_CHILD_ID = 102L; // TODO: 로그인 붙으면 제거
 
     @GetMapping("/{yearMonth}")
     @ApiOperation(value = "월별 리포트 조회", notes = "소비 유형·AI 조언을 제외한 리포트 데이터를 조회합니다.")
