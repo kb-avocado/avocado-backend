@@ -61,7 +61,15 @@ public enum SuccessCode implements ResponseCode {
     // 경제 신문(NWS)
     NEWS_LIST_FOUND(HttpStatus.OK, "NWS-000", "신문 목록을 조회했습니다."),
     NEWS_DETAIL_FOUND(HttpStatus.OK, "NWS-001", "신문 상세 정보를 조회했습니다."),
-    NEWS_ANSWER_SAVED(HttpStatus.OK, "NWS-002", "챌린지 답변이 저장되었습니다.");
+    NEWS_ANSWER_SAVED(HttpStatus.OK, "NWS-002", "챌린지 답변이 저장되었습니다."),
+
+    // 가족 연결(FAM)
+    FAMILY_REQUEST_CREATED(HttpStatus.CREATED, "FAM-000", "가족 연결을 요청했습니다."),
+    FAMILY_REQUEST_FOUND(HttpStatus.OK, "FAM-001", "가족 연결 요청을 조회했습니다."),
+    // 보호자가 승인 또는 거절한 결과. 어느 쪽인지는 응답의 status로 구분한다.
+    FAMILY_REQUEST_DECIDED(HttpStatus.OK, "FAM-002", "가족 연결 요청을 처리했습니다."),
+    // 아이가 최종 승인 또는 거절한 결과
+    FAMILY_REQUEST_CONFIRMED(HttpStatus.OK, "FAM-003", "가족 연결 요청을 확정했습니다.");
 
     private final HttpStatus httpStatus;
 

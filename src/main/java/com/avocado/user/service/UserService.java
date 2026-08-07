@@ -9,7 +9,6 @@ import com.avocado.user.domain.UserType;
 import com.avocado.user.dto.request.UserLoginRequestDto;
 import com.avocado.user.dto.request.UserSignUpRequestDto;
 import com.avocado.user.dto.response.LoginUserDto;
-import com.avocado.user.dto.response.UserLoginResponseDto;
 import com.avocado.user.dto.response.UserSignUpResponseDto;
 import com.avocado.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +48,7 @@ public class UserService {
      * @throws BusinessException 인증 실패 또는 로그인할 수 없는 계정 상태인 경우
      */
     @Transactional(readOnly = true)
-    public UserLoginResponseDto login(UserLoginRequestDto request) {
+    public LoginUserDto login(UserLoginRequestDto request) {
         User user = userMapper.selectByEmail(request.getEmail());
 
         // 가입되지 않은 이메일과 비밀번호 불일치를 구분해서 응답하지 않는다.
@@ -61,13 +60,9 @@ public class UserService {
 
         validateLoginable(user);
 
-        LoginUserDto loginUser = user.getUserType() == UserType.PARENT
+        return user.getUserType() == UserType.PARENT
                 ? toParentInfo(user)
                 : toChildInfo(user);
-
-        return UserLoginResponseDto.builder()
-                .user(loginUser)
-                .build();
     }
 
     // PENDING은 로그인은 되지만 진입 화면이 다른 상태라 여기서 막지 않는다.
@@ -84,20 +79,20 @@ public class UserService {
     // 부모는 계좌가 연동되지 않았으면 PENDING이므로 accountId가 비어 있을 수 있다.
     private LoginUserDto toParentInfo(User user) {
         return baseInfo(user)
-                .accountId(userMapper.selectAccountIdByParentId(user.getUserId()))
-                .child(userMapper.selectChildrenByParentId(user.getUserId()))
+                .accountId(userMapper.selectAccountIdByParentId(user.getId()))
+                .child(userMapper.selectChildrenByParentId(user.getId()))
                 .build();
     }
 
     // 아이는 부모와 연결되지 않았으면 PENDING이므로, 부모 ID 대신 연결 요청 정보를 내려준다.
     private LoginUserDto toChildInfo(User user) {
         LoginUserDto.LoginUserDtoBuilder builder = baseInfo(user)
-                .walletId(userMapper.selectWalletIdByChildId(user.getUserId()));
+                .walletId(userMapper.selectWalletIdByChildId(user.getId()));
 
         if (user.getStatus() == UserStatus.PENDING) {
-            builder.family(userMapper.selectFamilyByChildId(user.getUserId()));
+            builder.family(userMapper.selectFamilyByChildId(user.getId()));
         } else {
-            builder.parentId(userMapper.selectParentIdByChildId(user.getUserId()));
+            builder.parentId(userMapper.selectParentIdByChildId(user.getId()));
         }
 
         return builder.build();
@@ -105,7 +100,7 @@ public class UserService {
 
     private LoginUserDto.LoginUserDtoBuilder baseInfo(User user) {
         return LoginUserDto.builder()
-                .userId(user.getUserId())
+                .userId(user.getId())
                 .name(user.getName())
                 .type(user.getUserType())
                 .role(user.getRole())
@@ -151,7 +146,7 @@ public class UserService {
         insertUser(user);
 
         return UserSignUpResponseDto.builder()
-                .userId(user.getUserId())
+                .userId(user.getId())
                 .name(user.getName())
                 .type(user.getUserType())
                 .role(user.getRole())

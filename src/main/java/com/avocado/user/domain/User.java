@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class User {
 
-    private Long userId;
+    private Long id;
     private String email;
     // 단방향 해시된 비밀번호 (BCrypt)
     private String password;

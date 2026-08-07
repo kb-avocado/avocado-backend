@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.avocado.family.mapper.FamilyWalletMapper">
+
+    <select id="existsByChildId" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM wallets
+            WHERE child_id = #{childId}
+        )
+    </select>
+
+    <!-- balance(0), status(ACTIVE), created_at은 DB 기본값을 그대로 쓴다. -->
+    <insert id="insertWallet">
+        INSERT INTO wallets (
+            child_id,
+            wallet_number
+        ) VALUES (
+            #{childId},
+            #{walletNumber}
+        )
+    </insert>
+
+</mapper>
