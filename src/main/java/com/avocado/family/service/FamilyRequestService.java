@@ -38,9 +38,7 @@ public class FamilyRequestService {
             AuthUser requester,
             FamilyRequestCreateRequestDto request
     ) {
-        if (requester == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
+        requireAuthenticated(requester);
 
         if (requester.getUserType() != UserType.CHILD) {
             throw new BusinessException(ErrorCode.CHILD_ONLY_FAMILY_REQUEST);
@@ -64,6 +62,71 @@ public class FamilyRequestService {
                 .status(FamilyRelationStatus.PENDING)
                 .parentName(parent.getName())
                 .build();
+    }
+
+    /**
+     * 아이가 자기 요청이 어디까지 진행됐는지 확인한다. 대기 화면에서 주기적으로 부른다.
+     *
+     * @throws BusinessException 요청이 없거나(404) 본인 요청이 아닌 경우(403)
+     */
+    @Transactional(readOnly = true)
+    public FamilyRequestResponseDto findForChild(AuthUser requester, Long requestId) {
+        requireAuthenticated(requester);
+
+        FamilyRelation relation = findRelation(requestId);
+        requireOwner(requester, relation.getChildId());
+
+        return FamilyRequestResponseDto.builder()
+                .requestId(relation.getId())
+                .status(relation.getStatus())
+                .parentName(relation.getParentName())
+                .build();
+    }
+
+    /**
+     * 보호자가 자기에게 온 요청을 확인한다.
+     *
+     * @throws BusinessException 요청이 없거나(404) 본인에게 온 요청이 아닌 경우(403)
+     */
+    @Transactional(readOnly = true)
+    public FamilyRequestResponseDto findForParent(AuthUser requester, Long requestId) {
+        requireAuthenticated(requester);
+
+        FamilyRelation relation = findRelation(requestId);
+        requireOwner(requester, relation.getParentId());
+
+        return FamilyRequestResponseDto.builder()
+                .requestId(relation.getId())
+                .status(relation.getStatus())
+                .childName(relation.getChildName())
+                .createdAt(relation.getCreatedAt())
+                .build();
+    }
+
+    private void requireAuthenticated(AuthUser requester) {
+        if (requester == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+    }
+
+    private FamilyRelation findRelation(Long requestId) {
+        FamilyRelation relation = familyRelationMapper.selectDetailById(requestId);
+
+        if (relation == null) {
+            throw new BusinessException(ErrorCode.FAMILY_REQUEST_NOT_FOUND);
+        }
+
+        return relation;
+    }
+
+    /**
+     * 요청 ID 숫자만 바꾸면 남의 가족 요청에 닿을 수 있다.
+     * 조회든 처리든 당사자인지 반드시 확인한다.
+     */
+    private void requireOwner(AuthUser requester, Long ownerId) {
+        if (!requester.getUserId().equals(ownerId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
     }
 
     /**

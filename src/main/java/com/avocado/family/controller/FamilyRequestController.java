@@ -10,6 +10,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.validation.Valid;
 
 import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_CREATED;
+import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_FOUND;
 
 @Api(tags = "가족 연결 API")
 @RestController
@@ -46,5 +49,44 @@ public class FamilyRequestController {
         return ResponseEntity
                 .status(FAMILY_REQUEST_CREATED.getHttpStatus())
                 .body(ApiResponse.success(FAMILY_REQUEST_CREATED, responseDto));
+    }
+
+    @ApiOperation(
+            value = "[아이] 가족 연결 요청 조회",
+            notes = "아이가 자기 요청의 진행 상태를 확인합니다. 대기 화면에서 주기적으로 호출합니다. "
+                    + "보호자가 승인하면 status가 APPROVED로 바뀝니다. "
+    )
+    @GetMapping("/{requestId}")
+    public ResponseEntity<ApiResponse<FamilyRequestResponseDto>> getRequest(
+            @AuthenticationPrincipal
+            AuthUser authUser,
+            @PathVariable
+            Long requestId
+    ) {
+        FamilyRequestResponseDto responseDto =
+                familyRequestService.findForChild(authUser, requestId);
+
+        return ResponseEntity
+                .status(FAMILY_REQUEST_FOUND.getHttpStatus())
+                .body(ApiResponse.success(FAMILY_REQUEST_FOUND, responseDto));
+    }
+
+    @ApiOperation(
+            value = "[보호자] 가족 연결 요청 확인",
+            notes = "보호자가 자기에게 온 요청을 확인합니다."
+    )
+    @GetMapping("/{requestId}/check")
+    public ResponseEntity<ApiResponse<FamilyRequestResponseDto>> checkRequest(
+            @AuthenticationPrincipal
+            AuthUser authUser,
+            @PathVariable
+            Long requestId
+    ) {
+        FamilyRequestResponseDto responseDto =
+                familyRequestService.findForParent(authUser, requestId);
+
+        return ResponseEntity
+                .status(FAMILY_REQUEST_FOUND.getHttpStatus())
+                .body(ApiResponse.success(FAMILY_REQUEST_FOUND, responseDto));
     }
 }
