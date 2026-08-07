@@ -1,6 +1,7 @@
 package com.avocado.user.mapper;
 
 import com.avocado.user.domain.User;
+import com.avocado.user.domain.UserStatus;
 import com.avocado.user.dto.response.LoginChildDto;
 import com.avocado.user.dto.response.LoginFamilyDto;
 import org.apache.ibatis.annotations.Param;
@@ -45,4 +46,15 @@ public interface UserMapper {
 
     // 가족 연결 요청 시 초대 코드로 보호자를 찾는다. (invite_code는 UNIQUE)
     User selectByInviteCode(@Param("inviteCode") String inviteCode);
+
+    /**
+     * 회원 상태를 바꾼다.
+     * 가입 직후에는 PENDING이고, 아이는 가족 연결을, 부모는 계좌 등록을 마치면 ACTIVE가 된다.
+     *
+     * @return 바뀐 행 수
+     */
+    int updateStatus(
+            @Param("id") Long id,
+            @Param("status") UserStatus status
+    );
 }

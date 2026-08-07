@@ -4,6 +4,7 @@ import com.avocado.common.exception.BusinessException;
 import com.avocado.common.response.code.ErrorCode;
 import com.avocado.family.domain.FamilyRelation;
 import com.avocado.family.domain.FamilyRelationStatus;
+import com.avocado.family.dto.request.FamilyRequestConfirmRequestDto;
 import com.avocado.family.dto.request.FamilyRequestCreateRequestDto;
 import com.avocado.family.dto.request.FamilyRequestDecision;
 import com.avocado.family.dto.request.FamilyRequestDecisionRequestDto;
@@ -147,6 +148,56 @@ public class FamilyRequestService {
                 .status(decided)
                 .childName(relation.getChildName())
                 .createdAt(relation.getCreatedAt())
+                .build();
+    }
+
+    /**
+     * 아이가 보호자를 확인하고 연결을 확정하거나 취소한다. 가족 연결의 마지막 단계다.
+     * 확정하면 관계가 ACTIVE가 되고, 아이 계정도 함께 ACTIVE로 바뀐다.
+     * 두 테이블을 함께 바꾸므로 하나라도 실패하면 전부 되돌린다.
+     *
+     * @throws BusinessException 요청이 없거나(404), 본인 요청이 아니거나(403),
+     *                           보호자가 아직 승인하지 않은 경우(409)
+     */
+    @Transactional
+    public FamilyRequestResponseDto confirm(
+            AuthUser requester,
+            Long requestId,
+            FamilyRequestConfirmRequestDto request
+    ) {
+        requireAuthenticated(requester);
+
+        FamilyRelation relation = findRelation(requestId);
+        requireOwner(requester, relation.getChildId());
+
+        if (relation.getStatus() != FamilyRelationStatus.APPROVED) {
+            throw new BusinessException(ErrorCode.FAMILY_REQUEST_NOT_APPROVED);
+        }
+
+        FamilyRelationStatus confirmed = request.getConfirm()
+                ? FamilyRelationStatus.ACTIVE
+                : FamilyRelationStatus.CANCELED;
+
+        // 확인 버튼을 연타해도 한 번만 통과한다.
+        int updated = familyRelationMapper.updateStatus(
+                relation.getId(),
+                FamilyRelationStatus.APPROVED,
+                confirmed
+        );
+
+        if (updated == 0) {
+            throw new BusinessException(ErrorCode.FAMILY_REQUEST_NOT_APPROVED);
+        }
+
+        // 연결이 끝나야 아이가 서비스를 쓸 수 있다. 취소한 경우에는 PENDING으로 남는다.
+        if (confirmed == FamilyRelationStatus.ACTIVE) {
+            userMapper.updateStatus(relation.getChildId(), UserStatus.ACTIVE);
+        }
+
+        return FamilyRequestResponseDto.builder()
+                .requestId(relation.getId())
+                .status(confirmed)
+                .parentName(relation.getParentName())
                 .build();
     }
 

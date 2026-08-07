@@ -114,6 +114,13 @@
         )
     </select>
 
+    <!-- 아이는 가족 연결을, 부모는 계좌 등록을 마치면 PENDING에서 ACTIVE로 바뀐다. -->
+    <update id="updateStatus">
+        UPDATE users
+           SET status = #{status}
+         WHERE id = #{id}
+    </update>
+
     <!--
         role, status, invite_code는 DB 기본값이 있지만 가입 정책을 코드에서 드러내기 위해 명시한다. (수정하기)
         created_at, updated_at은 DB 기본값을 그대로 사용한다.

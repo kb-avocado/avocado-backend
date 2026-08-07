@@ -1,6 +1,7 @@
 package com.avocado.family.controller;
 
 import com.avocado.common.response.ApiResponse;
+import com.avocado.family.dto.request.FamilyRequestConfirmRequestDto;
 import com.avocado.family.dto.request.FamilyRequestCreateRequestDto;
 import com.avocado.family.dto.request.FamilyRequestDecisionRequestDto;
 import com.avocado.family.dto.response.FamilyRequestCheckResponseDto;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
 
+import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_CONFIRMED;
 import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_CREATED;
 import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_DECIDED;
 import static com.avocado.common.response.code.SuccessCode.FAMILY_REQUEST_FOUND;
@@ -116,5 +118,27 @@ public class FamilyRequestController {
         return ResponseEntity
                 .status(FAMILY_REQUEST_DECIDED.getHttpStatus())
                 .body(ApiResponse.success(FAMILY_REQUEST_DECIDED, responseDto));
+    }
+
+    @ApiOperation(
+            value = "[아이] 가족 연결 최종 확정",
+            notes = "보호자가 승인한 뒤, 아이가 보호자를 확인하고 연결을 확정하거나 취소합니다."
+    )
+    @PatchMapping("/{requestId}/confirm")
+    public ResponseEntity<ApiResponse<FamilyRequestResponseDto>> confirmRequest(
+            @AuthenticationPrincipal
+            AuthUser authUser,
+            @PathVariable
+            Long requestId,
+            @Valid
+            @RequestBody
+            FamilyRequestConfirmRequestDto request
+    ) {
+        FamilyRequestResponseDto responseDto =
+                familyRequestService.confirm(authUser, requestId, request);
+
+        return ResponseEntity
+                .status(FAMILY_REQUEST_CONFIRMED.getHttpStatus())
+                .body(ApiResponse.success(FAMILY_REQUEST_CONFIRMED, responseDto));
     }
 }
