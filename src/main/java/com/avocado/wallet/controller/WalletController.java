@@ -2,40 +2,38 @@ package com.avocado.wallet.controller;
 
 import com.avocado.common.response.ApiResponse;
 import com.avocado.common.response.code.SuccessCode;
+import com.avocado.jwt.dto.AuthUser;
 import com.avocado.wallet.dto.response.WalletResponseDto;
+import com.avocado.wallet.service.WalletService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
-
 @RestController
 @RequestMapping("/api/wallets")
+@RequiredArgsConstructor
 @Api(tags = "아이 선불 지갑 API")
 public class WalletController {
+    private final WalletService walletService;
 
     @GetMapping("/{childId}")
     @ApiOperation(
             value = "아이 선불 지갑 조회",
             notes = "특정 아이의 선불지갑 정보(상태, 잔액 등)를 조회합니다."
     )
-    public ResponseEntity<ApiResponse<WalletResponseDto>> getChildWallet(@PathVariable Long childId) {
-        WalletResponseDto mockWalletResponse = WalletResponseDto.builder()
-                .walletId(1L)
-                .childId(childId)
-                .walletNumber("12345678901234")
-                .balance(35000L)
-                .status("ACTIVE")
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
-
+    public ResponseEntity<ApiResponse<WalletResponseDto>> getChildWallet(
+            @PathVariable Long childId,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        WalletResponseDto response = walletService.getChildWallet(childId, authUser);
         return ResponseEntity
-                .status(SuccessCode.OK.getHttpStatus())
-                .body(ApiResponse.success(SuccessCode.OK, mockWalletResponse));
+                .status(SuccessCode.CHILD_WALLET_FOUND.getHttpStatus())
+                .body(ApiResponse.success(SuccessCode.CHILD_WALLET_FOUND, response));
     }
 }

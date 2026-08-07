@@ -2,6 +2,7 @@ package com.avocado.news.controller;
 
 import com.avocado.common.response.ApiResponse;
 import com.avocado.common.response.code.SuccessCode;
+import com.avocado.news.batch.NewsRssCrawlService;
 import com.avocado.news.dto.request.NewsAnswerRequestDto;
 import com.avocado.news.dto.response.NewsAnswerResponseDto;
 import com.avocado.news.dto.response.NewsDetailResponseDto;
@@ -24,6 +25,7 @@ import static com.avocado.common.response.code.SuccessCode.*;
 public class NewsController {
     private final NewsService newsService;
     private static final Long TEMP_CHILD_ID = 1L; // TODO: 로그인 붙으면 제거
+    private final NewsRssCrawlService newsRssCrawlService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<NewsListResponseDto>> getNewsList(
@@ -59,5 +61,12 @@ public class NewsController {
         return ResponseEntity
                 .status(NEWS_ANSWER_SAVED.getHttpStatus())
                 .body(ApiResponse.success(NEWS_ANSWER_SAVED, data));
+    }
+
+    //크롤링 테스트용 임시 엔드포인트. 테스트 후 삭제
+    @PostMapping("/crawl")
+    public ResponseEntity<String> crawl(){
+        int savedCount = newsRssCrawlService.crawlAndSave();
+        return ResponseEntity.ok(savedCount + "건 저장됨");
     }
 }

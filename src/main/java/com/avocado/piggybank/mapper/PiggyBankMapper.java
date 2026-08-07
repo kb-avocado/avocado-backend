@@ -47,4 +47,9 @@ public interface PiggyBankMapper {
     //저금통 삭제 추가
     int cancel(@Param("id") Long id);
 
+    //저금통 보너스 지급 완료 처리
+    int markBonusPaid(
+            @Param("id") Long id,
+            @Param("bonusPaidAt") LocalDateTime bonusPaidAt
+    );
 }

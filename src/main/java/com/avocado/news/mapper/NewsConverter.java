@@ -14,8 +14,10 @@ public class NewsConverter {
     private static final int NEW_BADGE_DAYS = 3;
 
     public NewsListItemDto toListItemDto(NewsArticle article, NewsActivity activity) {
-        boolean isNew = article.getPublishedAt()
+        boolean isRecentlyCreated = article.getCreatedAt()
                 .isAfter(LocalDateTime.now().minusDays(NEW_BADGE_DAYS));
+        boolean isUnread = activity == null || activity.getViewedAt() == null;
+        boolean isNew = isRecentlyCreated && isUnread;
 
         return NewsListItemDto.builder()
                 .newsId(article.getId())

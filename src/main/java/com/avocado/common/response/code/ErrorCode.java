@@ -18,6 +18,9 @@ public enum ErrorCode implements ResponseCode {
     USER_SUSPENDED(HttpStatus.FORBIDDEN, "AUT-004", "이용이 정지된 계정입니다. 고객센터에 문의해주세요."),
     USER_DELETED(HttpStatus.FORBIDDEN, "AUT-005", "탈퇴한 계정입니다."),
 
+    // 사용자 (USR)
+    CHILD_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "자녀를 찾을 수 없습니다."),
+
     // 저금통 (PIG)
     PIGGY_BANK_NOT_FOUND(HttpStatus.NOT_FOUND, "PIG-001", "저금통을 찾을 수 없습니다."),
     PIGGY_BANK_BONUS_NOT_SET(HttpStatus.BAD_REQUEST, "PIG-002", "설정된 보너스가 없는 저금통입니다."),
@@ -27,6 +30,7 @@ public enum ErrorCode implements ResponseCode {
     PIGGY_BANK_BONUS_ALREADY_SET(HttpStatus.CONFLICT, "PIG-006", "이미 보너스가 설정된 저금통입니다."),
     PIGGY_BANK_NOT_ACTIVE(HttpStatus.CONFLICT, "PIG-007", "진행 중인 저금통이 아닙니다."),
     PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET(HttpStatus.BAD_REQUEST, "PIG-008", "입금 금액이 저금통의 남은 목표 금액을 초과합니다."),
+    PIGGY_BANK_BONUS_ALREADY_PAID(HttpStatus.CONFLICT, "PIG-009", "이미 지급된 보너스입니다."),
 
     // 선불지갑 (WAL)
     WALLET_NOT_FOUND(HttpStatus.NOT_FOUND, "WAL-001", "선불지갑을 찾을 수 없습니다."),
