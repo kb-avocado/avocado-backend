@@ -42,4 +42,7 @@ public interface UserMapper {
 
     // 회원가입
     void insertUser(User user);
+
+    // 가족 연결 요청 시 초대 코드로 보호자를 찾는다. (invite_code는 UNIQUE)
+    User selectByInviteCode(@Param("inviteCode") String inviteCode);
 }
