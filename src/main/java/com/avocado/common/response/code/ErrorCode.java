@@ -50,7 +50,17 @@ public enum ErrorCode implements ResponseCode {
 
     // 회원 (USR)
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USR-001", "이미 가입된 이메일입니다."),
-    DUPLICATE_PHONE(HttpStatus.CONFLICT, "USR-002", "이미 가입된 전화번호입니다.");
+    DUPLICATE_PHONE(HttpStatus.CONFLICT, "USR-002", "이미 가입된 전화번호입니다."),
+
+    // 가족 연결 (FAM)
+    FAMILY_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "FAM-001", "가족 연결 요청을 찾을 수 없습니다."),
+    INVITE_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAM-002", "초대 코드와 일치하는 보호자가 없습니다."),
+    CHILD_ONLY_FAMILY_REQUEST(HttpStatus.FORBIDDEN, "FAM-003", "아이 계정만 가족 연결을 요청할 수 있습니다."),
+    ALREADY_CONNECTED(HttpStatus.CONFLICT, "FAM-004", "이미 보호자와 연결된 계정입니다."),
+    // 보호자가 이미 승인/거절한 요청을 다시 처리하려는 경우
+    FAMILY_REQUEST_ALREADY_HANDLED(HttpStatus.CONFLICT, "FAM-005", "이미 처리된 요청입니다."),
+    // 보호자 승인 전에 아이가 확정하려는 경우
+    FAMILY_REQUEST_NOT_APPROVED(HttpStatus.CONFLICT, "FAM-006", "보호자가 아직 승인하지 않은 요청입니다.");
 
     private final HttpStatus httpStatus;
 
