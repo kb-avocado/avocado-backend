@@ -2,6 +2,7 @@ package com.avocado.family.controller;
 
 import com.avocado.common.response.ApiResponse;
 import com.avocado.family.dto.request.FamilyRequestCreateRequestDto;
+import com.avocado.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.family.service.FamilyRequestService;
 import com.avocado.jwt.dto.AuthUser;
@@ -76,13 +77,13 @@ public class FamilyRequestController {
             notes = "보호자가 자기에게 온 요청을 확인합니다."
     )
     @GetMapping("/{requestId}/check")
-    public ResponseEntity<ApiResponse<FamilyRequestResponseDto>> checkRequest(
+    public ResponseEntity<ApiResponse<FamilyRequestCheckResponseDto>> checkRequest(
             @AuthenticationPrincipal
             AuthUser authUser,
             @PathVariable
             Long requestId
     ) {
-        FamilyRequestResponseDto responseDto =
+        FamilyRequestCheckResponseDto responseDto =
                 familyRequestService.findForParent(authUser, requestId);
 
         return ResponseEntity

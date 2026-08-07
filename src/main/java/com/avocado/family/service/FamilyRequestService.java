@@ -5,6 +5,7 @@ import com.avocado.common.response.code.ErrorCode;
 import com.avocado.family.domain.FamilyRelation;
 import com.avocado.family.domain.FamilyRelationStatus;
 import com.avocado.family.dto.request.FamilyRequestCreateRequestDto;
+import com.avocado.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.family.mapper.FamilyRelationMapper;
 import com.avocado.jwt.dto.AuthUser;
@@ -89,13 +90,13 @@ public class FamilyRequestService {
      * @throws BusinessException 요청이 없거나(404) 본인에게 온 요청이 아닌 경우(403)
      */
     @Transactional(readOnly = true)
-    public FamilyRequestResponseDto findForParent(AuthUser requester, Long requestId) {
+    public FamilyRequestCheckResponseDto findForParent(AuthUser requester, Long requestId) {
         requireAuthenticated(requester);
 
         FamilyRelation relation = findRelation(requestId);
         requireOwner(requester, relation.getParentId());
 
-        return FamilyRequestResponseDto.builder()
+        return FamilyRequestCheckResponseDto.builder()
                 .requestId(relation.getId())
                 .status(relation.getStatus())
                 .childName(relation.getChildName())
