@@ -49,6 +49,8 @@ public enum SuccessCode implements ResponseCode {
 
     // 거래(TXN)
     DEPOSIT_HISTORY_FETCHED(HttpStatus.OK, "TXN-000", "거래 내역 조회에 성공했습니다."),
+    WALLET_TX_LIST_FETCHED(HttpStatus.OK, "TXN-001", "선불지갑 거래 내역 조회에 성공했습니다."),
+
 
     // 응원 메시지(CHE)
     CHEER_MESSAGE_SENT(HttpStatus.CREATED, "CHE-000", "응원 메시지가 전송되었습니다."),
