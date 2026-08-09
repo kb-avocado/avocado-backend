@@ -4,7 +4,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.avocado.piggybank.mapper.PiggyBankMapper">
+<mapper namespace="com.avocado.domain.piggybank.mapper.PiggyBankMapper">
 
     <!-- 저금통 생성 -->
     <insert id="insert">
@@ -19,7 +19,7 @@
 
     <!--저금통 목록 조회 추가-->
     <select id="selectByWalletIdAndStatuses"
-            resultType="com.avocado.piggybank.domain.PiggyBank">
+            resultType="com.avocado.domain.piggybank.domain.PiggyBank">
         SELECT
         id,
         wallet_id,
@@ -66,7 +66,7 @@
     </update>
 
     <!--  저금통 보너스  -->
-    <select id="selectById" resultType="com.avocado.piggybank.domain.PiggyBank">
+    <select id="selectById" resultType="com.avocado.domain.piggybank.domain.PiggyBank">
         SELECT
         id,
         wallet_id,

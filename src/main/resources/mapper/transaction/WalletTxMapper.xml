@@ -4,7 +4,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.avocado.transaction.mapper.WalletTxMapper">
+<mapper namespace="com.avocado.domain.transaction.mapper.WalletTxMapper">
 
     <select id="countByWalletId" resultType="long">
         SELECT COUNT(*)
@@ -12,7 +12,7 @@
         WHERE wallet_id = #{walletId}
     </select>
 
-    <select id="findAllByWalletId" resultType="com.avocado.transaction.dto.response.WalletTxListItemResponseDto">
+    <select id="findAllByWalletId" resultType="com.avocado.domain.transaction.dto.response.WalletTxListItemResponseDto">
         SELECT
             h.history_id AS historyId,
             m.merchant_name AS title,

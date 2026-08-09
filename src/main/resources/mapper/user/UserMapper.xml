@@ -4,7 +4,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.avocado.user.mapper.UserMapper">
+<mapper namespace="com.avocado.domain.user.mapper.UserMapper">
 
     <sql id="userColumns">
         id,
@@ -21,14 +21,14 @@
         updated_at
     </sql>
 
-    <select id="selectByEmail" resultType="com.avocado.user.domain.User">
+    <select id="selectByEmail" resultType="com.avocado.domain.user.domain.User">
         SELECT <include refid="userColumns"/>
           FROM users
          WHERE email = #{email}
     </select>
 
     <!-- 가족 연결 요청에서 초대 코드로 보호자를 찾는다. invite_code도 UNIQUE -->
-    <select id="selectByInviteCode" resultType="com.avocado.user.domain.User">
+    <select id="selectByInviteCode" resultType="com.avocado.domain.user.domain.User">
         SELECT <include refid="userColumns"/>
           FROM users
          WHERE invite_code = #{inviteCode}
@@ -49,7 +49,7 @@
         status는 가족 관계 상태가 아니라 아이 계정 자체의 상태(users.status)다.
         지갑이 아직 없을 수 있어 LEFT JOIN 한다.
     -->
-    <select id="selectChildrenByParentId" resultType="com.avocado.user.dto.response.LoginChildDto">
+    <select id="selectChildrenByParentId" resultType="com.avocado.domain.user.dto.response.LoginChildDto">
         SELECT u.id     AS id,
                u.name   AS name,
                u.status AS status,
@@ -81,7 +81,7 @@
     </select>
 
     <!-- 요청이 여러 번 있었다면 가장 최근 요청을 기준으로 한다. -->
-    <select id="selectFamilyByChildId" resultType="com.avocado.user.dto.response.LoginFamilyDto">
+    <select id="selectFamilyByChildId" resultType="com.avocado.domain.user.dto.response.LoginFamilyDto">
         SELECT status AS status,
                id     AS requestId
           FROM family_relations

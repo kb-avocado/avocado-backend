@@ -1,0 +1,33 @@
+package com.avocado.domain.wallet.controller;
+
+import com.avocado.global.response.ApiResponse;
+import com.avocado.global.response.code.SuccessCode;
+import com.avocado.domain.wallet.dto.response.WalletQrResponseDto;
+import io.swagger.annotations.Api;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/wallets")
+@Api(tags = "아이 선불 지갑 QR 코드 API")
+public class WalletQrController {
+
+    @PostMapping("/qr")
+    public ResponseEntity<ApiResponse<WalletQrResponseDto>> createWalletQr(@PathVariable Long walletId) {
+        WalletQrResponseDto mockData = WalletQrResponseDto.builder()
+                .id(1L)
+                .walletId(walletId)
+                .token("QR_8f24dbfa7c934f20a3bc91e7")
+                .status("ACTIVE")
+                .expiredAt("2026-07-28T12:35:00")
+                .createdAt("2026-07-28T12:32:00")
+                .build();
+
+        return ResponseEntity
+                .status(SuccessCode.OK.getHttpStatus())
+                .body(ApiResponse.success(SuccessCode.OK, mockData));
+    }
+}
