@@ -27,6 +27,26 @@ services:
       timeout: 5s
       retries: 20
       start_period: 30s
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: avocado-redis
+    ports:
+      - "127.0.0.1:${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis-data:/data
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+
   flyway:
     image: flyway/flyway:13.1.0
     container_name: avocado-flyway
@@ -44,5 +64,7 @@ services:
     volumes:
       - ./src/main/resources/db/migration:/flyway/migrations:ro
     restart: "no"
+
 volumes:
   mysql-data:
+  redis-data:

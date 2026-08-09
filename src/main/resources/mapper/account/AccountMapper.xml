@@ -4,7 +4,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.avocado.account.mapper.AccountMapper">
+<mapper namespace="com.avocado.domain.account.mapper.AccountMapper">
     <!-- 은행 중복 계좌 여부 체크  -->
     <select id="existsByBankCodeAndAccountNumber" resultType="boolean">
         SELECT EXISTS (

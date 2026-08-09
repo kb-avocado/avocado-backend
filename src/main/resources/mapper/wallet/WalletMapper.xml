@@ -4,7 +4,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.avocado.wallet.mapper.WalletMapper">
+<mapper namespace="com.avocado.domain.wallet.mapper.WalletMapper">
 
     <!-- 사용자 ID로 해당 자녀가 보유한 선불지갑 ID를 조회한다. -->
     <select id="findWalletIdByUserId" resultType="long">
@@ -35,7 +35,7 @@
     </select>
 
     <!-- childId 기준으로 자녀의 선불지갑 단건 정보를 조회한다. -->
-    <select id="findByChildId" resultType="com.avocado.wallet.dto.response.WalletResponseDto">
+    <select id="findByChildId" resultType="com.avocado.domain.wallet.dto.response.WalletResponseDto">
         SELECT id AS wallet_id,
                child_id,
                wallet_number,

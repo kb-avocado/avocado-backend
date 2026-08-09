@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.avocado.domain.family.mapper.FamilyRelationMapper">
+
+    <select id="existsActiveByChildId" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+              FROM family_relations
+             WHERE child_id = #{childId}
+               AND status = 'ACTIVE'
+        )
+    </select>
+
+    <!--
+        아이가 새 초대 코드를 넣었다는 것은 이전 요청을 포기했다는 뜻이므로 정리한다.
+        정리하지 않으면 진행 중인 요청이 여러 건 남아 보호자가 둘 생길 수 있다.
+    -->
+    <update id="cancelInProgressByChildId">
+        UPDATE family_relations
+           SET status = 'CANCELED'
+         WHERE child_id = #{childId}
+           AND status IN ('PENDING', 'APPROVED')
+    </update>
+
+    <!-- uk_parent_child(UNIQUE) 덕분에 결과는 최대 한 건이다. -->
+    <select id="selectByParentIdAndChildId" resultType="com.avocado.domain.family.domain.FamilyRelation">
+        SELECT id,
+               parent_id,
+               child_id,
+               relation_type,
+               status,
+               created_at,
+               updated_at
+          FROM family_relations
+         WHERE parent_id = #{parentId}
+           AND child_id = #{childId}
+    </select>
+
+    <insert id="insertRequest" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO family_relations (
+            parent_id,
+            child_id,
+            status
+        ) VALUES (
+            #{parentId},
+            #{childId},
+            #{status}
+        )
+    </insert>
+
+    <!--
+        parentId, childId는 요청 당사자인지 확인하는 데 쓴다.
+    -->
+    <select id="selectDetailById" resultType="com.avocado.domain.family.domain.FamilyRelation">
+        SELECT fr.id         AS id,
+               fr.parent_id  AS parentId,
+               fr.child_id   AS childId,
+               fr.status     AS status,
+               p.name        AS parentName,
+               c.name        AS childName,
+               fr.created_at AS createdAt
+          FROM family_relations fr
+          JOIN users p
+            ON p.id = fr.parent_id
+          JOIN users c
+            ON c.id = fr.child_id
+         WHERE fr.id = #{id}
+    </select>
+
+    <!--
+        지금 상태가 fromStatus일 때만 바꾼다. 버튼 연타나 동시 요청으로
+        같은 전이가 두 번 일어나는 것을 DB 차원에서 막는다.
+        바뀐 행이 0건이면 이미 다른 상태로 처리된 요청이다.
+    -->
+    <update id="updateStatus">
+        UPDATE family_relations
+           SET status = #{toStatus}
+         WHERE id = #{id}
+           AND status = #{fromStatus}
+    </update>
+
+</mapper>

@@ -4,7 +4,7 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <!-- 응원 메세지 (조회, 생성, 삭제) -->
-<mapper namespace="com.avocado.piggybank.mapper.PiggyBankCheerMessageMapper">
+<mapper namespace="com.avocado.domain.piggybank.mapper.PiggyBankCheerMessageMapper">
 
     <insert id="insert">
         INSERT INTO piggy_bank_cheer_messages (piggy_bank_id, parent_id, content)
@@ -15,7 +15,7 @@
         SELECT LAST_INSERT_ID()
     </select>
 
-    <select id="selectByPiggyBankId" resultType="com.avocado.piggybank.dto.response.PiggyBankCheerMessageResponseDto">
+    <select id="selectByPiggyBankId" resultType="com.avocado.domain.piggybank.dto.response.PiggyBankCheerMessageResponseDto">
         SELECT
         m.id AS cheerMessageId,
         u.name AS senderName,

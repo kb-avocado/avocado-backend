@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.avocado.report.mapper.ReportMapper">
+<mapper namespace="com.avocado.domain.report.mapper.ReportMapper">
 
     <select id="findWalletIdByChildId" resultType="long">
         SELECT id
@@ -26,7 +26,7 @@
           AND DATE_FORMAT(created_at, '%Y-%m') = #{yearMonth}
     </select>
 
-    <resultMap id="topSpotRowMap" type="com.avocado.report.domain.TopSpotRow">
+    <resultMap id="topSpotRowMap" type="com.avocado.domain.report.domain.TopSpotRow">
         <result property="category" column="category"/>
         <result property="amount" column="amount"/>
     </resultMap>
@@ -46,7 +46,7 @@
         LIMIT #{limit}
     </select>
 
-    <resultMap id="monthlySpentRowMap" type="com.avocado.report.domain.MonthlySpentRow">
+    <resultMap id="monthlySpentRowMap" type="com.avocado.domain.report.domain.MonthlySpentRow">
         <result property="yearMonth" column="year_month"/>
         <result property="amount" column="amount"/>
     </resultMap>

@@ -4,10 +4,10 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.avocado.user.mapper.UserMapper">
+<mapper namespace="com.avocado.domain.user.mapper.UserMapper">
 
     <sql id="userColumns">
-        user_id,
+        id,
         email,
         password,
         name,
@@ -21,19 +21,26 @@
         updated_at
     </sql>
 
-    <select id="selectByEmail" resultType="com.avocado.user.domain.User">
+    <select id="selectByEmail" resultType="com.avocado.domain.user.domain.User">
         SELECT <include refid="userColumns"/>
           FROM users
          WHERE email = #{email}
     </select>
 
+    <!-- 가족 연결 요청에서 초대 코드로 보호자를 찾는다. invite_code도 UNIQUE -->
+    <select id="selectByInviteCode" resultType="com.avocado.domain.user.domain.User">
+        SELECT <include refid="userColumns"/>
+          FROM users
+         WHERE invite_code = #{inviteCode}
+    </select>
+
     <!-- 계좌가 여러 개일 수 있어 먼저 연동한 ACTIVE 계좌 하나를 대표로 사용한다. -->
     <select id="selectAccountIdByParentId" resultType="java.lang.Long">
-        SELECT account_id
+        SELECT id
           FROM accounts
          WHERE user_id = #{parentId}
            AND status = 'ACTIVE'
-         ORDER BY account_id
+         ORDER BY id
          LIMIT 1
     </select>
 
@@ -42,24 +49,24 @@
         status는 가족 관계 상태가 아니라 아이 계정 자체의 상태(users.status)다.
         지갑이 아직 없을 수 있어 LEFT JOIN 한다.
     -->
-    <select id="selectChildrenByParentId" resultType="com.avocado.user.dto.response.LoginChildDto">
-        SELECT u.user_id   AS id,
-               u.name      AS name,
-               u.status    AS status,
-               w.wallet_id AS walletId
+    <select id="selectChildrenByParentId" resultType="com.avocado.domain.user.dto.response.LoginChildDto">
+        SELECT u.id     AS id,
+               u.name   AS name,
+               u.status AS status,
+               w.id     AS walletId
           FROM family_relations fr
           JOIN users u
-            ON u.user_id = fr.child_id
+            ON u.id = fr.child_id
           LEFT JOIN wallets w
-            ON w.child_id = u.user_id
+            ON w.child_id = u.id
          WHERE fr.parent_id = #{parentId}
            AND fr.status = 'ACTIVE'
-         ORDER BY u.user_id
+         ORDER BY u.id
     </select>
 
     <!-- 지갑 상태(SUSPENDED, CLOSED)와 무관하게 내려준다. 정지 안내는 프론트에서 처리한다. -->
     <select id="selectWalletIdByChildId" resultType="java.lang.Long">
-        SELECT wallet_id
+        SELECT id
           FROM wallets
          WHERE child_id = #{childId}
     </select>
@@ -69,17 +76,17 @@
           FROM family_relations
          WHERE child_id = #{childId}
            AND status = 'ACTIVE'
-         ORDER BY relation_id
+         ORDER BY id
          LIMIT 1
     </select>
 
     <!-- 요청이 여러 번 있었다면 가장 최근 요청을 기준으로 한다. -->
-    <select id="selectFamilyByChildId" resultType="com.avocado.user.dto.response.LoginFamilyDto">
-        SELECT status      AS status,
-               relation_id AS requestId
+    <select id="selectFamilyByChildId" resultType="com.avocado.domain.user.dto.response.LoginFamilyDto">
+        SELECT status AS status,
+               id     AS requestId
           FROM family_relations
          WHERE child_id = #{childId}
-         ORDER BY relation_id DESC
+         ORDER BY id DESC
          LIMIT 1
     </select>
 
@@ -107,11 +114,18 @@
         )
     </select>
 
+    <!-- 아이는 가족 연결을, 부모는 계좌 등록을 마치면 PENDING에서 ACTIVE로 바뀐다. -->
+    <update id="updateStatus">
+        UPDATE users
+           SET status = #{status}
+         WHERE id = #{id}
+    </update>
+
     <!--
         role, status, invite_code는 DB 기본값이 있지만 가입 정책을 코드에서 드러내기 위해 명시한다. (수정하기)
         created_at, updated_at은 DB 기본값을 그대로 사용한다.
     -->
-    <insert id="insertUser" useGeneratedKeys="true" keyProperty="userId" keyColumn="user_id">
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
         INSERT INTO users (
             email,
             password,
