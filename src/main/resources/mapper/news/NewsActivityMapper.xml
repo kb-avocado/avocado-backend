@@ -3,7 +3,7 @@
 <mapper namespace="com.avocado.domain.news.mapper.NewsActivityMapper">
 
     <resultMap id="newsActivityResultMap" type="com.avocado.domain.news.domain.NewsActivity">
-        <id property="id" column="activity_id"/>
+        <id property="id" column="id"/>
         <result property="childId" column="child_id"/>
         <result property="articleId" column="article_id"/>
         <result property="childAnswer" column="child_answer"/>
@@ -14,15 +14,15 @@
     </resultMap>
 
     <select id="findByChildIdAndArticleId" resultMap="newsActivityResultMap">
-        SELECT activity_id, child_id, article_id, child_answer, viewed_at, completed_at, created_at, updated_at
+        SELECT id, child_id, article_id, child_answer, viewed_at, completed_at, created_at, updated_at
         FROM news_activities
         WHERE child_id = #{childId} AND article_id = #{articleId}
     </select>
 
     <select id="findByChildIdAndArticleIds" resultMap="newsActivityResultMap">
-        SELECT activity_id, child_id, article_id, child_answer, viewed_at, completed_at, created_at, updated_at
+        SELECT id, child_id, article_id, child_answer, viewed_at, completed_at, created_at, updated_at
         FROM news_activities
-        WHERE child_id=#{childId}
+        WHERE child_id = #{childId}
         AND article_id IN
         <foreach item="articleId" collection="articleIds" open="(" separator="," close=")">
             #{articleId}
@@ -42,7 +42,7 @@
             viewed_at = #{viewedAt},
             completed_at = #{completedAt},
             updated_at = #{updatedAt}
-        WHERE activity_id = #{id}
+        WHERE id = #{id}
     </update>
 
 </mapper>
