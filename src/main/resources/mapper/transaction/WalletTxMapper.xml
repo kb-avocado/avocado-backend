@@ -6,29 +6,35 @@
 
 <mapper namespace="com.avocado.domain.transaction.mapper.WalletTxMapper">
 
+    <!--  지갑의 전체 거래 수를 조회한다.  -->
     <select id="countByWalletId" resultType="long">
         SELECT COUNT(*)
         FROM wallet_histories
         WHERE wallet_id = #{walletId}
     </select>
 
-    <select id="findAllByWalletId" resultType="com.avocado.domain.transaction.dto.response.WalletTxListItemResponseDto">
+    <!--  지갑 거래내역을 최신순으로 조회한다.  -->
+    <select id="findAllByWalletId" resultType="com.avocado.domain.transaction.dto.response.WalletTxItemResponseDto">
         SELECT
-            h.history_id AS historyId,
-            m.merchant_name AS title,
-            l.ledger_type AS ledgerType,
-            h.amount AS amount,
-            h.balance_before AS balanceBefore,
-            h.balance_after AS balanceAfter,
-            h.created_at AS createAt
-        FROM wallet_histories h
-            INNER JOIN wallet_ledgers l
-                ON h.ledger_id = l.ledger_id
+            wh.id AS transactionId,
+            wh.trace_id AS traceId,
+            wh.transaction_type AS transactionType,
+            wh.amount AS amount,
+            CASE
+                WHEN wh.merchant_id IS NOT NULL
+                    THEN m.name
+                ELSE wh.counterparty_name
+            END AS counterpartyName,
+            wh.status AS status,
+            wh.created_at AS createdAt
+        FROM wallet_histories wh
             LEFT JOIN merchants m
-                ON h.merchant_id = m.merchant_id
-        WHERE h.wallet_id = #{walletId}
-        ORDER BY h.created_at DESC
-        LIMIT #{offset}, #{size}
+                ON m.id = wh.merchant_id
+        WHERE wh.wallet_id = #{walletId}
+        ORDER BY
+            wh.created_at DESC,
+            wh.id DESC
+        LIMIT #{size} OFFSET #{offset}
     </select>
 
 
