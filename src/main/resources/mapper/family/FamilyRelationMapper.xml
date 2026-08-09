@@ -4,7 +4,7 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.avocado.family.mapper.FamilyRelationMapper">
+<mapper namespace="com.avocado.domain.family.mapper.FamilyRelationMapper">
 
     <select id="existsActiveByChildId" resultType="boolean">
         SELECT EXISTS(
@@ -27,7 +27,7 @@
     </update>
 
     <!-- uk_parent_child(UNIQUE) 덕분에 결과는 최대 한 건이다. -->
-    <select id="selectByParentIdAndChildId" resultType="com.avocado.family.domain.FamilyRelation">
+    <select id="selectByParentIdAndChildId" resultType="com.avocado.domain.family.domain.FamilyRelation">
         SELECT id,
                parent_id,
                child_id,
@@ -55,7 +55,7 @@
     <!--
         parentId, childId는 요청 당사자인지 확인하는 데 쓴다.
     -->
-    <select id="selectDetailById" resultType="com.avocado.family.domain.FamilyRelation">
+    <select id="selectDetailById" resultType="com.avocado.domain.family.domain.FamilyRelation">
         SELECT fr.id         AS id,
                fr.parent_id  AS parentId,
                fr.child_id   AS childId,

@@ -4,10 +4,10 @@
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="com.avocado.transfer.mapper.TransferRecipientMapper">
+<mapper namespace="com.avocado.domain.transfer.mapper.TransferRecipientMapper">
 
     <select id="findByUserCode"
-            resultType="com.avocado.transfer.dto.response.TransferRecipientResponseDto">
+            resultType="com.avocado.domain.transfer.dto.response.TransferRecipientResponseDto">
         SELECT
             'WALLET' AS recipient_type,
             w.wallet_id AS recipient_id,
@@ -23,7 +23,7 @@
     </select>
 
     <select id="findByAccountNumber"
-            resultType="com.avocado.transfer.dto.response.TransferRecipientResponseDto">
+            resultType="com.avocado.domain.transfer.dto.response.TransferRecipientResponseDto">
         SELECT
             'WALLET' AS recipient_type,
             w.wallet_id AS recipient_id,
