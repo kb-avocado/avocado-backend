@@ -71,6 +71,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         return PiggyBankResponseDto.builder()
                 .piggyBankId(p.getId())
                 .name(p.getName())
+                .icon(p.getIcon())
                 .status(p.getStatus())
                 .favorite(p.getIsFavorite())
                 .savedAmount(saved)
@@ -96,6 +97,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         return PiggyBankDetailResponseDto.builder()
                 .piggyBankId(p.getId())
                 .name(p.getName())
+                .icon(p.getIcon())
                 .status(p.getStatus())
                 .favorite(p.getIsFavorite())
                 .savedAmount(saved)
@@ -120,6 +122,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         PiggyBank piggyBank = PiggyBank.builder()
                 .walletId(walletId)
                 .name(request.getName())
+                .icon(request.getIcon())
                 .targetAmount(request.getTargetAmount())
                 .build();
         piggyBankMapper.insert(piggyBank);

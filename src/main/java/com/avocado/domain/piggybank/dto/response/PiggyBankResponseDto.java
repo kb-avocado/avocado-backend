@@ -12,6 +12,7 @@ public class PiggyBankResponseDto {
 
     private final Long piggyBankId;   // 저금통 ID
     private final String name;        // 저금통 이름
+    private final String icon;
     private final String status;      // ACTIVE, PENDING_ACHIEVE, ACHIEVE, CANCEL
     private final Boolean favorite;   // 즐겨찾기 여부
     private final Long savedAmount;   // 현재 모은 금액 (DB balance)
