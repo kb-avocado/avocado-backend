@@ -9,6 +9,8 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.avocado.global.security.jwt.dto.AuthUser;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 import javax.validation.Valid;
 import java.util.List;
@@ -27,9 +29,11 @@ public class PiggyBankCheerMessageController {
     @ApiOperation(value = "응원 메시지 전송", notes = "보호자가 저금통에 응원 메시지를 남깁니다.")
     public ResponseEntity<ApiResponse<PiggyBankCheerMessageResponseDto>> sendMessage(
             @PathVariable Long piggyBankId,
-            @Valid @RequestBody PiggyBankCheerMessageCreateRequestDto request
+            @Valid @RequestBody PiggyBankCheerMessageCreateRequestDto request,
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        PiggyBankCheerMessageResponseDto response = piggyBankCheerMessageService.sendMessage(piggyBankId, request);
+        PiggyBankCheerMessageResponseDto response =
+                piggyBankCheerMessageService.sendMessage(piggyBankId, request, authUser);
 
         return ResponseEntity
                 .status(CHEER_MESSAGE_SENT.getHttpStatus())
