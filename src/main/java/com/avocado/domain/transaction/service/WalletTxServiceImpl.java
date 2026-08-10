@@ -1,5 +1,6 @@
 package com.avocado.domain.transaction.service;
 
+import com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.PageResponse;
 import com.avocado.domain.transaction.dto.request.WalletTxListRequestDto;
@@ -23,17 +24,13 @@ public class WalletTxServiceImpl implements WalletTxService {
     private final WalletMapper walletMapper;
     private final WalletTxMapper walletTxMapper;
 
-    /**
-     * 회원에게 연결된 선불지갑의 거래 내역을 페이지 단위로 조회
-     */
     @Override
     public PageResponse<WalletTxItemResponseDto> getWalletTxList(
             Long userId,
             WalletTxListRequestDto requestDto
     ) {
         // 회원과 연결된 지갑을 조회
-        Long walletId = walletMapper
-                .findWalletIdByUserId(userId)
+        Long walletId = walletMapper.findWalletIdByUserId(userId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.WALLET_NOT_FOUND));
 
         // 요청한 페이지 정보
@@ -60,5 +57,20 @@ public class WalletTxServiceImpl implements WalletTxService {
                 totalElements,
                 items
         );
+    }
+
+    @Override
+    public WalletTxDetailResponseDto getWalletTxDetail(
+            Long userId,
+            Long transactionId
+    ) {
+        // 회원과 연결된 지갑을 조회
+        Long walletId = walletMapper.findWalletIdByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.WALLET_NOT_FOUND));
+
+        return walletTxMapper.findDetailByWalletIdAndTransactionId(
+                walletId,
+                transactionId
+        ).orElseThrow(() -> new BusinessException(ErrorCode.WALLET_TX_NOT_FOUND));
     }
 }
