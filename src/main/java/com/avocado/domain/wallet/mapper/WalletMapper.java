@@ -27,4 +27,18 @@ public interface WalletMapper {
     Optional<WalletVo> findByChildId(
             @Param("childId") Long childId
     );
+
+
+    // 선불지갑 잔액을 증가시킨다.
+    int increaseBalance(
+            @Param("walletId") Long walletId,
+            @Param("amount") Long amount
+    );
+
+
+    // 아이 소유 지갑을 잠금 조회한다.
+    Optional<WalletVo> findForUpdateByIdAndChildId(
+            @Param("walletId") Long walletId,
+            @Param("childId") Long childId
+    );
 }

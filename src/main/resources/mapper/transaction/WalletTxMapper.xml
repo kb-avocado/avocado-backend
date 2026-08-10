@@ -68,4 +68,48 @@
         WHERE wh.wallet_id = #{walletId}
         AND wh.id = #{transactionId}
     </select>
+
+    <!--  선불지갑 거래 이력을 생성한다.  -->
+    <insert id="insertWalletHistory"
+            parameterType="com.avocado.domain.transaction.domain.WalletHistoryVo"
+            useGeneratedKeys="true"
+            keyProperty="id"
+    >
+        INSERT INTO wallet_histories (
+            wallet_id,
+            trace_id,
+            transaction_type,
+            amount,
+            memo,
+            status
+        )
+        VALUES (
+            #{walletId},
+            #{traceId},
+            #{transactionType},
+            #{amount},
+            #{memo},
+            #{status}
+        )
+    </insert>
+
+    <!--  실제 지갑 잔액 증가를 원장에 기록한다.  -->
+    <insert id="insertWalletLedger">
+        INSERT INTO wallet_ledgers (
+            history_id,
+            wallet_id,
+            ledger_type,
+            amount,
+            balance_before,
+            balance_after
+        )
+        VALUES (
+            #{historyId},
+            #{walletId},
+            #{ledgerType},
+            #{amount},
+            #{balanceBefore},
+            #{balanceAfter}
+        )
+    </insert>
 </mapper>
