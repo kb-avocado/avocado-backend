@@ -1,6 +1,6 @@
 package com.avocado.domain.wallet.mapper;
 
-import com.avocado.domain.wallet.dto.response.WalletResponseDto;
+import com.avocado.domain.wallet.domain.WalletVo;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.Optional;
@@ -24,7 +24,7 @@ public interface WalletMapper {
     );
 
     // 자녀 ID로 선불지갑 단건 정보를 조회한다.
-    Optional<WalletResponseDto> findByChildId(
+    Optional<WalletVo> findByChildId(
             @Param("childId") Long childId
     );
 }
