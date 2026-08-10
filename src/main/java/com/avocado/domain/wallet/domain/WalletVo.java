@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 public class WalletVo {
-
     private Long walletId;
     private Long childId;
     private String walletNumber;

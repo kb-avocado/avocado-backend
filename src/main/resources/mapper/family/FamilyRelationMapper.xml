@@ -83,4 +83,15 @@
            AND status = #{fromStatus}
     </update>
 
+    <!-- 부모와 아이 사이 ACTIVE 가족관계가 존재 확인  -->
+    <select id="existsActiveRelation" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM family_relations
+            WHERE parent_id = #{parentId}
+                AND child_id = #{childId}
+                AND status = 'ACTIVE'
+        )
+    </select>
+
 </mapper>
