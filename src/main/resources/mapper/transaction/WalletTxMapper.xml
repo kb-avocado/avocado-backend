@@ -37,5 +37,35 @@
         LIMIT #{size} OFFSET #{offset}
     </select>
 
-
+    <!--  지갑 상세 거래내역을 조회한다.  -->
+    <select id="findDetailByWalletIdAndTransactionId" resultType="com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto">
+        SELECT
+            wh.id               AS transactionId,
+            wh.trace_id         AS traceId,
+            wh.transaction_type AS transactionType,
+            wh.amount           AS amount,
+            CASE
+                WHEN wh.transaction_type IN ('PAYMENT', 'PAYMENT_CANCEL')
+                THEN m.name
+                ELSE wh.counterparty_name
+            END                 AS counterpartyName,
+            wh.target_bank_code      AS targetBankCode,
+            wh.target_account_number AS targetAccountNumber,
+            wh.memo                  AS memo,
+            wh.status                AS status,
+            wh.failure_code          AS failureCode,
+            wh.created_at            AS createdAt,
+            wl.ledger_type           AS ledgerType,
+            wl.balance_before        AS balanceBefore,
+            wl.balance_after         AS balanceAfter,
+            m.category               AS merchantCategory
+        FROM wallet_histories wh
+            LEFT JOIN wallet_ledgers wl
+                ON wl.history_id = wh.id
+                AND wl.wallet_id = wh.wallet_id
+            LEFT JOIN merchants m
+                ON m.id = wh.merchant_id
+        WHERE wh.wallet_id = #{walletId}
+        AND wh.id = #{transactionId}
+    </select>
 </mapper>
