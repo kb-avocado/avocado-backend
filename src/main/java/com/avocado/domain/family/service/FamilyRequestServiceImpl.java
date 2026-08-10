@@ -293,12 +293,30 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
             return relation.getId();
         }
 
-        familyRelationMapper.updateStatus(
+        int updated = familyRelationMapper.updateStatus(
                 existing.getId(),
                 existing.getStatus(),
                 FamilyRelationStatus.PENDING
         );
 
+        // 조회와 갱신 사이에 다른 요청이 같은 행을 건드리면 0건이 된다.
+        if (updated == 0) {
+            requirePending(existing.getId());
+        }
+
         return existing.getId();
+    }
+
+    /**
+     * 되살리기가 반영되지 않았을 때 실제 상태를 다시 확인한다.
+     * 요청 버튼을 연타한 경우 다른 호출이 이미 PENDING으로 만들어 놨으므로 실패가 아니다.
+     * 그 사이 보호자가 응답하는 등 다른 상태가 됐다면, PENDING이라고 응답할 수 없으므로 중단한다.
+     */
+    private void requirePending(Long requestId) {
+        FamilyRelation current = findRelation(requestId);
+
+        if (current.getStatus() != FamilyRelationStatus.PENDING) {
+            throw new BusinessException(ErrorCode.FAMILY_REQUEST_ALREADY_HANDLED);
+        }
     }
 }
