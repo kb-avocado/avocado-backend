@@ -39,9 +39,10 @@ public enum ErrorCode implements ResponseCode {
     WALLET_ALREADY_EXISTS(HttpStatus.CONFLICT, "WAL-004", "이미 선불지갑이 있는 계정입니다."),
 
     // 계좌 (ACC)
-    PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ACC-001", "보호자 회원을 찾을 수 없습니다."),
+    ACTIVE_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ACC-001", "활성 상태인 부모 회원을 찾을 수 없습니다."),
     DUPLICATE_ACCOUNT(HttpStatus.CONFLICT, "ACC-002", "이미 등록된 계좌입니다."),
     ACCOUNT_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ACC-003", "계좌 등록에 실패했습니다."),
+    PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ACC-04", "보호자 회원을 찾을 수 없습니다."),
 
     // 가맹점 (MER)
     MERCHANT_NOT_FOUND(HttpStatus.NOT_FOUND, "MER-001", "가맹점을 찾을 수 없습니다."),
