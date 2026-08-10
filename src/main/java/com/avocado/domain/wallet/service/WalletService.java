@@ -38,7 +38,7 @@ public class WalletService {
         WalletVo wallet = walletMapper.findByChildId(childId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.WALLET_NOT_FOUND));
 
-        return toWalletResponseDto(wallet);
+        return WalletResponseDto.from(wallet);
     }
 
     /*
@@ -87,15 +87,4 @@ public class WalletService {
                 );
     }
 
-    private WalletResponseDto toWalletResponseDto(WalletVo wallet) {
-        return WalletResponseDto.builder()
-                .walletId(wallet.getWalletId())
-                .childId(wallet.getChildId())
-                .walletNumber(wallet.getWalletNumber())
-                .balance(wallet.getBalance())
-                .status(wallet.getStatus())
-                .createdAt(wallet.getCreatedAt())
-                .updatedAt(wallet.getUpdatedAt())
-                .build();
-    }
 }
