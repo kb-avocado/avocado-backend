@@ -8,12 +8,11 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import java.time.Duration;
 import java.util.Date;
 
 // JWT 발급과 검증을 담당. jjwt 의존은 이 클래스 안에서만 사용한다.
@@ -27,18 +26,13 @@ public class JwtTokenProvider {
     private final SecretKey secretKey;
     private final String issuer;
 
-    @Getter
-    private final long accessTokenValidity;
+    private final Duration accessTokenValidity;
 
-    public JwtTokenProvider(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.issuer:avocado}") String issuer,
-            @Value("${jwt.access-token-validity:1800000}") long accessTokenValidity
-    ) {
+    public JwtTokenProvider(JwtProperties properties) {
         // HS256은 32바이트 미만 키를 거부하므로 Base64 디코딩 결과 길이에 주의
-        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
-        this.issuer = issuer;
-        this.accessTokenValidity = accessTokenValidity;
+        this.secretKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(properties.getSecret()));
+        this.issuer = properties.getIssuer();
+        this.accessTokenValidity = properties.getAccessTokenValidity();
     }
 
     /**
@@ -55,7 +49,7 @@ public class JwtTokenProvider {
             UserType userType
     ) {
         Date now = new Date();
-        Date expiration = new Date(now.getTime() + accessTokenValidity);
+        Date expiration = new Date(now.getTime() + accessTokenValidity.toMillis());
 
         return Jwts.builder()
                 .issuer(issuer)
@@ -74,7 +68,7 @@ public class JwtTokenProvider {
      * @param token JWT 문자열
      * @return 유효하면 Claims, 유효하지 않으면 null
      */
-    public Claims parseClaims(String token) {
+    private Claims parseClaims(String token) {
         try {
             return Jwts.parser()
                     .verifyWith(secretKey)

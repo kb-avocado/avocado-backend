@@ -50,11 +50,7 @@ public class UserController {
                 responseDto.getType()
         );
 
-        jwtUtil.addAccessTokenCookie(
-                response,
-                accessToken,
-                jwtTokenProvider.getAccessTokenValidity()
-        );
+        jwtUtil.addAccessTokenCookie(response, accessToken);
 
         return ResponseEntity
                 .status(SIGNUP_SUCCESS.getHttpStatus())
@@ -83,11 +79,7 @@ public class UserController {
                 user.getType()
         );
 
-        jwtUtil.addAccessTokenCookie(
-                response,
-                accessToken,
-                jwtTokenProvider.getAccessTokenValidity()
-        );
+        jwtUtil.addAccessTokenCookie(response, accessToken);
 
         LoginResultCode result = LoginResultCode.of(user.getType(), user.getStatus());
 

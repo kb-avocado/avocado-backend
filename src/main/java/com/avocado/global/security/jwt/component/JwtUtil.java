@@ -1,6 +1,5 @@
 package com.avocado.global.security.jwt.component;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.stereotype.Component;
@@ -21,21 +20,21 @@ public class JwtUtil {
     private final boolean secure;
     private final String sameSite;
 
-    public JwtUtil(
-            @Value("${jwt.cookie.secure:false}") boolean secure,
-            @Value("${jwt.cookie.same-site:Lax}") String sameSite
-    ) {
-        this.secure = secure;
-        this.sameSite = sameSite;
+    // 쿠키의 만료를 토큰과 맞춘다.
+    private final Duration accessTokenValidity;
+
+    public JwtUtil(JwtProperties properties) {
+        this.secure = properties.isCookieSecure();
+        this.sameSite = properties.getCookieSameSite();
+        this.accessTokenValidity = properties.getAccessTokenValidity();
     }
 
     // 로그인 성공 시 응답에 Access Token 쿠키를 실어 보냄
     public void addAccessTokenCookie(
             HttpServletResponse response,
-            String accessToken,
-            long validityMillis
+            String accessToken
     ) {
-        ResponseCookie cookie = buildCookie(accessToken, Duration.ofMillis(validityMillis));
+        ResponseCookie cookie = buildCookie(accessToken, accessTokenValidity);
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     }
 
