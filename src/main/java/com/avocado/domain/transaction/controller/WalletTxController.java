@@ -1,6 +1,7 @@
 package com.avocado.domain.transaction.controller;
 
 import com.avocado.domain.transaction.dto.request.WalletTxListRequestDto;
+import com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto;
 import com.avocado.domain.transaction.dto.response.WalletTxItemResponseDto;
 import com.avocado.domain.transaction.service.WalletTxService;
 import com.avocado.global.response.ApiResponse;
@@ -8,13 +9,11 @@ import com.avocado.global.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
+import static com.avocado.global.response.code.SuccessCode.WALLET_TX_DETAIL_FETCHED;
 import static com.avocado.global.response.code.SuccessCode.WALLET_TX_LIST_FETCHED;
 
 
@@ -37,9 +36,6 @@ public class WalletTxController {
     public ResponseEntity<ApiResponse<PageResponse<WalletTxItemResponseDto>>> getWalletTxList(
             @Valid @ModelAttribute WalletTxListRequestDto requestDto
     ) {
-
-        log.info("WalletTxController: 로그인한 아이의 선불지갑 거래 내역을 조회");
-        System.out.println("asdadasdasdsad");
         // TODO: 임시 회원 아이디
         Long userId = 102L;
 
@@ -52,6 +48,23 @@ public class WalletTxController {
         return ResponseEntity
                 .status(WALLET_TX_LIST_FETCHED.getHttpStatus())
                 .body(ApiResponse.success(WALLET_TX_LIST_FETCHED, response));
+    }
+
+    @GetMapping("/transactions/{transactionId}")
+    public ResponseEntity<ApiResponse<WalletTxDetailResponseDto>> getWalletTxDetail(
+            @PathVariable Long transactionId
+    ) {
+        // TODO: 임시 회원 아이디
+        Long userId = 102L;
+
+        WalletTxDetailResponseDto response = walletTxService.getWalletTxDetail(
+                userId,
+                transactionId
+        );
+
+        return ResponseEntity
+                .status(WALLET_TX_DETAIL_FETCHED.getHttpStatus())
+                .body(ApiResponse.success(WALLET_TX_DETAIL_FETCHED, response));
     }
 
 }
