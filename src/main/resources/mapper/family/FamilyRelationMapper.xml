@@ -31,7 +31,6 @@
         SELECT id,
                parent_id,
                child_id,
-               relation_type,
                status,
                created_at,
                updated_at
