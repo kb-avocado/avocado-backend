@@ -25,6 +25,7 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class FamilyRequestServiceImpl implements FamilyRequestService {
 
     private final FamilyRelationMapper familyRelationMapper;
@@ -34,7 +35,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
     /**
      * 아이가 보호자의 초대 코드로 가족 연결을 요청한다.
      *
-     * @param requester 요청한 아이 (토큰에서 꺼낸 인증 주체)
+     * @param authUser 요청한 아이 (토큰에서 꺼낸 인증 주체)
      * @param request   초대 코드
      * @return 만들어진 요청 정보
      * @throws BusinessException 아이 계정이 아니거나, 초대 코드가 없거나, 이미 연결된 경우
@@ -42,22 +43,23 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
     @Override
     @Transactional
     public FamilyRequestResponseDto createRequest(
-            AuthUser requester,
+            AuthUser authUser,
             FamilyRequestCreateRequestDto request
     ) {
-        requireAuthenticated(requester);
+        requireAuthenticated(authUser);
 
-        if (requester.getUserType() != UserType.CHILD) {
+        if (authUser.getUserType() != UserType.CHILD) {
             throw new BusinessException(ErrorCode.CHILD_ONLY_FAMILY_REQUEST);
         }
 
-        Long childId = requester.getUserId();
-        User parent = findParentByInviteCode(request.getCode());
+        Long childId = authUser.getUserId();
 
-        // 아이 하나에 보호자 하나. 이미 연결됐으면 새 요청을 만들지 않는다.
+        // 아이 하나에 보호자 하나. 이미 연결됐으면 초대 코드를 찾아볼 것도 없다.
         if (familyRelationMapper.existsActiveByChildId(childId)) {
             throw new BusinessException(ErrorCode.ALREADY_CONNECTED);
         }
+
+        User parent = findParentByInviteCode(request.getCode());
 
         familyRelationMapper.cancelInProgressByChildId(childId);
 
@@ -76,12 +78,11 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
      * @throws BusinessException 요청이 없거나(404) 본인 요청이 아닌 경우(403)
      */
     @Override
-    @Transactional(readOnly = true)
-    public FamilyRequestResponseDto findForChild(AuthUser requester, Long requestId) {
-        requireAuthenticated(requester);
+    public FamilyRequestResponseDto findForChild(AuthUser authUser, Long requestId) {
+        requireAuthenticated(authUser);
 
         FamilyRelation relation = findRelation(requestId);
-        requireOwner(requester, relation.getChildId());
+        requireOwner(authUser, relation.getChildId());
 
         return FamilyRequestResponseDto.builder()
                 .requestId(relation.getId())
@@ -96,12 +97,11 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
      * @throws BusinessException 요청이 없거나(404) 본인에게 온 요청이 아닌 경우(403)
      */
     @Override
-    @Transactional(readOnly = true)
-    public FamilyRequestCheckResponseDto findForParent(AuthUser requester, Long requestId) {
-        requireAuthenticated(requester);
+    public FamilyRequestCheckResponseDto findForParent(AuthUser authUser, Long requestId) {
+        requireAuthenticated(authUser);
 
         FamilyRelation relation = findRelation(requestId);
-        requireOwner(requester, relation.getParentId());
+        requireOwner(authUser, relation.getParentId());
 
         return FamilyRequestCheckResponseDto.builder()
                 .requestId(relation.getId())
@@ -227,8 +227,8 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
         return "WALLET-" + childId;
     }
 
-    private void requireAuthenticated(AuthUser requester) {
-        if (requester == null) {
+    private void requireAuthenticated(AuthUser authUser) {
+        if (authUser == null) {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
     }
@@ -247,8 +247,8 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
      * 요청 ID 숫자만 바꾸면 남의 가족 요청에 닿을 수 있다.
      * 조회든 처리든 당사자인지 반드시 확인한다.
      */
-    private void requireOwner(AuthUser requester, Long ownerId) {
-        if (!requester.getUserId().equals(ownerId)) {
+    private void requireOwner(AuthUser authUser, Long ownerId) {
+        if (!authUser.getUserId().equals(ownerId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
     }
