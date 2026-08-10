@@ -20,6 +20,7 @@ public enum ErrorCode implements ResponseCode {
 
     // 사용자 (USR)
     CHILD_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "자녀를 찾을 수 없습니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-002", "사용자를 찾을 수 없습니다."),
 
     // 저금통 (PIG)
     PIGGY_BANK_NOT_FOUND(HttpStatus.NOT_FOUND, "PIG-001", "저금통을 찾을 수 없습니다."),
