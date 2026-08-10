@@ -14,6 +14,7 @@ public class PiggyBank {
     private final Long id;
     private final Long walletId;
     private final String name;
+    private final String icon;  // 아이콘 추가
     private final Long targetAmount;
     private final Long balance;
     private final BonusType bonusType;
