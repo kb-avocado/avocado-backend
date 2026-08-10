@@ -4,6 +4,7 @@ import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.domain.wallet.dto.response.WalletResponseDto;
 import com.avocado.domain.wallet.mapper.WalletMapper;
 import lombok.RequiredArgsConstructor;
@@ -34,8 +35,10 @@ public class WalletService {
 
         validateChildWalletAccess(childId, authUser);
 
-        return walletMapper.findByChildId(childId)
+        WalletVo wallet = walletMapper.findByChildId(childId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.WALLET_NOT_FOUND));
+
+        return toWalletResponseDto(wallet);
     }
 
     /*
@@ -82,5 +85,17 @@ public class WalletService {
                         authUser.getUserId(),
                         childId
                 );
+    }
+
+    private WalletResponseDto toWalletResponseDto(WalletVo wallet) {
+        return WalletResponseDto.builder()
+                .walletId(wallet.getWalletId())
+                .childId(wallet.getChildId())
+                .walletNumber(wallet.getWalletNumber())
+                .balance(wallet.getBalance())
+                .status(wallet.getStatus())
+                .createdAt(wallet.getCreatedAt())
+                .updatedAt(wallet.getUpdatedAt())
+                .build();
     }
 }

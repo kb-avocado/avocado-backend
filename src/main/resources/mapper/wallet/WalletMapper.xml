@@ -35,7 +35,7 @@
     </select>
 
     <!-- childId 기준으로 자녀의 선불지갑 단건 정보를 조회한다. -->
-    <select id="findByChildId" resultType="com.avocado.domain.wallet.dto.response.WalletResponseDto">
+    <select id="findByChildId" resultType="com.avocado.domain.wallet.domain.WalletVo">
         SELECT id AS wallet_id,
                child_id,
                wallet_number,
