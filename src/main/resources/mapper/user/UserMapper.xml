@@ -161,4 +161,15 @@
         )
     </select>
 
+    <!--
+        부모 계정의 상태를 반환한다. 부모 계정이 아니면 결과가 없어 null이 된다.
+    -->
+    <select id="selectParentStatusById" resultType="com.avocado.domain.user.domain.UserStatus">
+        SELECT status
+          FROM users
+         WHERE id = #{userId}
+           AND role = 'USER'
+           AND user_type = 'PARENT'
+    </select>
+
 </mapper>

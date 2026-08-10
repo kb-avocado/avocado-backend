@@ -44,6 +44,13 @@ public interface UserMapper {
     // [PARENT] 부모 계정 활성화 여부 검사
     boolean existsActiveParentById(@Param("userId") Long userId);
 
+    /**
+     * [PARENT] 부모 회원의 계정 상태를 조회한다.
+     *
+     * @return 부모 회원의 상태. 회원이 없거나 부모 계정이 아니면 null
+     */
+    UserStatus selectParentStatusById(@Param("userId") Long userId);
+
     // 회원가입
     void insertUser(User user);
 
