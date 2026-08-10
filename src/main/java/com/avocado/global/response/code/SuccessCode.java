@@ -57,6 +57,7 @@ public enum SuccessCode implements ResponseCode {
 
     // 리포트(RPT)
     REPORT_FOUND(HttpStatus.OK, "RPT-000", "월별 리포트를 조회했습니다."),
+    SPENDING_REPORT_TYPE_FOUND(HttpStatus.OK, "RPT-001", "이번 달 소비 유형을 조회했습니다."),
 
     // 경제 신문(NWS)
     NEWS_LIST_FOUND(HttpStatus.OK, "NWS-000", "신문 목록을 조회했습니다."),
