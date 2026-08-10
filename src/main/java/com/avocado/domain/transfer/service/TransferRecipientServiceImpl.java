@@ -1,6 +1,6 @@
 package com.avocado.domain.transfer.service;
 
-import com.avocado.domain.transfer.dto.request.TransferRecipientSearchType;
+import com.avocado.domain.transfer.domain.TransferRecipientSearchType;
 import com.avocado.domain.transfer.dto.response.TransferRecipientResponseDto;
 import com.avocado.domain.transfer.mapper.TransferRecipientMapper;
 import com.avocado.global.exception.BusinessException;
