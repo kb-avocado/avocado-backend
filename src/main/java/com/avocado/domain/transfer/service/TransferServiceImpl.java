@@ -1,35 +1,37 @@
 package com.avocado.domain.transfer.service;
 
 import com.avocado.domain.account.domain.AccountVo;
-import com.avocado.domain.account.mapper.AccountMapper;
-import com.avocado.domain.family.mapper.FamilyRelationMapper;
-import com.avocado.domain.transaction.domain.WalletHistoryVo;
-import com.avocado.domain.transaction.mapper.WalletTxMapper;
+import com.avocado.domain.account.service.AccountService;
+import com.avocado.domain.family.service.FamilyService;
+import com.avocado.domain.transaction.service.AccountTxService;
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
-import com.avocado.domain.user.mapper.UserMapper;
-import com.avocado.domain.wallet.domain.WalletVo;
-import com.avocado.domain.wallet.mapper.WalletMapper;
-import com.avocado.global.exception.BusinessException;
+import com.avocado.domain.transfer.dto.request.WalletToPiggyBankTransferRequestDto;
+import com.avocado.domain.user.service.UserService;
+import com.avocado.domain.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
-import static com.avocado.global.response.code.ErrorCode.*;
-
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TransferServiceImpl implements TransferService {
 
-    private final FamilyRelationMapper familyRelationMapper;
-    private final AccountMapper accountMapper;
-    private final WalletMapper walletMapper;
-    private final WalletTxMapper walletTxMapper;
-    private final UserMapper userMapper;
+    private final AccountService accountService;
+    private final AccountTxService accountTxService;
+    private final FamilyService familyService;
+    private final UserService userService;
+    private final WalletService walletService;
 
+    /**
+     * 부모 외부 계좌에서
+     * 연결된 아이의 선불지갑으로 송금한다.
+     * 계좌, 가족 관계, 회원, 지갑 도메인의 기능을 조합하고
+     * 전체 송금의 트랜잭션 경계를 담당한다.
+     */
     @Override
     @Transactional
     public TransferResultVo transferAccountToWallet(AccountToWalletTransferRequestDto requestDto) {
@@ -38,190 +40,76 @@ public class TransferServiceImpl implements TransferService {
         Long walletId = requestDto.getWalletId();
         Long amount = requestDto.getAmount();
 
-        // 1. 부모 연동 계좌 조회
-        AccountVo account = getActiveParentAccount(parentId);
+        // 1. 부모에게 연결된 ACTIVE 외부 계좌를 조회한다.
+        AccountVo account = accountService.getActiveAccount(parentId);
 
-        // 2. 부모와 아이의 가족 관계 확인
-        validateFamilyRelation(
+        // 2. 부모와 아이가 ACTIVE 가족 관계인지 검증한다.
+        familyService.validateActiveRelation(
                 parentId,
                 childId
         );
 
-        // 3. 송금 상대방 이름 조회
-        String childName = getChildName(childId);
+        // 3. 송금 결과에 표시할 아이 이름을 조회한다.
+        String childName = userService.getUserName(childId);
 
-        // 4. 아이 선불지갑 조회 및 잠금
-        WalletVo wallet = getActiveWalletForUpdate(
-                walletId,
-                childId
-        );
-
-        // 5. 송금 전/후 지갑 잔액 계산
-        long balanceBefore = wallet.getBalance();
-        long balanceAfter = balanceBefore + amount;
-
-        // 6. 계좌와 지갑 거래를 연결하기 위한 추적 ID 생성
+        // 4. 계좌 거래와 지갑 거래를 연결하기 위한
+        // 공통 추적 ID를 생성한다.
         String traceId = UUID.randomUUID().toString();
 
-        // 7. 부모 계좌 거래 이력 생성
-        createAccountHistory(
+        // 5. 부모 외부 계좌 사용 이력을 기록한다.
+        accountTxService.recordWalletCharge(
                 account.getId(),
                 traceId,
                 amount
         );
 
-        // 8. 아이 선불지갑 잔액 증가
-        increaseWalletBalance(
-                walletId,
-                amount
-        );
-
-        // 9. 선불지갑 거래 이력 생성
-        Long walletHistoryId = createWalletHistory(
-                walletId,
-                traceId,
-                amount
-        );
-
-        // 10. 선불지갑 원장 생성
-        createWalletLedger(
-                walletHistoryId,
+        // 6. 아이 선불지갑에 금액을 입금하고
+        // 지갑 거래 이력 및 원장을 함께 생성한다.
+        walletService.depositFromAccount(
+                childId,
                 walletId,
                 amount,
-                balanceBefore,
-                balanceAfter
+                traceId
         );
 
-        // 11. 송금 결과 반환
+        // 7. 송금 결과를 반환한다.
         return TransferResultVo.builder()
                 .counterpartyName(childName)
                 .amount(amount)
                 .build();
     }
 
-    // 부모에게 연결된 ACTIVE 외부 계좌를 조회
-    private AccountVo getActiveParentAccount(Long parentId) {
-        return accountMapper
-                .findActiveByUserId(parentId)
-                .orElseThrow(() -> new BusinessException(ACTIVE_PARENT_NOT_FOUND));
-    }
+    @Override
+    @Transactional
+    public TransferResultVo transferWalletToPiggyBank(WalletToPiggyBankTransferRequestDto requestDto) {
+        Long childId = requestDto.getChildId();
+        Long walletId = requestDto.getWalletId();
+        Long piggyBankId = requestDto.getPiggyBankId();
+        Long amount = requestDto.getAmount();
 
-    // 부모와 아이가 실제 가족 관계인지 검증
-    private void validateFamilyRelation(
-            Long parentId,
-            Long childId
-    ) {
-        boolean isFamily = familyRelationMapper.existsActiveRelation(
-                parentId,
-                childId
-        );
+        // 하나의 자금 이동을 연결하기 위한 추적 ID 생성
+        String traceId = UUID.randomUUID().toString();
 
-        if (!isFamily) {
-            throw new BusinessException(FAMILY_RELATION_NOT_FOUND);
-        }
-    }
-
-    // 송금 상대방인 아이의 이름을 조회
-    private String getChildName(Long childId) {
-        return userMapper
-                .findNameById(childId)
-                .orElseThrow(() -> new BusinessException(CHILD_NOT_FOUND));
-    }
-
-    // 아이 소유의 선불지갑 잠금 조회 및 사용 가능 상태인지 검증
-    private WalletVo getActiveWalletForUpdate(
-            Long walletId,
-            Long childId
-    ) {
-        WalletVo wallet = walletMapper
-                .findForUpdateByIdAndChildId(
-                        walletId,
-                        childId
-                )
-                .orElseThrow(() -> new BusinessException(WALLET_NOT_FOUND));
-
-        if (!"ACTIVE".equals(wallet.getStatus())) {
-            throw new BusinessException(WALLET_INACTIVE);
-        }
-
-        return wallet;
-    }
-
-    // 부모의 외부 연동 계좌를 사용한 거래 이력을 기록
-    private void createAccountHistory(
-            Long accountId,
-            String traceId,
-            Long amount
-    ) {
-        int insertedRows = accountMapper.insertWalletChargeHistory(
-                accountId,
-                traceId,
-                amount
-        );
-
-        if (insertedRows != 1) {
-            throw new BusinessException(ACCOUNT_HISTORY_CREATE_FAILED);
-        }
-    }
-
-    // 아이 선불지갑 잔액을 증가
-    private void increaseWalletBalance(
-            Long walletId,
-            Long amount
-    ) {
-        int updatedRows = walletMapper.increaseBalance(
+        // 아이 선불지갑에서 저금할 금액을 출금
+        walletService.withdrawForPiggyBank(
+                childId,
                 walletId,
-                amount
-        );
-
-        if (updatedRows != 1) {
-            throw new BusinessException(WALLET_UPDATE_FAILED);
-        }
-    }
-
-    // 선불지갑 거래 이력 생성 및 생성된 거래 이력 ID를 반환
-    private Long createWalletHistory(
-            Long walletId,
-            String traceId,
-            Long amount
-    ) {
-        WalletHistoryVo walletHistory = WalletHistoryVo.builder()
-                .walletId(walletId)
-                .traceId(traceId)
-                .transactionType("CHARGE")
-                .amount(amount)
-                .memo("부모 계좌 충전")
-                .status("SUCCESS")
-                .build();
-
-        int insertedRows = walletTxMapper.insertWalletHistory(walletHistory);
-
-        if (insertedRows != 1 || walletHistory.getId() == null) {
-            throw new BusinessException(WALLET_HISTORY_CREATE_FAILED);
-        }
-
-        return walletHistory.getId();
-    }
-
-    // 선불지갑 잔액 변화를 원장에 기록
-    private void createWalletLedger(
-            Long historyId,
-            Long walletId,
-            Long amount,
-            Long balanceBefore,
-            Long balanceAfter
-    ) {
-        int insertedRows = walletTxMapper.insertWalletLedger(
-                historyId,
-                walletId,
-                "IN",
                 amount,
-                balanceBefore,
-                balanceAfter
+                traceId
         );
 
-        if (insertedRows != 1) {
-            throw new BusinessException(WALLET_LEDGER_CREATE_FAILED);
-        }
+        // TODO: 저금통에 금액을 입금한다
+//        piggyBankService.depositFromWallet(
+//                childId,
+//                piggyBankId,
+//                amount,
+//                traceId
+//        );
+
+        // 송금 결과 반환
+        return TransferResultVo.builder()
+                .counterpartyName("저금통")
+                .amount(amount)
+                .build();
     }
 }

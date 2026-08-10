@@ -23,10 +23,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 
+import static com.avocado.global.response.code.ErrorCode.*;
+
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class FamilyRequestServiceImpl implements FamilyRequestService {
+public class FamilyServiceImpl implements FamilyService {
 
     private final FamilyRelationMapper familyRelationMapper;
     private final FamilyWalletMapper familyWalletMapper;
@@ -36,7 +38,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
      * 아이가 보호자의 초대 코드로 가족 연결을 요청한다.
      *
      * @param authUser 요청한 아이 (토큰에서 꺼낸 인증 주체)
-     * @param request   초대 코드
+     * @param request  초대 코드
      * @return 만들어진 요청 정보
      * @throws BusinessException 아이 계정이 아니거나, 초대 코드가 없거나, 이미 연결된 경우
      */
@@ -49,14 +51,14 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
         requireAuthenticated(authUser);
 
         if (authUser.getUserType() != UserType.CHILD) {
-            throw new BusinessException(ErrorCode.CHILD_ONLY_FAMILY_REQUEST);
+            throw new BusinessException(CHILD_ONLY_FAMILY_REQUEST);
         }
 
         Long childId = authUser.getUserId();
 
         // 아이 하나에 보호자 하나. 이미 연결됐으면 초대 코드를 찾아볼 것도 없다.
         if (familyRelationMapper.existsActiveByChildId(childId)) {
-            throw new BusinessException(ErrorCode.ALREADY_CONNECTED);
+            throw new BusinessException(ALREADY_CONNECTED);
         }
 
         User parent = findParentByInviteCode(request.getCode());
@@ -130,7 +132,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
         requireOwner(authUser, relation.getParentId());
 
         if (relation.getStatus() != FamilyRelationStatus.PENDING) {
-            throw new BusinessException(ErrorCode.FAMILY_REQUEST_ALREADY_HANDLED);
+            throw new BusinessException(FAMILY_REQUEST_ALREADY_HANDLED);
         }
 
         FamilyRelationStatus decided = request.getDecision() == FamilyRequestDecision.APPROVE
@@ -145,7 +147,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
         );
 
         if (updated == 0) {
-            throw new BusinessException(ErrorCode.FAMILY_REQUEST_ALREADY_HANDLED);
+            throw new BusinessException(FAMILY_REQUEST_ALREADY_HANDLED);
         }
 
         return FamilyRequestCheckResponseDto.builder()
@@ -177,7 +179,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
         requireOwner(authUser, relation.getChildId());
 
         if (relation.getStatus() != FamilyRelationStatus.APPROVED) {
-            throw new BusinessException(ErrorCode.FAMILY_REQUEST_NOT_APPROVED);
+            throw new BusinessException(FAMILY_REQUEST_NOT_APPROVED);
         }
 
         FamilyRelationStatus confirmed = request.getConfirm()
@@ -192,7 +194,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
         );
 
         if (updated == 0) {
-            throw new BusinessException(ErrorCode.FAMILY_REQUEST_NOT_APPROVED);
+            throw new BusinessException(FAMILY_REQUEST_NOT_APPROVED);
         }
 
         // 연결이 끝나야 아이가 서비스를 쓸 수 있다. 취소한 경우에는 PENDING으로 남는다.
@@ -209,12 +211,30 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
     }
 
     /**
+     * 부모와 아이가 ACTIVE 가족 관계인지 검증한다.
+     */
+    @Override
+    public void validateActiveRelation(
+            Long parentId,
+            Long childId
+    ) {
+        boolean isFamily = familyRelationMapper.existsActiveRelation(
+                parentId,
+                childId
+        );
+
+        if (!isFamily) {
+            throw new BusinessException(FAMILY_RELATION_NOT_FOUND);
+        }
+    }
+
+    /**
      * 아이의 선불지갑을 만든다.
      * 확정과 같은 트랜잭션이라 여기서 실패하면 관계와 계정 상태까지 함께 되돌아간다.
      */
     private void createWallet(Long childId) {
         if (familyWalletMapper.existsByChildId(childId)) {
-            throw new BusinessException(ErrorCode.WALLET_ALREADY_EXISTS);
+            throw new BusinessException(WALLET_ALREADY_EXISTS);
         }
 
         familyWalletMapper.insertWallet(childId, temporaryWalletNumber(childId));
@@ -229,7 +249,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
 
     private void requireAuthenticated(AuthUser authUser) {
         if (authUser == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+            throw new BusinessException(UNAUTHORIZED);
         }
     }
 
@@ -237,7 +257,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
         FamilyRelation relation = familyRelationMapper.selectDetailById(requestId);
 
         if (relation == null) {
-            throw new BusinessException(ErrorCode.FAMILY_REQUEST_NOT_FOUND);
+            throw new BusinessException(FAMILY_REQUEST_NOT_FOUND);
         }
 
         return relation;
@@ -249,7 +269,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
      */
     private void requireOwner(AuthUser authUser, Long ownerId) {
         if (!authUser.getUserId().equals(ownerId)) {
-            throw new BusinessException(ErrorCode.FORBIDDEN);
+            throw new BusinessException(FORBIDDEN);
         }
     }
 
@@ -266,7 +286,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
                 && parent.getStatus() != UserStatus.DELETED;
 
         if (!usable) {
-            throw new BusinessException(ErrorCode.INVITE_CODE_NOT_FOUND);
+            throw new BusinessException(INVITE_CODE_NOT_FOUND);
         }
 
         return parent;
@@ -316,7 +336,7 @@ public class FamilyRequestServiceImpl implements FamilyRequestService {
         FamilyRelation current = findRelation(requestId);
 
         if (current.getStatus() != FamilyRelationStatus.PENDING) {
-            throw new BusinessException(ErrorCode.FAMILY_REQUEST_ALREADY_HANDLED);
+            throw new BusinessException(FAMILY_REQUEST_ALREADY_HANDLED);
         }
     }
 }

@@ -6,7 +6,7 @@ import com.avocado.domain.family.dto.request.FamilyRequestCreateRequestDto;
 import com.avocado.domain.family.dto.request.FamilyRequestDecisionRequestDto;
 import com.avocado.domain.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.domain.family.dto.response.FamilyRequestResponseDto;
-import com.avocado.domain.family.service.FamilyRequestService;
+import com.avocado.domain.family.service.FamilyService;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -34,7 +34,7 @@ import static com.avocado.global.response.code.SuccessCode.FAMILY_REQUEST_FOUND;
 @RequestMapping("/api/family/requests")
 public class FamilyRequestController {
 
-    private final FamilyRequestService familyRequestService;
+    private final FamilyService familyService;
 
     @ApiOperation(
             value = "가족 연결 요청",
@@ -50,7 +50,7 @@ public class FamilyRequestController {
             FamilyRequestCreateRequestDto request
     ) {
         FamilyRequestResponseDto responseDto =
-                familyRequestService.createRequest(authUser, request);
+                familyService.createRequest(authUser, request);
 
         return ResponseEntity
                 .status(FAMILY_REQUEST_CREATED.getHttpStatus())
@@ -70,7 +70,7 @@ public class FamilyRequestController {
             Long requestId
     ) {
         FamilyRequestResponseDto responseDto =
-                familyRequestService.findForChild(authUser, requestId);
+                familyService.findForChild(authUser, requestId);
 
         return ResponseEntity
                 .status(FAMILY_REQUEST_FOUND.getHttpStatus())
@@ -89,7 +89,7 @@ public class FamilyRequestController {
             Long requestId
     ) {
         FamilyRequestCheckResponseDto responseDto =
-                familyRequestService.findForParent(authUser, requestId);
+                familyService.findForParent(authUser, requestId);
 
         return ResponseEntity
                 .status(FAMILY_REQUEST_FOUND.getHttpStatus())
@@ -113,7 +113,7 @@ public class FamilyRequestController {
             FamilyRequestDecisionRequestDto request
     ) {
         FamilyRequestCheckResponseDto responseDto =
-                familyRequestService.decide(authUser, requestId, request);
+                familyService.decide(authUser, requestId, request);
 
         return ResponseEntity
                 .status(FAMILY_REQUEST_DECIDED.getHttpStatus())
@@ -135,7 +135,7 @@ public class FamilyRequestController {
             FamilyRequestConfirmRequestDto request
     ) {
         FamilyRequestResponseDto responseDto =
-                familyRequestService.confirm(authUser, requestId, request);
+                familyService.confirm(authUser, requestId, request);
 
         return ResponseEntity
                 .status(FAMILY_REQUEST_CONFIRMED.getHttpStatus())

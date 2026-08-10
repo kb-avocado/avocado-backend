@@ -174,7 +174,7 @@ class WalletServiceTest {
 
     private WalletVo walletVo(Long childId) {
         WalletVo wallet = new WalletVo();
-        wallet.setWalletId(2001L);
+        wallet.setId(2001L);
         wallet.setChildId(childId);
         wallet.setWalletNumber("WALLET-2026-0001");
         wallet.setBalance(48000L);

@@ -74,7 +74,7 @@ public class WalletResponseDto {
 
     public static WalletResponseDto from(WalletVo wallet) {
         return WalletResponseDto.builder()
-                .walletId(wallet.getWalletId())
+                .walletId(wallet.getId())
                 .childId(wallet.getChildId())
                 .walletNumber(wallet.getWalletNumber())
                 .balance(wallet.getBalance())

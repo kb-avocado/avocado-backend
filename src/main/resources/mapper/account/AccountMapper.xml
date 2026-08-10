@@ -41,25 +41,4 @@
             AND a.status = 'ACTIVE'
         LIMIT 1
     </select>
-
-    <!--  부모 계좌에서 아이 선불지갑으로 충전했다는 거래 사실 기록  -->
-    <insert id="insertWalletChargeHistory">
-        INSERT INTO account_histories (
-            account_id,
-            trace_id,
-            transaction_type,
-            amount,
-            status,
-            failure_code
-        )
-        VALUES (
-            #{accountId},
-            #{traceId},
-            'WITHDRAWAL',
-            #{amount},
-            'SUCCESS',
-            NULL
-        )
-    </insert>
-
 </mapper>

@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.security.SecureRandom;
 import java.util.Locale;
 
+import static com.avocado.global.response.code.ErrorCode.*;
+
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -55,7 +57,7 @@ public class UserService {
         // 구분하면 어떤 이메일이 가입되어 있는지 알아낼 수 있다.
         if (user == null
                 || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+            throw new BusinessException(INVALID_CREDENTIALS);
         }
 
         validateLoginable(user);
@@ -68,11 +70,11 @@ public class UserService {
     // PENDING은 로그인은 되지만 진입 화면이 다른 상태라 여기서 막지 않는다.
     private void validateLoginable(User user) {
         if (user.getStatus() == UserStatus.SUSPENDED) {
-            throw new BusinessException(ErrorCode.USER_SUSPENDED);
+            throw new BusinessException(USER_SUSPENDED);
         }
 
         if (user.getStatus() == UserStatus.DELETED) {
-            throw new BusinessException(ErrorCode.USER_DELETED);
+            throw new BusinessException(USER_DELETED);
         }
     }
 
@@ -121,11 +123,11 @@ public class UserService {
 
         // 이메일과 전화번호는 UNIQUE라 탈퇴한 회원이 쓰던 값도 다시 쓸 수 없다.
         if (userMapper.existsByEmail(email)) {
-            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+            throw new BusinessException(DUPLICATE_EMAIL);
         }
 
         if (userMapper.existsByPhone(phone)) {
-            throw new BusinessException(ErrorCode.DUPLICATE_PHONE);
+            throw new BusinessException(DUPLICATE_PHONE);
         }
 
         User user = User.builder()
@@ -177,7 +179,7 @@ public class UserService {
         }
 
         // 여기까지 왔다면 사용자가 다시 시도해서 풀 수 있는 문제가 아니다.
-        throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+        throw new BusinessException(INTERNAL_SERVER_ERROR);
     }
 
     private String randomInviteCode() {
@@ -217,14 +219,27 @@ public class UserService {
                 : message.substring(keyPosition);
 
         if (duplicatedKey.contains("phone")) {
-            return ErrorCode.DUPLICATE_PHONE;
+            return DUPLICATE_PHONE;
         }
 
         if (duplicatedKey.contains("email")) {
-            return ErrorCode.DUPLICATE_EMAIL;
+            return DUPLICATE_EMAIL;
         }
 
         // 초대 코드 충돌처럼 사용자가 입력을 고쳐서 해결할 수 없는 경우
-        return ErrorCode.INTERNAL_SERVER_ERROR;
+        return INTERNAL_SERVER_ERROR;
+    }
+
+    /**
+     * 회원 ID로 회원 이름을 조회한다.
+     *
+     * @param userId 회원 ID
+     * @return 회원 이름
+     */
+    @Transactional(readOnly = true)
+    public String getUserName(Long userId) {
+        return userMapper
+                .findNameById(userId)
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
     }
 }

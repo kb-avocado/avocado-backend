@@ -12,13 +12,13 @@ import com.avocado.global.security.jwt.dto.AuthUser;
  * 가족 연결 요청의 생성부터 확정까지를 담당한다.
  * 아이가 요청하고(PENDING), 보호자가 승인하고(APPROVED), 아이가 확정하면(ACTIVE) 연결이 끝난다.
  */
-public interface FamilyRequestService {
+public interface FamilyService {
 
     /**
      * 아이가 보호자의 초대 코드로 가족 연결을 요청한다.
      *
      * @param authUser 요청한 아이 (토큰에서 꺼낸 인증 주체)
-     * @param request   초대 코드
+     * @param request  초대 코드
      * @return 만들어진 요청 정보
      * @throws BusinessException 아이 계정이 아니거나, 초대 코드가 없거나, 이미 연결된 경우
      */
@@ -64,5 +64,16 @@ public interface FamilyRequestService {
             AuthUser authUser,
             Long requestId,
             FamilyRequestConfirmRequestDto request
+    );
+
+    /**
+     * 부모와 아이가 ACTIVE 가족 관계인지 검증한다.
+     *
+     * @param parentId 부모 회원 ID
+     * @param childId  아이 회원 ID
+     */
+    void validateActiveRelation(
+            Long parentId,
+            Long childId
     );
 }

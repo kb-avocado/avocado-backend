@@ -93,7 +93,7 @@
         )
     </insert>
 
-    <!--  실제 지갑 잔액 증가를 원장에 기록한다.  -->
+    <!-- 선불지갑의 실제 잔액 변화를 원장에 기록한다. -->
     <insert id="insertWalletLedger">
         INSERT INTO wallet_ledgers (
             history_id,

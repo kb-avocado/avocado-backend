@@ -1,7 +1,6 @@
 package com.avocado.domain.transfer.dto.response;
 
 import com.avocado.domain.transfer.domain.TransferResultVo;
-import com.avocado.domain.wallet.domain.WalletVo;
 import lombok.Builder;
 import lombok.Getter;
 

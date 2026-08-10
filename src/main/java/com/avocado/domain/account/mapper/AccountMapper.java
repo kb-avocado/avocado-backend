@@ -20,11 +20,4 @@ public interface AccountMapper {
     Optional<AccountVo> findActiveByUserId(
             @Param("userId") Long userId
     );
-
-    // 부모의 외부 연동 계좌를 이용한 아이 지갑 충전 사실을 기록한다.
-    int insertWalletChargeHistory(
-            @Param("accountId") Long accountId,
-            @Param("traceId") String traceId,
-            @Param("amount") Long amount
-    );
 }
