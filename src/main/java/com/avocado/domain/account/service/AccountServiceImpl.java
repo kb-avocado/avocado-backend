@@ -5,7 +5,7 @@ import com.avocado.domain.account.mapper.AccountMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.user.domain.UserStatus;
-import com.avocado.domain.user.service.UserStatusService;
+import com.avocado.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountServiceImpl implements AccountService {
 
     private final AccountMapper accountMapper;
-    private final UserStatusService userStatusService;
+    private final UserService userService;
 
     /**
      * 부모 회원의 은행 계좌를 등록한다.
@@ -34,7 +34,7 @@ public class AccountServiceImpl implements AccountService {
             String accountNumber
     ) {
         // 계좌를 등록하려는 회원의 상태를 확인. 부모 회원이 아니면 null이다.
-        UserStatus status = userStatusService.getParentStatus(userId);
+        UserStatus status = userService.getParentStatus(userId);
 
         // 부모 회원이 아니면 계좌 등록을 중단
         if (status == null) {
@@ -78,7 +78,7 @@ public class AccountServiceImpl implements AccountService {
             throw new BusinessException(ErrorCode.DUPLICATE_ACCOUNT);
         }
 
-        userStatusService.activate(userId);
+        userService.activate(userId);
 
         return accountVo;
     }

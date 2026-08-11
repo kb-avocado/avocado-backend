@@ -3,11 +3,13 @@ package com.avocado.domain.user.service;
 import com.avocado.domain.user.domain.UserStatus;
 
 /**
- * 회원 계정 상태를 다루는 창구.
- * 계좌 연동(account)과 가족 연결(family)이 끝나면 회원이 활성화되는데,
- * 그 판단 규칙이 각 도메인에 흩어지지 않도록 이곳에 모은다.
+ * 다른 도메인이 회원 정보를 조회하거나 회원 상태를 바꿀 때 거치는 창구.
+ *
+ * 다른 도메인이 호출하는 기능만 둔다.
+ * 로그인·회원가입처럼 user 도메인 안에서만 쓰는 기능은
+ * UserLoginService, UserSignUpService처럼 목적별로 분리한다.
  */
-public interface UserStatusService {
+public interface UserService {
 
     /**
      * 부모 회원의 계정 상태를 조회한다.
