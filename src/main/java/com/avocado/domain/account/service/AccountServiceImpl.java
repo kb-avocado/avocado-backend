@@ -82,4 +82,17 @@ public class AccountServiceImpl implements AccountService {
 
         return accountVo;
     }
+
+    /**
+     * 부모 회원에게 연결된 ACTIVE 외부 계좌를 조회한다.
+     *
+     * @param parentId 부모 회원 ID
+     * @return 활성 상태의 외부 연동 계좌
+     */
+    @Override
+    public AccountVo getActiveAccount(Long parentId) {
+        return accountMapper
+                .findActiveByUserId(parentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ACTIVE_PARENT_NOT_FOUND));
+    }
 }

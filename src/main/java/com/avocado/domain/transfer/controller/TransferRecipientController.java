@@ -2,7 +2,7 @@ package com.avocado.domain.transfer.controller;
 
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.response.code.SuccessCode;
-import com.avocado.domain.transfer.dto.request.TransferRecipientSearchType;
+import com.avocado.domain.transfer.domain.TransferRecipientSearchType;
 import com.avocado.domain.transfer.dto.response.TransferRecipientResponseDto;
 import com.avocado.domain.transfer.service.TransferRecipientService;
 import io.swagger.annotations.Api;

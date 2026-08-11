@@ -17,7 +17,6 @@ public class FamilyRelation {
     private Long id;
     private Long parentId;
     private Long childId;
-    private String relationType;
     private FamilyRelationStatus status;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

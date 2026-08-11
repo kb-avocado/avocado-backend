@@ -1,5 +1,7 @@
+
 package com.avocado.domain.wallet.dto.response;
 
+import com.avocado.domain.wallet.domain.WalletVo;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModel;
@@ -69,4 +71,16 @@ public class WalletResponseDto {
             example = "2026-08-03 17:37:25"
     )
     private LocalDateTime updatedAt;
+
+    public static WalletResponseDto from(WalletVo wallet) {
+        return WalletResponseDto.builder()
+                .walletId(wallet.getId())
+                .childId(wallet.getChildId())
+                .walletNumber(wallet.getWalletNumber())
+                .balance(wallet.getBalance())
+                .status(wallet.getStatus())
+                .createdAt(wallet.getCreatedAt())
+                .updatedAt(wallet.getUpdatedAt())
+                .build();
+    }
 }

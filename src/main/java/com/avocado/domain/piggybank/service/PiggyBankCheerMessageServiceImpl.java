@@ -6,6 +6,7 @@ import com.avocado.domain.piggybank.domain.PiggyBankCheerMessage;
 import com.avocado.domain.piggybank.dto.request.PiggyBankCheerMessageCreateRequestDto;
 import com.avocado.domain.piggybank.dto.response.PiggyBankCheerMessageResponseDto;
 import com.avocado.domain.piggybank.mapper.PiggyBankCheerMessageMapper;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,9 +19,17 @@ public class PiggyBankCheerMessageServiceImpl implements PiggyBankCheerMessageSe
     private final PiggyBankCheerMessageMapper piggyBankCheerMessageMapper;
 
     @Override
-    public PiggyBankCheerMessageResponseDto sendMessage(Long piggyBankId, PiggyBankCheerMessageCreateRequestDto request) {
-        // TODO: parentId는 로그인 붙으면 토큰에서 가져와야 함. 인증 전까지 임시 고정값
-        Long parentId = 101L;
+    public PiggyBankCheerMessageResponseDto sendMessage(
+            Long piggyBankId,
+            PiggyBankCheerMessageCreateRequestDto request,
+            AuthUser authUser
+    ) {
+        // TODO: /api/piggybanks/** permitAll 제거 후에도 방어 로직으로 유지한다.
+        if (authUser == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Long parentId = authUser.getUserId();
 
         PiggyBankCheerMessage cheerMessage = PiggyBankCheerMessage.builder()
                 .piggyBankId(piggyBankId)

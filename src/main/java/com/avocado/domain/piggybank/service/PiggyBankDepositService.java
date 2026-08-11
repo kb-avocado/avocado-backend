@@ -11,4 +11,11 @@ public interface PiggyBankDepositService {
     List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId);
 
     PiggyBankDepositResultResponseDto deposit(Long piggyBankId, PiggyBankDepositRequestDto request);
+
+    PiggyBankDepositResultResponseDto depositFromWallet(
+            Long childId,
+            Long piggyBankId,
+            Long amount,
+            String traceId
+    );
 }

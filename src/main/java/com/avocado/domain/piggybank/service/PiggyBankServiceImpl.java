@@ -154,4 +154,12 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         //   2) piggy_banks.balance = 0
         //   3) 거래 이력 기록 (piggy_bank_histories WITHDRAWAL, wallet_histories/ledger)
     }
+    @Override
+    @Transactional
+    public int promoteAchievements() {
+        int promoted = piggyBankMapper.promoteToAchieve();
+        // TODO(PGB-012): 승격된 저금통 원금 자동 환급 (지갑 잔액 증가 메서드 준비되면 연결)
+        //   현재는 지갑 API 대기 → 상태 전이만. 환급은 close 환급과 함께 추후 배선.
+        return promoted;
+    }
 }

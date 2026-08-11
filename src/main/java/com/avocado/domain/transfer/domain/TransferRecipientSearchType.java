@@ -1,4 +1,4 @@
-package com.avocado.domain.transfer.dto.request;
+package com.avocado.domain.transfer.domain;
 
 public enum TransferRecipientSearchType {
     USER_CODE,

@@ -1,10 +1,10 @@
 package com.avocado.domain.wallet.controller;
 
+import com.avocado.domain.wallet.service.WalletService;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.response.code.SuccessCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import com.avocado.domain.wallet.dto.response.WalletResponseDto;
-import com.avocado.domain.wallet.service.WalletService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
