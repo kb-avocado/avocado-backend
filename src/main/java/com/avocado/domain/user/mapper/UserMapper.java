@@ -74,9 +74,4 @@ public interface UserMapper {
     Optional<String> findNameById(
             @Param("userId") Long userId
     );
-
-    // 회원 ID로 회원 이름을 조회한다.
-    Optional<String> findNameById(
-            @Param("userId") Long userId
-    );
 }
