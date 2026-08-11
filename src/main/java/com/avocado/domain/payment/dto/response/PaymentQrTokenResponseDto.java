@@ -1,5 +1,6 @@
 package com.avocado.domain.payment.dto.response;
 
+import com.avocado.domain.payment.domain.PaymentQrTokenVo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
@@ -22,4 +23,11 @@ public class PaymentQrTokenResponseDto {
             required = true
     )
     private final long expiresIn;
+
+    public static PaymentQrTokenResponseDto from(PaymentQrTokenVo paymentQrToken) {
+        return PaymentQrTokenResponseDto.builder()
+                .token(paymentQrToken.getToken())
+                .expiresIn(paymentQrToken.getExpiresIn())
+                .build();
+    }
 }

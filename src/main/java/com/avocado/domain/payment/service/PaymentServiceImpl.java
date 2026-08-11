@@ -1,5 +1,6 @@
 package com.avocado.domain.payment.service;
 
+import com.avocado.domain.payment.domain.PaymentQrTokenVo;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
 import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
 import com.avocado.global.exception.BusinessException;
@@ -29,7 +30,9 @@ public class PaymentServiceImpl implements PaymentService {
     public PaymentQrTokenResponseDto issuePaymentQrToken(AuthUser authUser) {
         requireAuthenticated(authUser);
 
-        return issuePaymentQrToken(authUser.getUserId());
+        return PaymentQrTokenResponseDto.from(
+                issuePaymentQrToken(authUser.getUserId())
+        );
     }
 
     @Override
@@ -38,10 +41,12 @@ public class PaymentServiceImpl implements PaymentService {
 
         paymentQrTokenRepository.deleteByUserId(authUser.getUserId());
 
-        return issuePaymentQrToken(authUser.getUserId());
+        return PaymentQrTokenResponseDto.from(
+                issuePaymentQrToken(authUser.getUserId())
+        );
     }
 
-    private PaymentQrTokenResponseDto issuePaymentQrToken(Long userId) {
+    private PaymentQrTokenVo issuePaymentQrToken(Long userId) {
         String token = generateToken();
 
         paymentQrTokenRepository.save(
@@ -50,7 +55,8 @@ public class PaymentServiceImpl implements PaymentService {
                 paymentQrTokenTtl()
         );
 
-        return PaymentQrTokenResponseDto.builder()
+        return PaymentQrTokenVo.builder()
+                .userId(userId)
                 .token(token)
                 .expiresIn(paymentQrTokenTtlSeconds)
                 .build();
