@@ -6,6 +6,7 @@ import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
@@ -16,11 +17,13 @@ import java.util.Base64;
 @RequiredArgsConstructor
 public class PaymentService {
 
-    private static final Duration PAYMENT_QR_TOKEN_TTL = Duration.ofMinutes(3);
     private static final int TOKEN_BYTE_LENGTH = 32;
 
     private final PaymentQrTokenRepository paymentQrTokenRepository;
     private final SecureRandom secureRandom = new SecureRandom();
+
+    @Value("${payment.qr-token.ttl-seconds:180}")
+    private long paymentQrTokenTtlSeconds;
 
     public PaymentQrTokenResponseDto issuePaymentQrToken(AuthUser authUser) {
         requireAuthenticated(authUser);
@@ -30,12 +33,12 @@ public class PaymentService {
         paymentQrTokenRepository.save(
                 authUser.getUserId(),
                 token,
-                PAYMENT_QR_TOKEN_TTL
+                paymentQrTokenTtl()
         );
 
         return PaymentQrTokenResponseDto.builder()
                 .token(token)
-                .expiresIn(PAYMENT_QR_TOKEN_TTL.toSeconds())
+                .expiresIn(paymentQrTokenTtlSeconds)
                 .build();
     }
 
@@ -52,5 +55,9 @@ public class PaymentService {
         return Base64.getUrlEncoder()
                 .withoutPadding()
                 .encodeToString(randomBytes);
+    }
+
+    private Duration paymentQrTokenTtl() {
+        return Duration.ofSeconds(paymentQrTokenTtlSeconds);
     }
 }
