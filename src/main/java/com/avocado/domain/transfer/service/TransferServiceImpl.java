@@ -9,6 +9,8 @@ import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto
 import com.avocado.domain.transfer.dto.request.WalletToPiggyBankTransferRequestDto;
 import com.avocado.domain.user.service.UserService;
 import com.avocado.domain.wallet.service.WalletService;
+import com.avocado.domain.piggybank.dto.response.PiggyBankDepositResultResponseDto;
+import com.avocado.domain.piggybank.service.PiggyBankDepositService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,6 +27,7 @@ public class TransferServiceImpl implements TransferService {
     private final FamilyService familyService;
     private final UserService userService;
     private final WalletService walletService;
+    private final PiggyBankDepositService piggyBankDepositService;
 
     /**
      * 부모 외부 계좌에서
@@ -81,7 +84,7 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     @Transactional
-    public TransferResultVo transferWalletToPiggyBank(WalletToPiggyBankTransferRequestDto requestDto) {
+    public PiggyBankDepositResultResponseDto transferWalletToPiggyBank(WalletToPiggyBankTransferRequestDto requestDto) {
         Long childId = requestDto.getChildId();
         Long walletId = requestDto.getWalletId();
         Long piggyBankId = requestDto.getPiggyBankId();
@@ -91,25 +94,14 @@ public class TransferServiceImpl implements TransferService {
         String traceId = UUID.randomUUID().toString();
 
         // 아이 선불지갑에서 저금할 금액을 출금
-        walletService.withdrawForPiggyBank(
+        walletService.withdrawForPiggyBank(childId, walletId, amount, traceId);
+
+        // 저금통에 금액을 입금하고, 그 결과(목표달성 여부 포함)를 그대로 반환
+        return piggyBankDepositService.depositFromWallet(
                 childId,
-                walletId,
+                piggyBankId,
                 amount,
                 traceId
         );
-
-        // TODO: 저금통에 금액을 입금한다
-//        piggyBankService.depositFromWallet(
-//                childId,
-//                piggyBankId,
-//                amount,
-//                traceId
-//        );
-
-        // 송금 결과 반환
-        return TransferResultVo.builder()
-                .counterpartyName("저금통")
-                .amount(amount)
-                .build();
     }
 }
