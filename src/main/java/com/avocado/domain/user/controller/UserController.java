@@ -3,7 +3,6 @@ package com.avocado.domain.user.controller;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.security.jwt.component.JwtTokenProvider;
 import com.avocado.global.security.jwt.component.JwtUtil;
-import com.avocado.domain.user.domain.LoginResultCode;
 import com.avocado.domain.user.dto.request.UserLoginRequestDto;
 import com.avocado.domain.user.dto.request.UserSignUpRequestDto;
 import com.avocado.domain.user.dto.response.LoginUserDto;
@@ -63,7 +62,8 @@ public class UserController {
             value = "로그인",
             notes = "이메일과 비밀번호로 로그인합니다. "
                     + "Access Token은 응답 본문이 아니라 HttpOnly 쿠키로 전달됩니다. "
-                    + "계정이 PENDING이면 로그인은 성공하되 code가 달라집니다."
+                    + "이동할 화면은 응답의 status와 type으로 판단합니다. "
+                    + "(PENDING + PARENT = 계좌 연결 필요, PENDING + CHILD = 가족 연결 필요)"
     )
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginUserDto>> login(
@@ -83,9 +83,6 @@ public class UserController {
 
         jwtUtil.addAccessTokenCookie(response, accessToken);
 
-        LoginResultCode result = LoginResultCode.of(user.getType(), user.getStatus());
-
-        // 이부분 검토 필요
         return ResponseEntity
                 .status(LOGIN_SUCCESS.getHttpStatus())
                 .body(ApiResponse.success(LOGIN_SUCCESS, user));

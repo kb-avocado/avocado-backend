@@ -176,4 +176,11 @@
            AND user_type = 'PARENT'
     </select>
 
+    <!--  회원 ID로 회원 이름을 조회한다.  -->
+    <select id="findNameById" resultType="string">
+        SELECT name
+        FROM users
+        WHERE id = #{userId}
+    </select>
+
 </mapper>

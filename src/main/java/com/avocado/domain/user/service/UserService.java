@@ -27,4 +27,12 @@ public interface UserService {
      * @param userId 활성화할 회원 ID
      */
     void activate(Long userId);
+
+    /**
+     * 회원 ID로 회원 이름을 조회한다.
+     *
+     * @param userId 회원 ID
+     * @return 회원 이름. 회원이 없으면 USER_NOT_FOUND 예외를 던진다.
+     */
+    String getUserName(Long userId);
 }

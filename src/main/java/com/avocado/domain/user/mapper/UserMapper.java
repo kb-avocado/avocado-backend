@@ -7,6 +7,7 @@ import com.avocado.domain.user.dto.response.LoginFamilyDto;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 로그인 응답을 한 번에 구성하기 위해 accounts, wallets, family_relations 조회도 이곳에 둔다.
@@ -67,5 +68,10 @@ public interface UserMapper {
             @Param("id") Long id,
             @Param("fromStatus") UserStatus fromStatus,
             @Param("toStatus") UserStatus toStatus
+    );
+
+    // 회원 ID로 회원 이름을 조회한다.
+    Optional<String> findNameById(
+            @Param("userId") Long userId
     );
 }
