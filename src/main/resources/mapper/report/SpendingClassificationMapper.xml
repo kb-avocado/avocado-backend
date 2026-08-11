@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.avocado.domain.report.mapper.SpendingClassificationMapper">
+
+    <select id="findMaxPaymentAmount" resultType="long">
+        SELECT IFNULL(MAX(amount), 0)
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+          AND transaction_type = 'PAYMENT'
+          AND status = 'SUCCESS'
+          AND DATE_FORMAT(created_at, '%Y-%m') = #{yearMonth}
+    </select>
+
+    <select id="findDistinctSpendingDayCount" resultType="int">
+        SELECT COUNT(DISTINCT DATE(created_at))
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+          AND transaction_type = 'PAYMENT'
+          AND status = 'SUCCESS'
+          AND DATE_FORMAT(created_at, '%Y-%m') = #{yearMonth}
+    </select>
+
+    <select id="findTopMerchantAmount" resultType="long">
+        SELECT IFNULL(MAX(merchant_total), 0)
+        FROM (
+                 SELECT SUM(amount) AS merchant_total
+                 FROM wallet_histories
+                 WHERE wallet_id = #{walletId}
+                   AND transaction_type = 'PAYMENT'
+                   AND status = 'SUCCESS'
+                   AND DATE_FORMAT(created_at, '%Y-%m') = #{yearMonth}
+                 GROUP BY merchant_id
+             ) merchant_totals
+    </select>
+
+    <select id="countAchievedPiggyBanks" resultType="int">
+        SELECT COUNT(*)
+        FROM piggy_banks
+        WHERE wallet_id = #{walletId}
+          AND status = 'ACHIEVE'
+          AND DATE_FORMAT(achieved_at, '%Y-%m') = #{yearMonth}
+    </select>
+
+</mapper>

@@ -48,10 +48,15 @@ public class ReportConverter {
                 .build();
     }
 
-    public SavingsDto toSavingsDto(long totalSaved) {
+    //저축률(이번달 저축액 / 이번 달 순수령 용돈)
+    public SavingsDto toSavingsDto(long totalSaved, long allowanceReceived) {
+        Integer savingsRate = allowanceReceived <= 0
+                ? null
+                : (int) Math.round(totalSaved * 100.0 / allowanceReceived);
+
         return SavingsDto.builder()
                 .totalSaved(totalSaved)
-                .savingsRate(null) // TODO: 용돈 지급 테이블 확정되면 계산 로직 추가
+                .savingsRate(savingsRate)
                 .build();
     }
 }

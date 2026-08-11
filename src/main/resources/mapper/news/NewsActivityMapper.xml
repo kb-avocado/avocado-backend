@@ -29,7 +29,7 @@
         </foreach>
     </select>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="activity_id">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO news_activities
         (child_id, article_id, child_answer, viewed_at, completed_at, created_at, updated_at)
         VALUES

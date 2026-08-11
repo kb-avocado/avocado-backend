@@ -33,7 +33,7 @@
 
     <select id="findTopSpots" resultMap="topSpotRowMap">
         SELECT
-            IFNULL(m.category, '기타') AS category,
+            IFNULL(m.name, '기타') AS category,
             SUM(wh.amount) AS amount
         FROM wallet_histories wh
                  LEFT JOIN merchants m ON m.id = wh.merchant_id
@@ -41,19 +41,19 @@
           AND wh.transaction_type = 'PAYMENT'
           AND wh.status = 'SUCCESS'
           AND DATE_FORMAT(wh.created_at, '%Y-%m') = #{yearMonth}
-        GROUP BY IFNULL(m.category, '기타')
+        GROUP BY IFNULL(m.name, '기타')
         ORDER BY amount DESC
         LIMIT #{limit}
     </select>
 
     <resultMap id="monthlySpentRowMap" type="com.avocado.domain.report.domain.MonthlySpentRow">
-        <result property="yearMonth" column="year_month"/>
+        <result property="yearMonth" column="ym"/>
         <result property="amount" column="amount"/>
     </resultMap>
 
     <select id="findMonthlySpentList" resultMap="monthlySpentRowMap">
         SELECT
-        DATE_FORMAT(created_at, '%Y-%m') AS year_month,
+        DATE_FORMAT(created_at, '%Y-%m') AS ym,
         SUM(amount) AS amount
         FROM wallet_histories
         WHERE wallet_id = #{walletId}
@@ -81,4 +81,19 @@
         WHERE wallet_id = #{walletId}
     </select>
 
+    <!-- 용돈 취소분을 제외한 실수형액, 저축률 분모로 사용-->
+    <select id="sumAllowanceReceived" resultType="long">
+        SELECT IFNULL(SUM(
+            CASE
+                WHEN transaction_type = 'CHARGE' THEN amount
+                WHEN transaction_type = 'CHARGE_CANCLE' THEN -amount
+                ELSE 0
+            END
+        ), 0)
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+            AND transaction_type IN ('CHARGE', 'CHARGE_CANCEL')
+            AND status = 'SUCCESS'
+            AND DATE_FORMAT(created_at, '%Y-%m')
+    </select>
 </mapper>

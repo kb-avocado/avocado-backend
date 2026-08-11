@@ -35,7 +35,7 @@
         )
     </select>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="article_id">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         INSERT INTO news_articles (title, subtitle, link, today_challenge, published_at, created_at)
         VALUES (#{title}, #{subtitle}, #{link}, #{todayChallenge}, #{publishedAt}, #{createdAt})
     </insert>

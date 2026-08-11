@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.avocado.domain.report.mapper.ChildSpendingReportMapper">
+
+
+    <resultMap id="childSpendingReportMap" type="com.avocado.domain.report.domain.ChildSpendingReport">
+        <id property="id" column="id"/>
+        <result property="childId" column="child_id"/>
+        <result property="reportTypeId" column="report_type_id"/>
+        <result property="reportYear" column="report_year"/>
+        <result property="reportMonth" column="report_month"/>
+    </resultMap>
+
+    <select id="findByChildAndYearMonth" resultMap="childSpendingReportMap">
+        SELECT id, child_id, report_type_id, report_year, report_month
+        FROM child_spending_reports
+        WHERE child_id = #{childId}
+        AND report_year = #{year}
+        AND report_month = #{month}
+    </select>
+
+    <insert id="upsert">
+        INSERT INTO child_spending_reports (child_id, report_type_id, report_year, report_month)
+        VALUES (#{childId}, #{reportTypeId}, #{reportYear}, #{reportMonth})
+        ON DUPLICATE KEY UPDATE report_type_id = VALUES(report_type_id)
+    </insert>
+
+</mapper>
