@@ -28,10 +28,22 @@ public class PaymentService {
     public PaymentQrTokenResponseDto issuePaymentQrToken(AuthUser authUser) {
         requireAuthenticated(authUser);
 
+        return issuePaymentQrToken(authUser.getUserId());
+    }
+
+    public PaymentQrTokenResponseDto reissuePaymentQrToken(AuthUser authUser) {
+        requireAuthenticated(authUser);
+
+        paymentQrTokenRepository.deleteByUserId(authUser.getUserId());
+
+        return issuePaymentQrToken(authUser.getUserId());
+    }
+
+    private PaymentQrTokenResponseDto issuePaymentQrToken(Long userId) {
         String token = generateToken();
 
         paymentQrTokenRepository.save(
-                authUser.getUserId(),
+                userId,
                 token,
                 paymentQrTokenTtl()
         );
