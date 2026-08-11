@@ -42,6 +42,8 @@ public enum SuccessCode implements ResponseCode {
 
     // 결제 (PAY)
     PAYMENT_SUCCESS(HttpStatus.OK, "PAY-000", "결제가 성공적으로 완료되었습니다."),
+    PAYMENT_QR_TOKEN_ISSUED(HttpStatus.CREATED, "PAY-001", "결제 QR 토큰이 발급되었습니다."),
+    PAYMENT_QR_TOKEN_REISSUED(HttpStatus.OK, "PAY-002", "결제 QR 토큰이 재발급되었습니다."),
 
     // 송금 (TRF)
     TRANSFER_SUCCESS(HttpStatus.OK, "TRF-000", "송금이 완료되었습니다."),

@@ -1,7 +1,11 @@
 package com.avocado.domain.payment.service;
 
-import org.springframework.stereotype.Service;
+import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
+import com.avocado.global.security.jwt.dto.AuthUser;
 
-@Service
-public class PaymentService {
+public interface PaymentService {
+
+    PaymentQrTokenResponseDto issuePaymentQrToken(AuthUser authUser);
+
+    PaymentQrTokenResponseDto reissuePaymentQrToken(AuthUser authUser);
 }

@@ -57,6 +57,7 @@ public enum ErrorCode implements ResponseCode {
     // 결제 (PAY)
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAY-001", "결제 정보를 찾을 수 없습니다."),
     DUPLICATE_PAYMENT_REQUEST(HttpStatus.CONFLICT, "PAY-002", "이미 처리된 결제 요청입니다."),
+    PAYMENT_QR_REISSUE_TOO_FREQUENT(HttpStatus.TOO_MANY_REQUESTS, "PAY-003", "QR 토큰 재발급 요청이 너무 잦습니다. 잠시 후 다시 시도해주세요."),
 
     // 신문 (NWS)
     NEWS_NOT_FOUND(HttpStatus.NOT_FOUND, "NWS-001", "신문 기사를 찾을 수 없습니다."),

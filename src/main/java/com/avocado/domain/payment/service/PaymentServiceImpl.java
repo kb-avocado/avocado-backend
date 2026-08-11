@@ -1,0 +1,102 @@
+package com.avocado.domain.payment.service;
+
+import com.avocado.domain.payment.domain.PaymentQrTokenVo;
+import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
+import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
+import com.avocado.global.exception.BusinessException;
+import com.avocado.global.response.code.ErrorCode;
+import com.avocado.global.security.jwt.dto.AuthUser;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.security.SecureRandom;
+import java.time.Duration;
+import java.util.Base64;
+
+@Service
+@RequiredArgsConstructor
+public class PaymentServiceImpl implements PaymentService {
+
+    private static final int TOKEN_BYTE_LENGTH = 32;
+
+    private final PaymentQrTokenRepository paymentQrTokenRepository;
+    private final SecureRandom secureRandom = new SecureRandom();
+
+    @Value("${payment.qr-token.ttl-seconds:180}")
+    private long paymentQrTokenTtlSeconds;
+
+    @Value("${payment.qr-token.reissue-lock-seconds:3}")
+    private long paymentQrReissueLockSeconds;
+
+    @Override
+    public PaymentQrTokenResponseDto issuePaymentQrToken(AuthUser authUser) {
+        requireAuthenticated(authUser);
+
+        return PaymentQrTokenResponseDto.from(
+                issuePaymentQrToken(authUser.getUserId())
+        );
+    }
+
+    @Override
+    public PaymentQrTokenResponseDto reissuePaymentQrToken(AuthUser authUser) {
+        requireAuthenticated(authUser);
+        validateReissueAllowed(authUser.getUserId());
+
+        paymentQrTokenRepository.deleteByUserId(authUser.getUserId());
+
+        return PaymentQrTokenResponseDto.from(
+                issuePaymentQrToken(authUser.getUserId())
+        );
+    }
+
+    private PaymentQrTokenVo issuePaymentQrToken(Long userId) {
+        String token = generateToken();
+
+        paymentQrTokenRepository.save(
+                userId,
+                token,
+                paymentQrTokenTtl()
+        );
+
+        return PaymentQrTokenVo.builder()
+                .userId(userId)
+                .token(token)
+                .expiresIn(paymentQrTokenTtlSeconds)
+                .build();
+    }
+
+    private void requireAuthenticated(AuthUser authUser) {
+        if (authUser == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+    }
+
+    private void validateReissueAllowed(Long userId) {
+        boolean acquired = paymentQrTokenRepository.acquireReissueLock(
+                userId,
+                paymentQrReissueLockTtl()
+        );
+
+        if (!acquired) {
+            throw new BusinessException(ErrorCode.PAYMENT_QR_REISSUE_TOO_FREQUENT);
+        }
+    }
+
+    private String generateToken() {
+        byte[] randomBytes = new byte[TOKEN_BYTE_LENGTH];
+        secureRandom.nextBytes(randomBytes);
+
+        return Base64.getUrlEncoder()
+                .withoutPadding()
+                .encodeToString(randomBytes);
+    }
+
+    private Duration paymentQrTokenTtl() {
+        return Duration.ofSeconds(paymentQrTokenTtlSeconds);
+    }
+
+    private Duration paymentQrReissueLockTtl() {
+        return Duration.ofSeconds(paymentQrReissueLockSeconds);
+    }
+}
