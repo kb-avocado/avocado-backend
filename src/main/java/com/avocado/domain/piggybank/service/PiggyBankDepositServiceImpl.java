@@ -44,7 +44,6 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_ACTIVE);
         }
 
-        // 목표금액을 넘는 입금은 차단
         Long remaining = piggyBank.getTargetAmount() - piggyBank.getBalance();
         if (request.getAmount() > remaining) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET);
@@ -73,6 +72,55 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
         return PiggyBankDepositResultResponseDto.builder()
                 .piggyBankId(piggyBankId)
                 .depositedAmount(request.getAmount())
+                .balanceAfter(balanceAfter)
+                .status(newStatus)
+                .goalReached(goalReached)
+                .depositedAt(now)
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public PiggyBankDepositResultResponseDto depositFromWallet(
+            Long childId,
+            Long piggyBankId,
+            Long amount,
+            String traceId
+    ) {
+        PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
+
+        if (piggyBank == null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        if (!"ACTIVE".equals(piggyBank.getStatus())) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_ACTIVE);
+        }
+
+        Long remaining = piggyBank.getTargetAmount() - piggyBank.getBalance();
+        if (amount > remaining) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET);
+        }
+
+        Long balanceBefore = piggyBank.getBalance();
+        Long balanceAfter = balanceBefore + amount;
+
+        boolean goalReached = balanceAfter >= piggyBank.getTargetAmount();
+        String newStatus = goalReached ? "PENDING_ACHIEVE" : "ACTIVE";
+
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime firstDepositedAt = piggyBank.getFirstDepositedAt() != null
+                ? piggyBank.getFirstDepositedAt()
+                : now;
+        LocalDateTime targetReachedAt = goalReached ? now : piggyBank.getTargetReachedAt();
+
+        piggyBankMapper.increaseBalance(piggyBankId, balanceAfter, newStatus, firstDepositedAt, targetReachedAt);
+
+        piggyBankHistoryMapper.insertDeposit(piggyBankId, amount, balanceBefore, balanceAfter, traceId);
+
+        return PiggyBankDepositResultResponseDto.builder()
+                .piggyBankId(piggyBankId)
+                .depositedAmount(amount)
                 .balanceAfter(balanceAfter)
                 .status(newStatus)
                 .goalReached(goalReached)
