@@ -17,6 +17,7 @@ import com.avocado.domain.user.domain.User;
 import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +34,7 @@ public class FamilyServiceImpl implements FamilyService {
     private final FamilyRelationMapper familyRelationMapper;
     private final FamilyWalletMapper familyWalletMapper;
     private final UserMapper userMapper;
+    private final UserService userService;
 
     /**
      * 아이가 보호자의 초대 코드로 가족 연결을 요청한다.
@@ -199,7 +201,7 @@ public class FamilyServiceImpl implements FamilyService {
 
         // 연결이 끝나야 아이가 서비스를 쓸 수 있다. 취소한 경우에는 PENDING으로 남는다.
         if (confirmed == FamilyRelationStatus.ACTIVE) {
-            userMapper.updateStatus(relation.getChildId(), UserStatus.ACTIVE);
+            userService.activate(relation.getChildId());
             createWallet(relation.getChildId());
         }
 

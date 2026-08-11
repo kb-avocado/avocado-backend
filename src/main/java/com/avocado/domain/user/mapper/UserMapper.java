@@ -59,14 +59,15 @@ public interface UserMapper {
     User selectByInviteCode(@Param("inviteCode") String inviteCode);
 
     /**
-     * 회원 상태를 바꾼다.
+     * 지금 상태가 fromStatus일 때만 toStatus로 바꾼다.
      * 가입 직후에는 PENDING이고, 아이는 가족 연결을, 부모는 계좌 등록을 마치면 ACTIVE가 된다.
      *
-     * @return 바뀐 행 수
+     * @return 바뀐 행 수. 0이면 이미 다른 상태인 계정이다.
      */
     int updateStatus(
             @Param("id") Long id,
-            @Param("status") UserStatus status
+            @Param("fromStatus") UserStatus fromStatus,
+            @Param("toStatus") UserStatus toStatus
     );
 
     // 회원 ID로 회원 이름을 조회한다.
