@@ -20,6 +20,9 @@ public enum SuccessCode implements ResponseCode {
     ACCOUNT_LINK_REQUIRED(HttpStatus.OK, "AUT-004", "로그인에 성공했습니다. 계좌 연결이 필요합니다."),
     FAMILY_LINK_REQUIRED(HttpStatus.OK, "AUT-005", "로그인에 성공했습니다. 가족 연결이 필요합니다."),
 
+    // 사용자 (USR)
+    MY_PAGE_FOUND(HttpStatus.OK, "USR-000", "내 정보를 조회했습니다."),
+
     // 선불지갑 (WAL)
     WALLET_CHARGED(HttpStatus.OK, "WAL-000", "선불지갑이 성공적으로 충전되었습니다."),
     CHILD_WALLET_FOUND(HttpStatus.OK, "WAL-001", "아이의 선불지갑을 조회했습니다."),

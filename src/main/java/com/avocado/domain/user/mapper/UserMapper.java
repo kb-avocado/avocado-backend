@@ -4,6 +4,7 @@ import com.avocado.domain.user.domain.User;
 import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.dto.response.LoginChildDto;
 import com.avocado.domain.user.dto.response.LoginFamilyDto;
+import com.avocado.domain.user.dto.response.MyPageResponseDto;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -74,4 +75,19 @@ public interface UserMapper {
     Optional<String> findNameById(
             @Param("userId") Long userId
     );
+
+    /**
+     * [PARENT] 마이페이지에 보여줄 부모 회원 정보. 초대 코드를 함께 내려준다.
+     *
+     * @return 부모 회원의 마이페이지 정보. 회원이 없거나 부모 계정이 아니면 null
+     */
+    MyPageResponseDto selectParentMyPageById(@Param("parentId") Long parentId);
+
+    /**
+     * [CHILD] 마이페이지에 보여줄 아이 회원 정보. 연결된 보호자 정보를 함께 내려준다.
+     * 아직 가족 연결 전이면 보호자 정보만 비어 있다.
+     *
+     * @return 아이 회원의 마이페이지 정보. 회원이 없거나 아이 계정이 아니면 null
+     */
+    MyPageResponseDto selectChildMyPageById(@Param("childId") Long childId);
 }
