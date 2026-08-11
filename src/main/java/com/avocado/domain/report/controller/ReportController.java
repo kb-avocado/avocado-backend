@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import static com.avocado.global.response.code.SuccessCode.REPORT_FOUND;
 import static com.avocado.global.response.code.SuccessCode.SPENDING_REPORT_TYPE_FOUND;
-// TODO: 로그인 붙으면 childId를 토큰에서 꺼내도록 교체. 지금은 데모용 임시 고정값 사용
 @Api(tags = "리포트 API")
 @RestController
 @RequestMapping("/api/reports")

@@ -15,4 +15,9 @@
         WHERE code = #{code}
     </select>
 
+    <select id="findById" resultMap="spendingReportTypeMap">
+        SELECT id, code, name, description
+        FROM spending_report_types
+        WHERE id=#{id}
+    </select>
 </mapper>

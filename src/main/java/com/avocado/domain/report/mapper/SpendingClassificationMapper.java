@@ -1,13 +1,10 @@
 package com.avocado.domain.report.mapper;
 
-import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+import org.mybatis.spring.annotation.MapperScan;
 
-@Mapper
+@MapperScan
 public interface SpendingClassificationMapper {
-
-    // 이번 달 단일 최대 결제액 (SMALL_SAVER 판정용)
-    Long findMaxPaymentAmount(@Param("walletId") Long walletId, @Param("yearMonth") String yearMonth);
 
     // 이번 달 소비가 발생한 날짜 수 (FREQUENT_SPARROW 판정용)
     Integer findDistinctSpendingDayCount(@Param("walletId") Long walletId, @Param("yearMonth") String yearMonth);

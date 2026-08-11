@@ -6,7 +6,6 @@ import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.report.domain.MonthlySpentRow;
 import com.avocado.domain.report.domain.TopSpotRow;
-import com.avocado.domain.report.dto.response.*;
 import com.avocado.domain.report.mapper.ReportConverter;
 import com.avocado.domain.report.mapper.ReportMapper;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +64,8 @@ public class ReportServiceImpl implements ReportService {
         }
 
         long totalSaved = reportMapper.sumSavedAmount(walletId, yearMonth);
-        SavingsDto savings = reportConverter.toSavingsDto(totalSaved);
+        long allowanceReceived = reportMapper.sumAllowanceReceived(walletId, yearMonth);
+        SavingsDto savings = reportConverter.toSavingsDto(totalSaved, allowanceReceived);
 
         NavigationDto navigation = buildNavigation(walletId, targetMonth);
 
@@ -91,7 +91,10 @@ public class ReportServiceImpl implements ReportService {
         String earliestMonth = reportMapper.findEarliestTransactionMonth(walletId);
         boolean hasPrevious = earliestMonth != null
                 && !targetMonth.minusMonths(1).isBefore(YearMonth.parse(earliestMonth));
-        boolean hasNext = targetMonth.isBefore(YearMonth.now());
+
+        // 이번 달 데이터는 아직 집계 중이라 보여주지 않음 -> "지난달"까지만 조회 가능
+        YearMonth lastViewableMonth = YearMonth.now().minusMonths(1);
+        boolean hasNext = targetMonth.isBefore(lastViewableMonth);
 
         return NavigationDto.builder()
                 .hasPrevious(hasPrevious)

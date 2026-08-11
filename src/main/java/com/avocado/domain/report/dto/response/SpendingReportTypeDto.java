@@ -8,5 +8,6 @@ import lombok.Getter;
 public class SpendingReportTypeDto {
     private String code;
     private String name;
-    private String description;
+    private String childDescription;
+    private String parentDescription;
 }

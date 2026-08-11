@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,46 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
     private static final double ONE_STORE_SNIPER_SHARE = 0.5;
     private static final long SMALL_SAVER_MAX_AMOUNT = 10000;
 
+    // 유형별 아이용/부모용 설명. { childDescription, parentDescription } 순서.
+    private static final Map<String, String[]> DESCRIPTIONS = Map.ofEntries(
+            Map.entry("SAVING_DREAMER", new String[]{
+                    "저금 목표를 하나씩 차근차근 채워가고 있어요! 꿈을 향해 열심히 달리는 중이에요.",
+                    "이번 달에 저금통을 2개 이상 채웠을 때 나오는 유형이에요."
+            }),
+            Map.entry("ZERO_SPENDING", new String[]{
+                    "이번 달은 지갑도 푹 쉬었어요! 꼭 필요한 순간만 기다리는 멋진 절약가예요.",
+                    "이번 달 소비가 0원일 때 나오는 유형이에요."
+            }),
+            Map.entry("FREQUENT_SPARROW", new String[]{
+                    "용돈 쓰는 날이 많았어요! 다음 달엔 하루쯤 쉬어가는 소비도 도전해 보세요.",
+                    "한 달 동안 소비한 날이 25일 이상일 때 나오는 유형이에요."
+            }),
+            Map.entry("BIG_SPENDER", new String[]{
+                    "자주 사지는 않지만, 한 번 살 땐 제대로! 신중하게 선택하는 소비 스타일이에요.",
+                    "평균 결제 금액이 15,000원 이상이고 소비 횟수가 5회 이하일 때 나오는 유형이에요."
+            }),
+            Map.entry("ROLLER_COASTER", new String[]{
+                    "지난달과 소비 총 금액이 크게 달라졌어요! 이번 달에 무슨 일이 있었나요?",
+                    "전월 대비 소비 금액이 50% 이상 증가하거나 감소했을 때 나오는 유형이에요."
+            }),
+            Map.entry("CAREFUL_OWL", new String[]{
+                    "꼭 필요한 순간에만 소비하는 신중한 스타일이에요! 한 번 더 생각하는 습관이 멋져요.",
+                    "이번 달 소비 횟수가 10회 이하일 때 나오는 유형이에요."
+            }),
+            Map.entry("ONE_STORE_SNIPER", new String[]{
+                    "좋아하는 곳은 한 번 빠지면 계속 가게 돼요! 단골 가게가 생겼네요.",
+                    "한 가게에서 사용한 금액이 전체 소비의 50% 이상일 때 나오는 유형이에요."
+            }),
+            Map.entry("SMALL_SAVER", new String[]{
+                    "작은 돈도 소중하게 아끼는 습관이 있어요! 차곡차곡 모이면 큰 힘이 된답니다.",
+                    "이번 달 총 소비 금액이 10,000원 이하일 때 나오는 유형이에요."
+            }),
+            Map.entry("SPROUT", new String[]{
+                    "차근차근 나만의 소비 습관을 만들어가는 중이에요! 다음 달에는 어떤 유형이 될지 기대돼요.",
+                    "특정 소비 패턴에 해당하지 않을 때 나오는 기본 유형이에요."
+            })
+    );
+
     private final ReportMapper reportMapper;
     private final SpendingClassificationMapper spendingClassificationMapper;
     private final SpendingReportTypeMapper spendingReportTypeMapper;
@@ -38,12 +79,32 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
 
     @Override
     public SpendingReportTypeDto classifyAndSave(String yearMonth, Long childId) {
+        YearMonth targetMonth = YearMonth.parse(yearMonth);
+
+        // 이미 이 달에 계산된 기록이 있으면 재계산하지 않고 그대로 반환 (한 달에 한 번만 계산)
+        ChildSpendingReport existing = childSpendingReportMapper.findByChildAndYearMonth(
+                childId, targetMonth.getYear(), targetMonth.getMonthValue());
+
+        if (existing != null) {
+            SpendingReportType cachedType = spendingReportTypeMapper.findById(existing.getReportTypeId());
+            if (cachedType == null) {
+                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
+            }
+            return toDto(cachedType);
+        }
+
+        return calculateAndSave(yearMonth, childId, targetMonth);
+    }
+
+    /**
+     * 그 달 최초 조회 시에만 실행되는 실제 판정 로직.
+     */
+    private SpendingReportTypeDto calculateAndSave(String yearMonth, Long childId, YearMonth targetMonth) {
         Long walletId = reportMapper.findWalletIdByChildId(childId);
         if (walletId == null) {
             throw new BusinessException(ErrorCode.WALLET_NOT_FOUND);
         }
 
-        YearMonth targetMonth = YearMonth.parse(yearMonth);
         String previousMonth = targetMonth.minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
 
         long totalSpent = reportMapper.sumSpentAmount(walletId, yearMonth);
@@ -64,10 +125,18 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
         report.setReportMonth(targetMonth.getMonthValue());
         childSpendingReportMapper.upsert(report);
 
+        return toDto(type);
+    }
+
+    private SpendingReportTypeDto toDto(SpendingReportType type) {
+        String[] descriptions = DESCRIPTIONS.getOrDefault(
+                type.getCode(), new String[]{type.getDescription(), type.getDescription()});
+
         return SpendingReportTypeDto.builder()
                 .code(type.getCode())
                 .name(type.getName())
-                .description(type.getDescription())
+                .childDescription(descriptions[0])
+                .parentDescription(descriptions[1])
                 .build();
     }
 
@@ -118,8 +187,7 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
             return "ONE_STORE_SNIPER";
         }
 
-        long maxPaymentAmount = spendingClassificationMapper.findMaxPaymentAmount(walletId, yearMonth);
-        if (maxPaymentAmount <= SMALL_SAVER_MAX_AMOUNT) {
+        if (totalSpent <= SMALL_SAVER_MAX_AMOUNT) {
             return "SMALL_SAVER";
         }
 
