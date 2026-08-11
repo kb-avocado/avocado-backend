@@ -26,6 +26,9 @@ public class PaymentServiceImpl implements PaymentService {
     @Value("${payment.qr-token.ttl-seconds:180}")
     private long paymentQrTokenTtlSeconds;
 
+    @Value("${payment.qr-token.reissue-lock-seconds:3}")
+    private long paymentQrReissueLockSeconds;
+
     @Override
     public PaymentQrTokenResponseDto issuePaymentQrToken(AuthUser authUser) {
         requireAuthenticated(authUser);
@@ -38,6 +41,7 @@ public class PaymentServiceImpl implements PaymentService {
     @Override
     public PaymentQrTokenResponseDto reissuePaymentQrToken(AuthUser authUser) {
         requireAuthenticated(authUser);
+        validateReissueAllowed(authUser.getUserId());
 
         paymentQrTokenRepository.deleteByUserId(authUser.getUserId());
 
@@ -68,6 +72,17 @@ public class PaymentServiceImpl implements PaymentService {
         }
     }
 
+    private void validateReissueAllowed(Long userId) {
+        boolean acquired = paymentQrTokenRepository.acquireReissueLock(
+                userId,
+                paymentQrReissueLockTtl()
+        );
+
+        if (!acquired) {
+            throw new BusinessException(ErrorCode.PAYMENT_QR_REISSUE_TOO_FREQUENT);
+        }
+    }
+
     private String generateToken() {
         byte[] randomBytes = new byte[TOKEN_BYTE_LENGTH];
         secureRandom.nextBytes(randomBytes);
@@ -79,5 +94,9 @@ public class PaymentServiceImpl implements PaymentService {
 
     private Duration paymentQrTokenTtl() {
         return Duration.ofSeconds(paymentQrTokenTtlSeconds);
+    }
+
+    private Duration paymentQrReissueLockTtl() {
+        return Duration.ofSeconds(paymentQrReissueLockSeconds);
     }
 }

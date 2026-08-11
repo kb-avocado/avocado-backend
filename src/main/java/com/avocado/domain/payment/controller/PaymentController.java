@@ -57,6 +57,7 @@ public class PaymentController {
                     + "동작\n"
                     + "- 로그인 사용자의 기존 결제 QR 토큰이 있으면 즉시 무효화하고, "
                     + "새 QR 토큰을 TTL과 함께 Redis에 저장합니다.\n"
+                    + "- 같은 사용자의 너무 잦은 재발급 요청은 429로 거절합니다.\n"
                     + "\n"
                     + "Response Body\n"
                     + "- success: true\n"
@@ -82,6 +83,10 @@ public class PaymentController {
             @io.swagger.annotations.ApiResponse(
                     code = 401,
                     message = "AUT-001: 인증이 필요합니다."
+            ),
+            @io.swagger.annotations.ApiResponse(
+                    code = 429,
+                    message = "PAY-003: QR 토큰 재발급 요청이 너무 잦습니다. 잠시 후 다시 시도해주세요."
             )
     })
     @PostMapping(

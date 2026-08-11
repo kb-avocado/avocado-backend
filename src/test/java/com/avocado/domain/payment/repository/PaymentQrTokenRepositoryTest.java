@@ -107,4 +107,38 @@ class PaymentQrTokenRepositoryTest {
         // then
         assertThat(result).isEqualTo(179L);
     }
+
+    @Test
+    @DisplayName("재발급 lock을 TTL과 함께 획득한다")
+    void acquireReissueLock_success() {
+        // given
+        Duration ttl = Duration.ofSeconds(3);
+
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.setIfAbsent("payment:qr:reissue-lock:102", "1", ttl))
+                .thenReturn(true);
+
+        // when
+        boolean result = paymentQrTokenRepository.acquireReissueLock(102L, ttl);
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("재발급 lock이 이미 있으면 획득하지 못한다")
+    void acquireReissueLock_alreadyExists() {
+        // given
+        Duration ttl = Duration.ofSeconds(3);
+
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.setIfAbsent("payment:qr:reissue-lock:102", "1", ttl))
+                .thenReturn(false);
+
+        // when
+        boolean result = paymentQrTokenRepository.acquireReissueLock(102L, ttl);
+
+        // then
+        assertThat(result).isFalse();
+    }
 }

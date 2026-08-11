@@ -14,6 +14,7 @@ public class PaymentQrTokenRepository {
 
     private static final String USER_TOKEN_KEY_PREFIX = "payment:qr:user:";
     private static final String TOKEN_USER_KEY_PREFIX = "payment:qr:token:";
+    private static final String REISSUE_LOCK_KEY_PREFIX = "payment:qr:reissue-lock:";
 
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -59,11 +60,25 @@ public class PaymentQrTokenRepository {
         return ttl == null ? -1L : ttl;
     }
 
+    public boolean acquireReissueLock(
+            Long userId,
+            Duration ttl
+    ) {
+        Boolean acquired = stringRedisTemplate.opsForValue()
+                .setIfAbsent(reissueLockKey(userId), "1", ttl);
+
+        return Boolean.TRUE.equals(acquired);
+    }
+
     private String userTokenKey(Long userId) {
         return USER_TOKEN_KEY_PREFIX + userId;
     }
 
     private String tokenUserKey(String token) {
         return TOKEN_USER_KEY_PREFIX + token;
+    }
+
+    private String reissueLockKey(Long userId) {
+        return REISSUE_LOCK_KEY_PREFIX + userId;
     }
 }

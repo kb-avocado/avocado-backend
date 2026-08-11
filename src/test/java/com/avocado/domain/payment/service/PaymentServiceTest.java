@@ -21,7 +21,9 @@ import java.time.Duration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class PaymentServiceTest {
@@ -40,6 +42,11 @@ class PaymentServiceTest {
                 paymentService,
                 "paymentQrTokenTtlSeconds",
                 TOKEN_TTL_SECONDS
+        );
+        ReflectionTestUtils.setField(
+                paymentService,
+                "paymentQrReissueLockSeconds",
+                3L
         );
     }
 
@@ -82,6 +89,11 @@ class PaymentServiceTest {
         AuthUser authUser = authUser(102L);
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
 
+        when(paymentQrTokenRepository.acquireReissueLock(
+                authUser.getUserId(),
+                Duration.ofSeconds(3)
+        )).thenReturn(true);
+
         // when
         PaymentQrTokenResponseDto result = paymentService.reissuePaymentQrToken(authUser);
 
@@ -93,6 +105,26 @@ class PaymentServiceTest {
                 eq(Duration.ofSeconds(TOKEN_TTL_SECONDS))
         );
         assertThat(tokenCaptor.getValue()).isEqualTo(result.getToken());
+    }
+
+    @Test
+    @DisplayName("QR 재발급 요청이 너무 잦으면 기존 토큰을 무효화하지 않는다")
+    void reissuePaymentQrToken_tooFrequent_fail() {
+        // given
+        AuthUser authUser = authUser(102L);
+
+        when(paymentQrTokenRepository.acquireReissueLock(
+                authUser.getUserId(),
+                Duration.ofSeconds(3)
+        )).thenReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> paymentService.reissuePaymentQrToken(authUser))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.PAYMENT_QR_REISSUE_TOO_FREQUENT);
+
+        verify(paymentQrTokenRepository, never()).deleteByUserId(authUser.getUserId());
     }
 
     private AuthUser authUser(Long userId) {
