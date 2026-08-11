@@ -27,4 +27,18 @@
             #{accountNumber}
         )
     </insert>
+
+    <!-- 부모에게 연결된 ACTIVE 계좌 조회 -->
+    <select id="findActiveByUserId" resultType="com.avocado.domain.account.domain.AccountVo">
+        SELECT
+            a.id,
+            a.user_id        AS userId,
+            a.bank_code      AS bankCode,
+            a.account_number AS accountNumber,
+            a.status
+        FROM accounts a
+        WHERE a.user_id = #{userId}
+            AND a.status = 'ACTIVE'
+        LIMIT 1
+    </select>
 </mapper>

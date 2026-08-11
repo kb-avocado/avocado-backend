@@ -12,6 +12,7 @@ public class PiggyBankDetailResponseDto {
 
     private final Long piggyBankId;
     private final String name;
+    private final String icon;
     private final String status;
     private final Boolean favorite;
     private final Long savedAmount;      // 모은 금액 (balance)

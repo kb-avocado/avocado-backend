@@ -5,20 +5,17 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Getter;
 import lombok.Setter;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 @Getter
 @Setter
-@ApiModel(description = "선불지갑 거래 기본 내역 조회 요청 파라미터")
 public class WalletTxListRequestDto {
 
-    @ApiModelProperty(
-            value = "페이지 번호",
-            example = "0"
-    )
+    @Min(value = 0)
     private int page = 0;
 
-    @ApiModelProperty(
-            value = "페이지당 데이터 수",
-            example = "20"
-    )
+    @Min(value = 1)
+    @Max(value = 30)
     private int size = 20;
 }

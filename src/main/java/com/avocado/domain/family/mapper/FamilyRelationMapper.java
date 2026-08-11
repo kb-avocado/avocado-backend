@@ -38,4 +38,10 @@ public interface FamilyRelationMapper {
             @Param("fromStatus") FamilyRelationStatus fromStatus,
             @Param("toStatus") FamilyRelationStatus toStatus
     );
+
+    // 부모와 아이 사이 ACTIVE 가족관계가 존재 확인.
+    boolean existsActiveRelation(
+            @Param("parentId") Long parentId,
+            @Param("childId") Long childId
+    );
 }

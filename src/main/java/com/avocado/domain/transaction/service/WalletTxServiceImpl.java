@@ -1,15 +1,17 @@
 package com.avocado.domain.transaction.service;
 
+import com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto;
+import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.PageResponse;
 import com.avocado.domain.transaction.dto.request.WalletTxListRequestDto;
-import com.avocado.domain.transaction.dto.response.WalletTxListItemResponseDto;
+import com.avocado.domain.transaction.dto.response.WalletTxItemResponseDto;
 import com.avocado.domain.transaction.mapper.WalletTxMapper;
 import com.avocado.domain.wallet.mapper.WalletMapper;
+import com.avocado.global.response.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -21,48 +23,52 @@ public class WalletTxServiceImpl implements WalletTxService {
     private final WalletTxMapper walletTxMapper;
 
     @Override
-    public PageResponse<WalletTxListItemResponseDto> getWalletTxList(
+    public PageResponse<WalletTxItemResponseDto> getWalletTxList(
             Long userId,
             WalletTxListRequestDto requestDto
     ) {
-        // 페이지 처리
+        // 회원과 연결된 지갑을 조회
+        Long walletId = walletMapper.findWalletIdByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.WALLET_NOT_FOUND));
+
+        // 요청한 페이지 정보
         int page = requestDto.getPage();
         int size = requestDto.getSize();
+
+        // 오프셋
         int offset = page * size;
 
-        // 사용자의 ID로 등록된 지갑의 ID를 조회
-        Long walletId = walletMapper
-                .findWalletIdByUserId(userId)
-                .orElseThrow(
-                        () -> new IllegalArgumentException("선불지갑을 찾을 수 없습니다.")
-                );
-
-        // 해당 지갑의 전체 거래 수 조회
+        // 해당 지갑의 총 거래 수
         long totalElements = walletTxMapper.countByWalletId(walletId);
 
-        // 거래 내역이 존재하지 않을 경우
-        if (totalElements == 0) {
-            return PageResponse.of(
-                    page,
-                    size,
-                    0L,
-                    Collections.emptyList()
-            );
-        }
-
-        // 해당 지갑의 전체 거래 내역 조회
-        List<WalletTxListItemResponseDto> items = walletTxMapper.findAllByWalletId(
+        // 현재 페이지에 해당하는 전체 거래 목록
+        List<WalletTxItemResponseDto> items = walletTxMapper.findAllByWalletId(
                 walletId,
                 offset,
                 size
         );
 
-        // 거래 내역이 존재할 경우
+        // 공통 페이지 응답 객체를 생성 후 반환
         return PageResponse.of(
                 page,
                 size,
                 totalElements,
                 items
         );
+    }
+
+    @Override
+    public WalletTxDetailResponseDto getWalletTxDetail(
+            Long userId,
+            Long transactionId
+    ) {
+        // 회원과 연결된 지갑을 조회
+        Long walletId = walletMapper.findWalletIdByUserId(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.WALLET_NOT_FOUND));
+
+        return walletTxMapper.findDetailByWalletIdAndTransactionId(
+                walletId,
+                transactionId
+        ).orElseThrow(() -> new BusinessException(ErrorCode.WALLET_TX_NOT_FOUND));
     }
 }

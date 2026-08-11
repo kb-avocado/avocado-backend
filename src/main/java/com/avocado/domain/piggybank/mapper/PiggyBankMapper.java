@@ -51,4 +51,6 @@ public interface PiggyBankMapper {
             @Param("id") Long id,
             @Param("bonusPaidAt") LocalDateTime bonusPaidAt
     );
+    // 목표 도달 후 7일 경과분을 ACHIEVE로 승격, 승격된 행 수 반환
+    int promoteToAchieve();
 }

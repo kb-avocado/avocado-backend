@@ -6,30 +6,110 @@
 
 <mapper namespace="com.avocado.domain.transaction.mapper.WalletTxMapper">
 
+    <!--  지갑의 전체 거래 수를 조회한다.  -->
     <select id="countByWalletId" resultType="long">
         SELECT COUNT(*)
         FROM wallet_histories
         WHERE wallet_id = #{walletId}
     </select>
 
-    <select id="findAllByWalletId" resultType="com.avocado.domain.transaction.dto.response.WalletTxListItemResponseDto">
+    <!--  지갑 거래내역을 최신순으로 조회한다.  -->
+    <select id="findAllByWalletId" resultType="com.avocado.domain.transaction.dto.response.WalletTxItemResponseDto">
         SELECT
-            h.history_id AS historyId,
-            m.merchant_name AS title,
-            l.ledger_type AS ledgerType,
-            h.amount AS amount,
-            h.balance_before AS balanceBefore,
-            h.balance_after AS balanceAfter,
-            h.created_at AS createAt
-        FROM wallet_histories h
-            INNER JOIN wallet_ledgers l
-                ON h.ledger_id = l.ledger_id
+            wh.id AS transactionId,
+            wh.trace_id AS traceId,
+            wh.transaction_type AS transactionType,
+            wh.amount AS amount,
+            CASE
+                WHEN wh.merchant_id IS NOT NULL
+                    THEN m.name
+                ELSE wh.counterparty_name
+            END AS counterpartyName,
+            wh.status AS status,
+            wh.created_at AS createdAt
+        FROM wallet_histories wh
             LEFT JOIN merchants m
-                ON h.merchant_id = m.merchant_id
-        WHERE h.wallet_id = #{walletId}
-        ORDER BY h.created_at DESC
-        LIMIT #{offset}, #{size}
+                ON m.id = wh.merchant_id
+        WHERE wh.wallet_id = #{walletId}
+        ORDER BY
+            wh.created_at DESC,
+            wh.id DESC
+        LIMIT #{size} OFFSET #{offset}
     </select>
 
+    <!--  지갑 상세 거래내역을 조회한다.  -->
+    <select id="findDetailByWalletIdAndTransactionId" resultType="com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto">
+        SELECT
+            wh.id               AS transactionId,
+            wh.trace_id         AS traceId,
+            wh.transaction_type AS transactionType,
+            wh.amount           AS amount,
+            CASE
+                WHEN wh.transaction_type IN ('PAYMENT', 'PAYMENT_CANCEL')
+                THEN m.name
+                ELSE wh.counterparty_name
+            END                 AS counterpartyName,
+            wh.target_bank_code      AS targetBankCode,
+            wh.target_account_number AS targetAccountNumber,
+            wh.memo                  AS memo,
+            wh.status                AS status,
+            wh.failure_code          AS failureCode,
+            wh.created_at            AS createdAt,
+            wl.ledger_type           AS ledgerType,
+            wl.balance_before        AS balanceBefore,
+            wl.balance_after         AS balanceAfter,
+            m.category               AS merchantCategory
+        FROM wallet_histories wh
+            LEFT JOIN wallet_ledgers wl
+                ON wl.history_id = wh.id
+                AND wl.wallet_id = wh.wallet_id
+            LEFT JOIN merchants m
+                ON m.id = wh.merchant_id
+        WHERE wh.wallet_id = #{walletId}
+        AND wh.id = #{transactionId}
+    </select>
 
+    <!--  선불지갑 거래 이력을 생성한다.  -->
+    <insert id="insertWalletHistory"
+            parameterType="com.avocado.domain.transaction.domain.WalletHistoryVo"
+            useGeneratedKeys="true"
+            keyProperty="id"
+    >
+        INSERT INTO wallet_histories (
+            wallet_id,
+            trace_id,
+            transaction_type,
+            amount,
+            memo,
+            status
+        )
+        VALUES (
+            #{walletId},
+            #{traceId},
+            #{transactionType},
+            #{amount},
+            #{memo},
+            #{status}
+        )
+    </insert>
+
+    <!-- 선불지갑의 실제 잔액 변화를 원장에 기록한다. -->
+    <insert id="insertWalletLedger">
+        INSERT INTO wallet_ledgers (
+            history_id,
+            wallet_id,
+            ledger_type,
+            amount,
+            balance_before,
+            balance_after
+        )
+        VALUES (
+            #{historyId},
+            #{walletId},
+            #{ledgerType},
+            #{amount},
+            #{balanceBefore},
+            #{balanceAfter}
+        )
+    </insert>
 </mapper>

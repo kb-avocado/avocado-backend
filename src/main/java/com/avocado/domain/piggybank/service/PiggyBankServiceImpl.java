@@ -71,6 +71,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         return PiggyBankResponseDto.builder()
                 .piggyBankId(p.getId())
                 .name(p.getName())
+                .icon(p.getIcon())
                 .status(p.getStatus())
                 .favorite(p.getIsFavorite())
                 .savedAmount(saved)
@@ -96,6 +97,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         return PiggyBankDetailResponseDto.builder()
                 .piggyBankId(p.getId())
                 .name(p.getName())
+                .icon(p.getIcon())
                 .status(p.getStatus())
                 .favorite(p.getIsFavorite())
                 .savedAmount(saved)
@@ -120,6 +122,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         PiggyBank piggyBank = PiggyBank.builder()
                 .walletId(walletId)
                 .name(request.getName())
+                .icon(request.getIcon())
                 .targetAmount(request.getTargetAmount())
                 .build();
         piggyBankMapper.insert(piggyBank);
@@ -150,5 +153,13 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         //   1) wallet.balance += p.getBalance()  (이자 제외)
         //   2) piggy_banks.balance = 0
         //   3) 거래 이력 기록 (piggy_bank_histories WITHDRAWAL, wallet_histories/ledger)
+    }
+    @Override
+    @Transactional
+    public int promoteAchievements() {
+        int promoted = piggyBankMapper.promoteToAchieve();
+        // TODO(PGB-012): 승격된 저금통 원금 자동 환급 (지갑 잔액 증가 메서드 준비되면 연결)
+        //   현재는 지갑 API 대기 → 상태 전이만. 환급은 close 환급과 함께 추후 배선.
+        return promoted;
     }
 }

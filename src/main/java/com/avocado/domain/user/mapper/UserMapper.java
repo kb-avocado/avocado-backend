@@ -7,6 +7,7 @@ import com.avocado.domain.user.dto.response.LoginFamilyDto;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 로그인 응답을 한 번에 구성하기 위해 accounts, wallets, family_relations 조회도 이곳에 둔다.
@@ -44,6 +45,13 @@ public interface UserMapper {
     // [PARENT] 부모 계정 활성화 여부 검사
     boolean existsActiveParentById(@Param("userId") Long userId);
 
+    /**
+     * [PARENT] 부모 회원의 계정 상태를 조회한다.
+     *
+     * @return 부모 회원의 상태. 회원이 없거나 부모 계정이 아니면 null
+     */
+    UserStatus selectParentStatusById(@Param("userId") Long userId);
+
     // 회원가입
     void insertUser(User user);
 
@@ -51,13 +59,19 @@ public interface UserMapper {
     User selectByInviteCode(@Param("inviteCode") String inviteCode);
 
     /**
-     * 회원 상태를 바꾼다.
+     * 지금 상태가 fromStatus일 때만 toStatus로 바꾼다.
      * 가입 직후에는 PENDING이고, 아이는 가족 연결을, 부모는 계좌 등록을 마치면 ACTIVE가 된다.
      *
-     * @return 바뀐 행 수
+     * @return 바뀐 행 수. 0이면 이미 다른 상태인 계정이다.
      */
     int updateStatus(
             @Param("id") Long id,
-            @Param("status") UserStatus status
+            @Param("fromStatus") UserStatus fromStatus,
+            @Param("toStatus") UserStatus toStatus
+    );
+
+    // 회원 ID로 회원 이름을 조회한다.
+    Optional<String> findNameById(
+            @Param("userId") Long userId
     );
 }

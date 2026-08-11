@@ -8,10 +8,9 @@
 
     <!-- 저금통 생성 -->
     <insert id="insert">
-        INSERT INTO piggy_banks (wallet_id, name, target_amount)
-        VALUES (#{walletId}, #{name}, #{targetAmount})
+        INSERT INTO piggy_banks (wallet_id, name, icon, target_amount)
+        VALUES (#{walletId}, #{name}, #{icon}, #{targetAmount})
     </insert>
-
     <!-- 방금 생성된 id 조회 -->
     <select id="selectLastInsertId" resultType="Long">
         SELECT LAST_INSERT_ID()
@@ -24,6 +23,7 @@
         id,
         wallet_id,
         name,
+        icon,
         target_amount,
         balance,
         bonus_type,
@@ -71,6 +71,7 @@
         id,
         wallet_id,
         name,
+        icon,
         target_amount,
         balance,
         bonus_type,
@@ -114,5 +115,15 @@
         target_reached_at = #{targetReachedAt},
         updated_at = NOW()
         WHERE id = #{id}
+    </update>
+    <!-- 최초 입금(first_deposited_at) 후 7일 경과한 PENDING_ACHIEVE → ACHIEVE 승격 -->
+    <update id="promoteToAchieve">
+        UPDATE piggy_banks
+        SET status = 'ACHIEVE',
+        achieved_at = NOW(),
+        updated_at = NOW()
+        WHERE status = 'PENDING_ACHIEVE'
+        AND first_deposited_at IS NOT NULL
+        AND first_deposited_at &lt;= DATE_SUB(NOW(), INTERVAL 7 DAY)
     </update>
 </mapper>

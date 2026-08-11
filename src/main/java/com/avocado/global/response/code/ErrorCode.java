@@ -20,6 +20,7 @@ public enum ErrorCode implements ResponseCode {
 
     // 사용자 (USR)
     CHILD_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "자녀를 찾을 수 없습니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-002", "사용자를 찾을 수 없습니다."),
 
     // 저금통 (PIG)
     PIGGY_BANK_NOT_FOUND(HttpStatus.NOT_FOUND, "PIG-001", "저금통을 찾을 수 없습니다."),
@@ -37,11 +38,16 @@ public enum ErrorCode implements ResponseCode {
     WALLET_INACTIVE(HttpStatus.CONFLICT, "WAL-002", "사용할 수 없는 선불지갑입니다."),
     INSUFFICIENT_BALANCE(HttpStatus.CONFLICT, "WAL-003", "선불지갑 잔액이 부족합니다."),
     WALLET_ALREADY_EXISTS(HttpStatus.CONFLICT, "WAL-004", "이미 선불지갑이 있는 계정입니다."),
+    WALLET_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WAL-005", "선불지갑 잔액 변경에 실패했습니다."),
+    WALLET_HISTORY_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WAL-006", "선불지갑 거래 이력 저장에 실패했습니다."),
+    WALLET_LEDGER_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WAL-007", "선불지갑 원장 저장에 실패했습니다."),
 
     // 계좌 (ACC)
     ACTIVE_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ACC-001", "활성 상태인 부모 회원을 찾을 수 없습니다."),
     DUPLICATE_ACCOUNT(HttpStatus.CONFLICT, "ACC-002", "이미 등록된 계좌입니다."),
     ACCOUNT_CREATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ACC-003", "계좌 등록에 실패했습니다."),
+    PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ACC-004", "보호자 회원을 찾을 수 없습니다."),
+    ACCOUNT_HISTORY_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "ACC-005", "계좌 거래 이력 저장에 실패했습니다."),
 
     // 가맹점 (MER)
     MERCHANT_NOT_FOUND(HttpStatus.NOT_FOUND, "MER-001", "가맹점을 찾을 수 없습니다."),
@@ -58,6 +64,9 @@ public enum ErrorCode implements ResponseCode {
     // 송금 (TRF)
     TRANSFER_RECIPIENT_NOT_FOUND(HttpStatus.NOT_FOUND, "TRF-001", "송금 대상을 찾을 수 없습니다."),
 
+    // 거래 (TXN)
+    WALLET_TX_NOT_FOUND(HttpStatus.NOT_FOUND, "TXN-001", "선불지갑 거래 내역을 찾을 수 없습니다."),
+
     // 회원 (USR)
     DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USR-001", "이미 가입된 이메일입니다."),
     DUPLICATE_PHONE(HttpStatus.CONFLICT, "USR-002", "이미 가입된 전화번호입니다."),
@@ -70,7 +79,8 @@ public enum ErrorCode implements ResponseCode {
     // 보호자가 이미 승인/거절한 요청을 다시 처리하려는 경우
     FAMILY_REQUEST_ALREADY_HANDLED(HttpStatus.CONFLICT, "FAM-005", "이미 처리된 요청입니다."),
     // 보호자 승인 전에 아이가 확정하려는 경우
-    FAMILY_REQUEST_NOT_APPROVED(HttpStatus.CONFLICT, "FAM-006", "보호자가 아직 승인하지 않은 요청입니다.");
+    FAMILY_REQUEST_NOT_APPROVED(HttpStatus.CONFLICT, "FAM-006", "보호자가 아직 승인하지 않은 요청입니다."),
+    FAMILY_RELATION_NOT_FOUND(HttpStatus.NOT_FOUND, "FAM-007", "가족 관계를 확인할 수 없습니다.");
 
     private final HttpStatus httpStatus;
 

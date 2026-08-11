@@ -20,4 +20,7 @@ public interface PiggyBankService {
 
     // 저금통 삭제
     void close(Long piggyBankId);
+
+    // 7일 달성 승격 (스케줄러가 호출), 승격된 저금통 수 반환
+    int promoteAchievements();
 }
