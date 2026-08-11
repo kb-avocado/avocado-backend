@@ -1,6 +1,6 @@
 package com.avocado.domain.wallet.service;
 
-import com.avocado.domain.wallet.service.WalletService;
+import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -38,7 +38,7 @@ class WalletServiceTest {
         // given
         Long childId = 102L;
         AuthUser authUser = authUser(childId, UserType.CHILD);
-        WalletResponseDto wallet = walletResponse(childId);
+        WalletVo wallet = walletVo(childId);
 
         when(walletMapper.existsChildById(childId)).thenReturn(true);
         when(walletMapper.findByChildId(childId)).thenReturn(Optional.of(wallet));
@@ -62,7 +62,7 @@ class WalletServiceTest {
         Long parentId = 101L;
         Long childId = 102L;
         AuthUser authUser = authUser(parentId, UserType.PARENT);
-        WalletResponseDto wallet = walletResponse(childId);
+        WalletVo wallet = walletVo(childId);
 
         when(walletMapper.existsChildById(childId)).thenReturn(true);
         when(walletMapper.existsActiveFamilyRelation(parentId, childId)).thenReturn(true);
@@ -172,13 +172,13 @@ class WalletServiceTest {
                 .build();
     }
 
-    private WalletResponseDto walletResponse(Long childId) {
-        return WalletResponseDto.builder()
-                .walletId(2001L)
-                .childId(childId)
-                .walletNumber("WALLET-2026-0001")
-                .balance(48000L)
-                .status("ACTIVE")
-                .build();
+    private WalletVo walletVo(Long childId) {
+        WalletVo wallet = new WalletVo();
+        wallet.setId(2001L);
+        wallet.setChildId(childId);
+        wallet.setWalletNumber("WALLET-2026-0001");
+        wallet.setBalance(48000L);
+        wallet.setStatus("ACTIVE");
+        return wallet;
     }
 }

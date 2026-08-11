@@ -35,17 +35,48 @@
     </select>
 
     <!-- childId 기준으로 자녀의 선불지갑 단건 정보를 조회한다. -->
-    <select id="findByChildId" resultType="com.avocado.domain.wallet.dto.response.WalletResponseDto">
-        SELECT id AS wallet_id,
-               child_id,
-               wallet_number,
-               balance,
-               status,
-               created_at,
-               updated_at
+    <select id="findByChildId" resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id      AS childId,
+            wallet_number AS walletNumber,
+            balance,
+            status,
+            created_at    AS createdAt,
+            updated_at    AS updatedAt
         FROM wallets
         WHERE child_id = #{childId}
     </select>
 
+    <!-- 아이 선불지갑 잔액 증가 -->
+    <update id="increaseBalance">
+        UPDATE wallets
+        SET balance = balance + #{amount}
+        WHERE id = #{walletId}
+            AND status = 'ACTIVE'
+    </update>
+
+    <!-- 아이 선불지갑 잔액 감소 -->
+    <update id="decreaseBalance">
+        UPDATE wallets
+        SET balance = balance - #{amount}
+        WHERE id = #{walletId}
+            AND status = 'ACTIVE'
+            AND balance >= #{amount}
+    </update>
+
+    <!--  실제 해당 아이의 지갑인지 검증 및 동시 잔액 변경을 방지  -->
+    <select id="findForUpdateByIdAndChildId" resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id      AS childId,
+            wallet_number AS walletNumber,
+            balance,
+            status
+        FROM wallets
+        WHERE id = #{walletId}
+            AND child_id = #{childId}
+        FOR UPDATE
+    </select>
 
 </mapper>
