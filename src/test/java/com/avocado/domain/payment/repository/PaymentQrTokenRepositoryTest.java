@@ -1,0 +1,110 @@
+package com.avocado.domain.payment.repository;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
+
+import java.time.Duration;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class PaymentQrTokenRepositoryTest {
+
+    @Mock
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
+
+    private PaymentQrTokenRepository paymentQrTokenRepository;
+
+    @BeforeEach
+    void setUp() {
+        paymentQrTokenRepository = new PaymentQrTokenRepository(stringRedisTemplate);
+    }
+
+    @Test
+    @DisplayName("사용자 토큰과 토큰 사용자 역인덱스를 TTL과 함께 저장한다")
+    void save_withTtl() {
+        // given
+        Long userId = 102L;
+        String token = "qr-token";
+        Duration ttl = Duration.ofSeconds(180);
+
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        // when
+        paymentQrTokenRepository.save(userId, token, ttl);
+
+        // then
+        verify(valueOperations).set("payment:qr:user:102", token, ttl);
+        verify(valueOperations).set("payment:qr:token:qr-token", "102", ttl);
+    }
+
+    @Test
+    @DisplayName("사용자 ID로 저장된 QR 토큰을 조회한다")
+    void findTokenByUserId() {
+        // given
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("payment:qr:user:102")).thenReturn("qr-token");
+
+        // when
+        Optional<String> result = paymentQrTokenRepository.findTokenByUserId(102L);
+
+        // then
+        assertThat(result).contains("qr-token");
+    }
+
+    @Test
+    @DisplayName("토큰으로 사용자 ID를 조회한다")
+    void findUserIdByToken() {
+        // given
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("payment:qr:token:qr-token")).thenReturn("102");
+
+        // when
+        Optional<Long> result = paymentQrTokenRepository.findUserIdByToken("qr-token");
+
+        // then
+        assertThat(result).contains(102L);
+    }
+
+    @Test
+    @DisplayName("사용자 기준 삭제 시 기존 토큰 역인덱스와 사용자 토큰을 모두 삭제한다")
+    void deleteByUserId() {
+        // given
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("payment:qr:user:102")).thenReturn("qr-token");
+
+        // when
+        paymentQrTokenRepository.deleteByUserId(102L);
+
+        // then
+        verify(stringRedisTemplate).delete("payment:qr:token:qr-token");
+        verify(stringRedisTemplate).delete("payment:qr:user:102");
+    }
+
+    @Test
+    @DisplayName("토큰 TTL을 초 단위로 조회한다")
+    void getTokenTtlSeconds() {
+        // given
+        when(stringRedisTemplate.getExpire("payment:qr:token:qr-token", TimeUnit.SECONDS))
+                .thenReturn(179L);
+
+        // when
+        long result = paymentQrTokenRepository.getTokenTtlSeconds("qr-token");
+
+        // then
+        assertThat(result).isEqualTo(179L);
+    }
+}
