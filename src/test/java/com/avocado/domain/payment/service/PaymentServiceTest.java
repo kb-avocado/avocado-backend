@@ -31,11 +31,11 @@ class PaymentServiceTest {
     @Mock
     private PaymentQrTokenRepository paymentQrTokenRepository;
 
-    private PaymentService paymentService;
+    private PaymentServiceImpl paymentService;
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentService(paymentQrTokenRepository);
+        paymentService = new PaymentServiceImpl(paymentQrTokenRepository);
         ReflectionTestUtils.setField(
                 paymentService,
                 "paymentQrTokenTtlSeconds",
