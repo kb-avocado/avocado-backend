@@ -49,10 +49,14 @@ public class PiggyBankController {
     @GetMapping("/{piggyBankId}")
     @ApiOperation(value = "저금통 상세 조회", notes = "저금통 하나의 상세 정보를 조회합니다.")
     public ResponseEntity<ApiResponse<PiggyBankDetailResponseDto>> getDetail(
-            @PathVariable Long piggyBankId
+            @PathVariable Long piggyBankId,
+            @RequestParam(required = false) Long childId,   // 부모가 아이 저금통 조회 시
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        PiggyBankDetailResponseDto response =
-                piggyBankService.getDetail(piggyBankId);
+        Long targetChildId = (childId != null) ? childId : authUser.getUserId();
+        Long walletId = walletService.getChildWallet(targetChildId, authUser).getWalletId();
+
+        PiggyBankDetailResponseDto response = piggyBankService.getDetail(piggyBankId, walletId);
 
         return ResponseEntity
                 .status(PIGGY_BANK_DETAIL_FETCHED.getHttpStatus())
@@ -78,11 +82,14 @@ public class PiggyBankController {
 
     //저금통 삭제
     @PostMapping("/{piggyBankId}/close")
-    @ApiOperation(value = "저금통 중도 포기", notes = "목표 달성 전 저금통을 중도 포기합니다. (환급은 후속 예정)")
+    @ApiOperation(value = "저금통 중도 포기", notes = "목표 달성 전 저금통을 중도 포기합니다.")
     public ResponseEntity<ApiResponse<Void>> close(
-            @PathVariable Long piggyBankId
+            @PathVariable Long piggyBankId,
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        piggyBankService.close(piggyBankId);
+        Long walletId = walletService.getChildWallet(authUser.getUserId(), authUser).getWalletId();
+
+        piggyBankService.close(piggyBankId, walletId);
 
         return ResponseEntity
                 .status(PIGGY_BANK_CLOSED.getHttpStatus())
