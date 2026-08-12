@@ -101,11 +101,16 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
     // 저금통 상세 조회
     @Override
-    public PiggyBankDetailResponseDto getDetail(Long piggyBankId) {
+    public PiggyBankDetailResponseDto getDetail(Long piggyBankId, Long walletId) {
         PiggyBank p = piggyBankMapper.selectById(piggyBankId);
         // 팀 공용 예외 처리
         if (p == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        // 소유권 검증: 이 저금통이 요청자의 지갑 소속인지
+        if (!p.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         long target = p.getTargetAmount() == null ? 0 : p.getTargetAmount();
@@ -148,15 +153,20 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
         // 3) 생성된 id로 상세 반환
         Long newId = piggyBankMapper.selectLastInsertId();
-        return getDetail(newId);
+        return getDetail(newId, walletId);
     }
     // 저금통 삭제
     @Override
     @Transactional
-    public void close(Long piggyBankId) {
+    public void close(Long piggyBankId, Long walletId) {
         PiggyBank p = piggyBankMapper.selectById(piggyBankId);
         if (p == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        // 소유권 검증
+        if (!p.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         // 이미 최종 달성(ACHIEVE) or 취소(CANCEL)면 중도 포기 불가
