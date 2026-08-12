@@ -18,4 +18,15 @@ public class PiggyBankResponseDto {
     private final Long savedAmount;   // 현재 모은 금액 (DB balance)
     private final Long targetAmount;  // 목표 금액
     private final Integer progressRate; // 달성률(%) - 서비스에서 계산
+    private final BonusDto bonus;
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    public static class BonusDto {
+        private final String status;   // PAID / UNPAID
+        private final String type;     // NONE / FIXED / RATE
+        private final Long amount;     // FIXED 정액
+        private final Long rate;       // RATE 비율
+    }
 }
