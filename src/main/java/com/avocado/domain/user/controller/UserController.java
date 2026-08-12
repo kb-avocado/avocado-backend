@@ -3,6 +3,7 @@ package com.avocado.domain.user.controller;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.security.jwt.component.JwtTokenProvider;
 import com.avocado.global.security.jwt.component.JwtUtil;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import com.avocado.domain.user.dto.request.UserLoginRequestDto;
 import com.avocado.domain.user.dto.request.UserSignUpRequestDto;
 import com.avocado.domain.user.dto.response.LoginUserDto;
@@ -13,6 +14,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletResponse;
@@ -86,6 +88,22 @@ public class UserController {
         return ResponseEntity
                 .status(LOGIN_SUCCESS.getHttpStatus())
                 .body(ApiResponse.success(LOGIN_SUCCESS, user));
+    }
+
+    @ApiOperation(
+            value = "내 로그인 정보 조회",
+            notes = "쿠키의 Access Token으로 로그인한 회원의 정보를 다시 조회합니다. "
+                    + "새로고침하면 브라우저에 있던 회원 정보가 사라지는데, 토큰은 HttpOnly 쿠키라 JS가 읽을 수 없어 서버에 되물어야 합니다. "
+    )
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<LoginUserDto>> me(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        LoginUserDto user = userLoginService.me(authUser);
+
+        return ResponseEntity
+                .status(SESSION_FOUND.getHttpStatus())
+                .body(ApiResponse.success(SESSION_FOUND, user));
     }
 
     @ApiOperation(

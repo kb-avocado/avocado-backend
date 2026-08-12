@@ -27,6 +27,13 @@
          WHERE email = #{email}
     </select>
 
+    <!-- 새로고침 복원 시 토큰의 회원 ID로 조회한다. -->
+    <select id="selectById" resultType="com.avocado.domain.user.domain.User">
+        SELECT <include refid="userColumns"/>
+          FROM users
+         WHERE id = #{id}
+    </select>
+
     <!-- 가족 연결 요청에서 초대 코드로 보호자를 찾는다. invite_code도 UNIQUE -->
     <select id="selectByInviteCode" resultType="com.avocado.domain.user.domain.User">
         SELECT <include refid="userColumns"/>

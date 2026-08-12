@@ -8,6 +8,7 @@ import com.avocado.domain.user.dto.response.LoginUserDto;
 import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,32 @@ public class UserLoginServiceImpl implements UserLoginService {
         if (user == null
                 || !passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        validateLoginable(user);
+
+        return user.getUserType() == UserType.PARENT
+                ? toParentInfo(user)
+                : toChildInfo(user);
+    }
+
+    /**
+     * 토큰으로 로그인한 회원의 정보를 다시 조회한다.
+     *
+     * @param authUser 요청한 회원 (토큰에서 꺼낸 인증 주체)
+     * @return 로그인한 회원 정보
+     * @throws BusinessException 인증 정보가 없거나, 회원이 없거나, 로그인할 수 없는 계정 상태인 경우
+     */
+    @Override
+    public LoginUserDto me(AuthUser authUser) {
+        if (authUser == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        User user = userMapper.selectById(authUser.getUserId());
+
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
 
         validateLoginable(user);
