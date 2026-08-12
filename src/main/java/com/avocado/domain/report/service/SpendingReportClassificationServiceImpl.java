@@ -22,7 +22,6 @@ import java.util.Map;
 @Transactional
 public class SpendingReportClassificationServiceImpl implements SpendingReportClassificationService {
 
-    // TODO: 아래 기준값들은 문서 설명 기준 임의 해석. 기획 확정되면 조정할 것.
     private static final int SAVING_DREAMER_MIN_ACHIEVED = 2;
     private static final int FREQUENT_SPARROW_MIN_DAYS = 25;
     private static final double BIG_SPENDER_MIN_AVG_AMOUNT = 15000;
