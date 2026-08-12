@@ -1,5 +1,6 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.piggybank.domain.BonusType;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -77,6 +78,24 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .savedAmount(saved)
                 .targetAmount(target)
                 .progressRate(rate)
+                .bonus(toBonusDto(p)) // 추가
+                .build();
+    }
+
+    // 저금통 목록 조회 보너스 정보 포함
+    // 도메인의 보너스 필드 → bonus DTO
+    private PiggyBankResponseDto.BonusDto toBonusDto(PiggyBank p) {
+        BonusType type = p.getBonusType();
+        if (type == null || type == BonusType.NONE) {
+            return PiggyBankResponseDto.BonusDto.builder()
+                    .status("UNPAID").type("NONE").build();
+        }
+        String status = (p.getBonusPaidAt() != null) ? "PAID" : "UNPAID";
+        return PiggyBankResponseDto.BonusDto.builder()
+                .status(status)
+                .type(type.name())
+                .amount(type == BonusType.FIXED ? p.getBonusValue() : null)
+                .rate(type == BonusType.RATE ? p.getBonusValue() : null)
                 .build();
     }
 
