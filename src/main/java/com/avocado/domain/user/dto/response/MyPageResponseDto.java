@@ -11,11 +11,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * 마이페이지에 보여줄 내 정보.
- * 회원 타입에 따라 내려가는 필드가 달라서, 값이 없는 필드는 응답에서 아예 제외한다.
  * - PARENT: inviteCode
  * - CHILD : parentName, parentEmail
- *
- * MyBatis가 직접 매핑하므로 기본 생성자가 필요하다.
  */
 @ApiModel(description = "마이페이지 내 정보")
 @Getter

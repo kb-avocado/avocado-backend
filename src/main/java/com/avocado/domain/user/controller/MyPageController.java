@@ -16,10 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import static com.avocado.global.response.code.SuccessCode.MY_PAGE_FOUND;
 
 /**
- * 마이페이지 API.
- *
- * 회원가입·로그인은 인증 없이 열려 있어야 해서 /api/auth를 쓰는 UserController에 두지만,
- * 마이페이지는 인증이 필요하므로 경로와 컨트롤러를 분리한다.
+ * 마이페이지 API
  */
 @Api(tags = "마이페이지 API")
 @RestController
