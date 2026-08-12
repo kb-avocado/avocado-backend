@@ -1,5 +1,8 @@
 package com.avocado.domain.piggybank.controller;
 
+import com.avocado.domain.wallet.service.WalletService;
+import com.avocado.global.security.jwt.dto.AuthUser;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.domain.piggybank.dto.request.PiggyBankCreateRequestDto;
 import com.avocado.domain.piggybank.dto.response.PiggyBankDetailResponseDto;
@@ -24,16 +27,19 @@ import static com.avocado.global.response.code.SuccessCode.*;
 public class PiggyBankController {
 
     private final PiggyBankService piggyBankService;
-
+    private final WalletService walletService;
     @GetMapping
     @ApiOperation(value = "저금통 목록 조회", notes = "상태별(IN_PROGRESS/CLOSED) 저금통 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<PiggyBankListResponseDto>> getList(
             @RequestParam(defaultValue = "IN_PROGRESS") String status,
-            // TODO: 로그인(인증) 붙으면 로그인 사용자의 walletId로 대체
-            @RequestParam Long walletId
+            @RequestParam(required = false) Long childId,   // 부모가 아이 조회 시 사용 (아이는 생략)
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        PiggyBankListResponseDto response =
-                piggyBankService.getList(walletId, status);
+        // 아이는 본인, 부모는 childId로 아이 지정
+        Long targetChildId = (childId != null) ? childId : authUser.getUserId();
+        Long walletId = walletService.getChildWallet(targetChildId, authUser).getWalletId();
+
+        PiggyBankListResponseDto response = piggyBankService.getList(walletId, status);
 
         return ResponseEntity
                 .status(PIGGY_BANK_LIST_FETCHED.getHttpStatus())
@@ -57,11 +63,13 @@ public class PiggyBankController {
     @PostMapping
     @ApiOperation(value = "저금통 생성", notes = "새 저금통을 생성합니다. (최대 3개)")
     public ResponseEntity<ApiResponse<PiggyBankDetailResponseDto>> create(
-            @RequestParam Long walletId,   // TODO: 인증 붙으면 로그인 사용자 walletId로 교체
-            @Valid @RequestBody PiggyBankCreateRequestDto request
+            @Valid @RequestBody PiggyBankCreateRequestDto request,
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        PiggyBankDetailResponseDto response =
-                piggyBankService.create(walletId, request);
+        Long childId = authUser.getUserId();
+        Long walletId = walletService.getChildWallet(childId, authUser).getWalletId();
+
+        PiggyBankDetailResponseDto response = piggyBankService.create(walletId, request);
 
         return ResponseEntity
                 .status(PIGGY_BANK_CREATED.getHttpStatus())
