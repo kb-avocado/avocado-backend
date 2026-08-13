@@ -1,8 +1,10 @@
 // report/service/ReportServiceImpl.java
 package com.avocado.domain.report.service;
 
+import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.report.dto.response.*;
 import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.domain.wallet.mapper.WalletMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
@@ -35,6 +37,8 @@ public class ReportServiceImpl implements ReportService {
     private final ReportMapper reportMapper;
     private final ReportConverter reportConverter;
     private final WalletMapper walletMapper;
+    private final UserMapper userMapper;
+    private final FamilyRelationMapper familyRelationMapper;
 
     @Override
     public ReportResponseDto getReport(String yearMonth, Long childId, AuthUser authUser) {
@@ -135,7 +139,7 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private void validateChildAccess(Long childId, AuthUser authUser) {
-        if (!walletMapper.existsChildById(childId)) {
+        if (!userMapper.existsChildById(childId)) {
             throw new BusinessException(CHILD_NOT_FOUND);
         }
 
@@ -157,6 +161,6 @@ public class ReportServiceImpl implements ReportService {
 
     private boolean isConnectedParent(Long childId, AuthUser authUser) {
         return UserType.PARENT.equals(authUser.getUserType())
-                && walletMapper.existsActiveFamilyRelation(authUser.getUserId(), childId);
+                && familyRelationMapper.existsActiveRelation(authUser.getUserId(), childId);
     }
 }
