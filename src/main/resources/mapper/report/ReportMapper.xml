@@ -96,4 +96,14 @@
             AND status = 'SUCCESS'
             AND DATE_FORMAT(created_at, '%Y-%m')
     </select>
+
+    <!-- 홈 화면 "오늘 사용" 금액. 하루 단위로 집계한다. -->
+    <select id="sumSpentAmountByDate" resultType="long">
+        SELECT IFNULL(SUM(amount), 0)
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+          AND transaction_type = 'PAYMENT'
+          AND status = 'SUCCESS'
+          AND DATE(created_at) = #{date}
+    </select>
 </mapper>

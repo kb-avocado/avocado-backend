@@ -37,6 +37,8 @@ public enum SuccessCode implements ResponseCode {
     PIGGY_BANK_CLOSED(HttpStatus.OK, "PIG-006", "저금통을 중도 포기했습니다."),
     PIGGY_BANK_DEPOSITED(HttpStatus.OK, "PIG-007", "저금통에 성공적으로 입금되었습니다."),
 
+    //홈
+    HOME_FOUND(HttpStatus.OK, "HOM-000", "홈 정보를 조회했습니다."),
     // 계좌 (ACC)
     ACCOUNT_CREATED(HttpStatus.CREATED, "ACC-000", "계좌가 성공적으로 등록되었습니다."),
 
