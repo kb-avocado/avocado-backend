@@ -16,6 +16,7 @@ public class JwtProperties {
     private final String secret;
     private final String issuer;
     private final Duration accessTokenValidity;
+    private final Duration refreshTokenValidity;
     private final boolean cookieSecure;
     private final String cookieSameSite;
 
@@ -24,7 +25,8 @@ public class JwtProperties {
             @Value("${jwt.issuer:avocado}") String issuer,
             @Value("${jwt.access-token-validity:1800000}") long accessTokenValidityMillis,
             @Value("${jwt.cookie.secure:false}") boolean cookieSecure,
-            @Value("${jwt.cookie.same-site:Lax}") String cookieSameSite
+            @Value("${jwt.cookie.same-site:Lax}") String cookieSameSite,
+            @Value("${jwt.refresh-token-validity:1209600000}") long refreshTokenValidityMillis
     ) {
         this.secret = secret;
         this.issuer = issuer;
@@ -32,5 +34,6 @@ public class JwtProperties {
         this.accessTokenValidity = Duration.ofMillis(accessTokenValidityMillis);
         this.cookieSecure = cookieSecure;
         this.cookieSameSite = cookieSameSite;
+        this.refreshTokenValidity = Duration.ofMillis(refreshTokenValidityMillis);
     }
 }
