@@ -13,27 +13,6 @@
         WHERE child_id = #{userId}
     </select>
 
-    <!-- childId에 해당하는 회원이 자녀(CHILD) 유형으로 존재하는지 확인한다. -->
-    <select id="existsChildById" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1
-            FROM users
-            WHERE id = #{childId}
-              AND user_type = 'CHILD'
-        )
-    </select>
-
-    <!-- 로그인한 보호자와 조회 대상 자녀 사이에 활성 가족 관계가 있는지 확인한다. -->
-    <select id="existsActiveFamilyRelation" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1
-            FROM family_relations
-            WHERE parent_id = #{parentId}
-              AND child_id = #{childId}
-              AND status = 'ACTIVE'
-        )
-    </select>
-
     <!-- childId 기준으로 자녀의 선불지갑 단건 정보를 조회한다. -->
     <select id="findByChildId" resultType="com.avocado.domain.wallet.domain.WalletVo">
         SELECT

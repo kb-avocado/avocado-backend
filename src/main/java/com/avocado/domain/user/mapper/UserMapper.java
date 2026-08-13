@@ -17,47 +17,74 @@ import java.util.Optional;
 public interface UserMapper {
 
     // 로그인 시 이메일로 회원 조회 (email은 UNIQUE)
-    User selectByEmail(@Param("email") String email);
+    User selectByEmail(
+            @Param("email") String email
+    );
 
     // [PARENT] 연동 계좌 ID. 계좌가 여러 개면 먼저 연동한 ACTIVE 계좌를 사용한다.
-    Long selectAccountIdByParentId(@Param("parentId") Long parentId);
+    Long selectAccountIdByParentId(
+            @Param("parentId") Long parentId
+    );
 
     // [PARENT] 가족 관계가 ACTIVE인 아이 목록
-    List<LoginChildDto> selectChildrenByParentId(@Param("parentId") Long parentId);
+    List<LoginChildDto> selectChildrenByParentId(
+            @Param("parentId") Long parentId
+    );
 
     // [CHILD] 선불지갑 ID (지갑 상태와 무관하게 조회)
-    Long selectWalletIdByChildId(@Param("childId") Long childId);
+    Long selectWalletIdByChildId(
+            @Param("childId") Long childId
+    );
 
     // [CHILD] 연결된 부모 회원 ID
-    Long selectParentIdByChildId(@Param("childId") Long childId);
+    Long selectParentIdByChildId(
+            @Param("childId") Long childId
+    );
 
     // [CHILD] 가족 연결 요청 정보 (PENDING 응답용)
-    LoginFamilyDto selectFamilyByChildId(@Param("childId") Long childId);
+    LoginFamilyDto selectFamilyByChildId(
+            @Param("childId") Long childId
+    );
 
     // 회원가입 시 이메일 중복 검사 (email은 UNIQUE)
-    boolean existsByEmail(@Param("email") String email);
+    boolean existsByEmail(
+            @Param("email") String email
+    );
 
     // 회원가입 시 전화번호 중복 검사 (phone은 UNIQUE)
-    boolean existsByPhone(@Param("phone") String phone);
+    boolean existsByPhone(
+            @Param("phone") String phone
+    );
 
     // [PARENT] 초대 코드 중복 검사 (invite_code는 UNIQUE)
-    boolean existsByInviteCode(@Param("inviteCode") String inviteCode);
+    boolean existsByInviteCode(
+            @Param("inviteCode") String inviteCode
+    );
 
     // [PARENT] 부모 계정 활성화 여부 검사
-    boolean existsActiveParentById(@Param("userId") Long userId);
+    boolean existsActiveParentById(
+            @Param("userId") Long userId
+    );
 
-    /**
-     * [PARENT] 부모 회원의 계정 상태를 조회한다.
-     *
-     * @return 부모 회원의 상태. 회원이 없거나 부모 계정이 아니면 null
-     */
-    UserStatus selectParentStatusById(@Param("userId") Long userId);
+    // 조회 대상 자녀 회원이 존재하는지 확인
+    boolean existsChildById(
+            @Param("childId") Long childId
+    );
+
+    // [PARENT] 부모 회원의 계정 상태를 조회한다.
+    UserStatus selectParentStatusById(
+            @Param("userId") Long userId
+    );
 
     // 회원가입
-    void insertUser(User user);
+    void insertUser(
+            User user
+    );
 
     // 가족 연결 요청 시 초대 코드로 보호자를 찾는다. (invite_code는 UNIQUE)
-    User selectByInviteCode(@Param("inviteCode") String inviteCode);
+    User selectByInviteCode(
+            @Param("inviteCode") String inviteCode
+    );
 
     /**
      * 지금 상태가 fromStatus일 때만 toStatus로 바꾼다.
@@ -81,7 +108,9 @@ public interface UserMapper {
      *
      * @return 부모 회원의 마이페이지 정보. 회원이 없거나 부모 계정이 아니면 null
      */
-    MyPageResponseDto selectParentMyPageById(@Param("parentId") Long parentId);
+    MyPageResponseDto selectParentMyPageById(
+            @Param("parentId") Long parentId
+    );
 
     /**
      * [CHILD] 마이페이지에 보여줄 아이 회원 정보. 연결된 보호자 정보를 함께 내려준다.
@@ -89,5 +118,7 @@ public interface UserMapper {
      *
      * @return 아이 회원의 마이페이지 정보. 회원이 없거나 아이 계정이 아니면 null
      */
-    MyPageResponseDto selectChildMyPageById(@Param("childId") Long childId);
+    MyPageResponseDto selectChildMyPageById(
+            @Param("childId") Long childId
+    );
 }
