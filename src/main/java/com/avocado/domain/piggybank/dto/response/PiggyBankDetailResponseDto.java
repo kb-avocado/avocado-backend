@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 /** 저금통 상세 조회 응답 (목록 항목 + 남은 금액 + 보너스 정보) */
 @Getter
 @Builder
@@ -21,4 +23,5 @@ public class PiggyBankDetailResponseDto {
     private final Long remainingAmount;  // 남은 금액 (target - saved)
     private final String bonusType;      // NONE, FIXED, RATE
     private final Long bonusValue;       // 정액 금액 또는 비율
+    private final LocalDateTime bonusPaidAt;  // 보너스 지급 완료 시각 (미지급이면 null)
 }
