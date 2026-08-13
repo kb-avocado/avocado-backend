@@ -53,7 +53,7 @@ public class SecurityConfig {
             "/api/payments/**",     // 결제&결제 환불
             "/api/piggybanks/**",   // 저금통
 //            "/api/news/**",         // 뉴스
-            "/api/reports/**",      // 리포트
+//            "/api/reports/**",      // 리포트
             "/api/notifications/**",// 알림
             "/api/accounts/**",     // 계좌
             "/api/merchants/**"     // 가맹점
