@@ -92,7 +92,7 @@ class PiggyBankServiceImplTest {
         when(piggyBankMapper.selectById(1L)).thenReturn(p);
 
         // when
-        PiggyBankDetailResponseDto result = piggyBankService.getDetail(1L);
+        PiggyBankDetailResponseDto result = piggyBankService.getDetail(1L,1L);
 
         // then
         assertThat(result.getPiggyBankId()).isEqualTo(1L);
@@ -109,7 +109,7 @@ class PiggyBankServiceImplTest {
         when(piggyBankMapper.selectById(999L)).thenReturn(null);
 
         // when & then
-        assertThatThrownBy(() -> piggyBankService.getDetail(999L))
+        assertThatThrownBy(() -> piggyBankService.getDetail(999L,1L))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.PIGGY_BANK_NOT_FOUND);
@@ -117,14 +117,14 @@ class PiggyBankServiceImplTest {
     @Test
     @DisplayName("상세 조회 - 목표 달성 시 진행률 100, 남은 금액 0")
     void getDetail_achieved() {
-        PiggyBank p = PiggyBank.builder()
+        PiggyBank p = PiggyBank.builder().id(5L).walletId(1L)
                 .id(5L).name("여행 가방").targetAmount(200000L).balance(200000L)
                 .status("ACHIEVE").isFavorite(false)
                 .bonusType(PiggyBankBonusType.NONE).bonusValue(0L)
                 .build();
         when(piggyBankMapper.selectById(5L)).thenReturn(p);
 
-        PiggyBankDetailResponseDto result = piggyBankService.getDetail(5L);
+        PiggyBankDetailResponseDto result = piggyBankService.getDetail(5L,1L);
 
         assertThat(result.getProgressRate()).isEqualTo(100);
         assertThat(result.getRemainingAmount()).isEqualTo(0L);
@@ -135,15 +135,15 @@ class PiggyBankServiceImplTest {
     @DisplayName("상세 조회 - 목표 금액 0이면 진행률 0 (0으로 나누기 방지)")
     void getDetail_zeroTarget() {
         PiggyBank p = PiggyBank.builder()
-                .id(6L).name("테스트").targetAmount(0L).balance(0L)
+                .id(6L).walletId(1L)   // ★ .walletId(1L) 추가
+                .name("테스트").targetAmount(0L).balance(0L)
                 .status("ACTIVE").isFavorite(false)
                 .bonusType(PiggyBankBonusType.NONE).bonusValue(0L)
                 .build();
         when(piggyBankMapper.selectById(6L)).thenReturn(p);
 
-        PiggyBankDetailResponseDto result = piggyBankService.getDetail(6L);
-
-        assertThat(result.getProgressRate()).isEqualTo(0);  // 0/0 → 0 처리
+        PiggyBankDetailResponseDto result = piggyBankService.getDetail(6L, 1L);
+        assertThat(result.getProgressRate()).isEqualTo(0);
     }
 
     @Test
@@ -185,10 +185,10 @@ class PiggyBankServiceImplTest {
     @Test
     @DisplayName("중도 포기 - 정상 처리")
     void close_success() {
-        PiggyBank p = PiggyBank.builder().id(1L).status("ACTIVE").build();
+        PiggyBank p = PiggyBank.builder().id(1L).walletId(1L).status("ACTIVE").build();  // ★ .walletId(1L)
         when(piggyBankMapper.selectById(1L)).thenReturn(p);
 
-        piggyBankService.close(1L);
+        piggyBankService.close(1L, 1L);
 
         verify(piggyBankMapper).cancel(1L);
     }
@@ -196,11 +196,22 @@ class PiggyBankServiceImplTest {
     @Test
     @DisplayName("중도 포기 - 이미 종료된 저금통이면 예외")
     void close_alreadyClosed() {
-        PiggyBank p = PiggyBank.builder().id(1L).status("CANCEL").build();
+        PiggyBank p = PiggyBank.builder().id(1L).walletId(1L).status("CANCEL").build();  // ★ .walletId(1L)
         when(piggyBankMapper.selectById(1L)).thenReturn(p);
 
-        assertThatThrownBy(() -> piggyBankService.close(1L))
+        assertThatThrownBy(() -> piggyBankService.close(1L, 1L))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PIGGY_BANK_ALREADY_CLOSED);
+    }
+    @Test
+    @DisplayName("상세 조회 - 남의 저금통이면 FORBIDDEN")
+    void getDetail_forbidden() {
+        PiggyBank p = PiggyBank.builder().id(1L).walletId(999L)  // 저금통은 999 지갑
+                .targetAmount(1000L).balance(0L).status("ACTIVE").isFavorite(false)
+                .bonusType(BonusType.NONE).bonusValue(0L).build();
+        when(piggyBankMapper.selectById(1L)).thenReturn(p);
+
+        assertThatThrownBy(() -> piggyBankService.getDetail(1L, 1L))  // 요청자는 1 지갑
+                .isInstanceOf(BusinessException.class);
     }
 }

@@ -101,11 +101,16 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
     // 저금통 상세 조회
     @Override
-    public PiggyBankDetailResponseDto getDetail(Long piggyBankId) {
+    public PiggyBankDetailResponseDto getDetail(Long piggyBankId, Long walletId) {
         PiggyBank p = piggyBankMapper.selectById(piggyBankId);
         // 팀 공용 예외 처리
         if (p == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        // 소유권 검증: 이 저금통이 요청자의 지갑 소속인지
+        if (!p.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         long target = p.getTargetAmount() == null ? 0 : p.getTargetAmount();
@@ -125,6 +130,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .remainingAmount(remaining)
                 .bonusType(p.getBonusType() == null ? "NONE" : p.getBonusType().name())
                 .bonusValue(p.getBonusValue())
+                .bonusPaidAt(p.getBonusPaidAt())
                 .build();
     }
     @Override
@@ -148,15 +154,20 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
         // 3) 생성된 id로 상세 반환
         Long newId = piggyBankMapper.selectLastInsertId();
-        return getDetail(newId);
+        return getDetail(newId, walletId);
     }
     // 저금통 삭제
     @Override
     @Transactional
-    public void close(Long piggyBankId) {
+    public void close(Long piggyBankId, Long walletId) {
         PiggyBank p = piggyBankMapper.selectById(piggyBankId);
         if (p == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        // 소유권 검증
+        if (!p.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         // 이미 최종 달성(ACHIEVE) or 취소(CANCEL)면 중도 포기 불가
@@ -180,5 +191,30 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         // TODO(PGB-012): 승격된 저금통 원금 자동 환급 (지갑 잔액 증가 메서드 준비되면 연결)
         //   현재는 지갑 API 대기 → 상태 전이만. 환급은 close 환급과 함께 추후 배선.
         return promoted;
+    }
+
+    // 저금통 즐겨찾기 토글 (아이당 1개만)
+    @Override
+    @Transactional
+    public boolean toggleFavorite(Long piggyBankId, Long walletId) {
+        PiggyBank p = piggyBankMapper.selectById(piggyBankId);
+        if (p == null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+        // 소유권 검증
+        if (!p.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        boolean next = !Boolean.TRUE.equals(p.getIsFavorite());
+        if (next) {
+            // 1개 제한: 같은 지갑 기존 즐겨찾기 해제 후 이 저금통만 등록
+            piggyBankMapper.clearFavoritesByWallet(walletId);
+            piggyBankMapper.updateFavorite(piggyBankId, true);
+        } else {
+            // 다시 누르면 해제 (0개 허용)
+            piggyBankMapper.updateFavorite(piggyBankId, false);
+        }
+        return next;
     }
 }

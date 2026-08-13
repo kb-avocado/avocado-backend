@@ -21,11 +21,16 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
     private final PiggyBankMapper piggyBankMapper;
 
     @Override
-    public PiggyBankBonusResponseDto setBonus(Long piggyBankId, PiggyBankBonusSetRequestDto request) {
+    public PiggyBankBonusResponseDto setBonus(Long piggyBankId, PiggyBankBonusSetRequestDto request, Long walletId) {
         PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
 
         if (piggyBank == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+      
+        // 소유권 검증: 이 저금통이 요청자의 지갑 소속인지
+        if (!piggyBank.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         if (piggyBank.getBonusType() != PiggyBankBonusType.NONE) {
@@ -45,11 +50,16 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
 
     @Override
     @Transactional
-    public PiggyBankBonusPayResponseDto payBonus(Long piggyBankId) {
+    public PiggyBankBonusPayResponseDto payBonus(Long piggyBankId, Long walletId) {
         PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
 
         if (piggyBank == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+      
+        // 소유권 검증: 이 저금통이 요청자의 지갑 소속인지
+        if (!piggyBank.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         if (piggyBank.getBonusType() == PiggyBankBonusType.NONE) {

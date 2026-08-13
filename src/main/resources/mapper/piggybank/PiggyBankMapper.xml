@@ -126,4 +126,20 @@
         AND first_deposited_at IS NOT NULL
         AND first_deposited_at &lt;= DATE_SUB(NOW(), INTERVAL 7 DAY)
     </update>
+
+    <!-- 즐겨찾기 추가-->
+    <update id="clearFavoritesByWallet">
+        UPDATE piggy_banks
+        SET is_favorite = FALSE,
+        updated_at = NOW()
+        WHERE wallet_id = #{walletId}
+        AND is_favorite = TRUE
+    </update>
+
+    <update id="updateFavorite">
+        UPDATE piggy_banks
+        SET is_favorite = #{favorite},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper>
