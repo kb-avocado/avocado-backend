@@ -95,4 +95,20 @@ public class PiggyBankController {
                 .status(PIGGY_BANK_CLOSED.getHttpStatus())
                 .body(ApiResponse.success(PIGGY_BANK_CLOSED));
     }
+
+    //저금통 즐겨찾기 토글 (아이당 1개)
+    @PatchMapping("/{piggyBankId}/favorite")
+    @ApiOperation(value = "저금통 즐겨찾기 토글", notes = "저금통 즐겨찾기를 켜고 끕니다. (아이당 1개만 유지)")
+    public ResponseEntity<ApiResponse<Boolean>> toggleFavorite(
+            @PathVariable Long piggyBankId,
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        Long walletId = walletService.getChildWallet(authUser.getUserId(), authUser).getWalletId();
+
+        boolean favorite = piggyBankService.toggleFavorite(piggyBankId, walletId);
+
+        return ResponseEntity
+                .status(PIGGY_BANK_FAVORITE_UPDATED.getHttpStatus())
+                .body(ApiResponse.success(PIGGY_BANK_FAVORITE_UPDATED, favorite));
+    }
 }
