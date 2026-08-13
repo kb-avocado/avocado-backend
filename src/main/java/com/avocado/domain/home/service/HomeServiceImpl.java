@@ -1,5 +1,6 @@
 package com.avocado.domain.home.service;
 
+import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.home.dto.response.HomeFavoritePiggyBankDto;
 import com.avocado.domain.home.dto.response.HomeResponseDto;
 import com.avocado.domain.news.dto.response.NewsListItemDto;
@@ -8,6 +9,7 @@ import com.avocado.domain.piggybank.domain.PiggyBank;
 import com.avocado.domain.piggybank.mapper.PiggyBankMapper;
 import com.avocado.domain.report.mapper.ReportMapper;
 import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.domain.wallet.mapper.WalletMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -33,6 +35,8 @@ public class HomeServiceImpl implements HomeService {
     // 홈에는 최근 신문 2건만 노출
     private static final int NEWS_PREVIEW_SIZE = 2;
 
+    private final UserMapper userMapper;
+    private final FamilyRelationMapper familyRelationMapper;
     private final WalletMapper walletMapper;
     private final PiggyBankMapper piggyBankMapper;
     private final ReportMapper reportMapper;
@@ -116,7 +120,7 @@ public class HomeServiceImpl implements HomeService {
     }
 
     private void validateChildAccess(Long childId, AuthUser authUser) {
-        if (!walletMapper.existsChildById(childId)) {
+        if (!userMapper.existsChildById(childId)) {
             throw new BusinessException(CHILD_NOT_FOUND);
         }
 
@@ -138,6 +142,6 @@ public class HomeServiceImpl implements HomeService {
 
     private boolean isConnectedParent(Long childId, AuthUser authUser) {
         return UserType.PARENT.equals(authUser.getUserType())
-                && walletMapper.existsActiveFamilyRelation(authUser.getUserId(), childId);
+                && familyRelationMapper.existsActiveRelation(authUser.getUserId(), childId);
     }
 }
