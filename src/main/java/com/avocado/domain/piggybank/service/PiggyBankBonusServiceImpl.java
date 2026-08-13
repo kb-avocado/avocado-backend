@@ -1,8 +1,8 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
-import com.avocado.domain.piggybank.domain.BonusType;
 import com.avocado.domain.piggybank.domain.PiggyBank;
 import com.avocado.domain.piggybank.dto.request.PiggyBankBonusSetRequestDto;
 import com.avocado.domain.piggybank.dto.response.PiggyBankBonusPayResponseDto;
@@ -28,17 +28,17 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
         }
 
-        if (piggyBank.getBonusType() != BonusType.NONE) {
+        if (piggyBank.getBonusType() != PiggyBankBonusType.NONE) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_BONUS_ALREADY_SET);
         }
 
-        validateBonusValue(request.getBonusType(), request.getBonusValue());
+        validateBonusValue(request.getPiggyBankBonusType(), request.getBonusValue());
 
-        piggyBankMapper.updateBonus(piggyBankId, request.getBonusType(), request.getBonusValue());
+        piggyBankMapper.updateBonus(piggyBankId, request.getPiggyBankBonusType(), request.getBonusValue());
 
         return PiggyBankBonusResponseDto.builder()
                 .piggyBankId(piggyBankId)
-                .bonusType(request.getBonusType())
+                .piggyBankBonusType(request.getPiggyBankBonusType())
                 .bonusValue(request.getBonusValue())
                 .build();
     }
@@ -52,7 +52,7 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
         }
 
-        if (piggyBank.getBonusType() == BonusType.NONE) {
+        if (piggyBank.getBonusType() == PiggyBankBonusType.NONE) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_BONUS_NOT_SET);
         }
 
@@ -70,17 +70,17 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
 
         return PiggyBankBonusPayResponseDto.builder()
                 .piggyBankId(piggyBankId)
-                .bonusType(piggyBank.getBonusType())
+                .piggyBankBonusType(piggyBank.getBonusType())
                 .bonusValue(piggyBank.getBonusValue())
                 .paidAt(paidAt)
                 .build();
     }
 
-    private void validateBonusValue(BonusType bonusType, Long bonusValue) {
-        if (bonusType == BonusType.RATE && (bonusValue < 1 || bonusValue > 100)) {
+    private void validateBonusValue(PiggyBankBonusType piggyBankBonusType, Long bonusValue) {
+        if (piggyBankBonusType == PiggyBankBonusType.RATE && (bonusValue < 1 || bonusValue > 100)) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
-        if (bonusType == BonusType.FIXED && bonusValue <= 0) {
+        if (piggyBankBonusType == PiggyBankBonusType.FIXED && bonusValue <= 0) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
     }
