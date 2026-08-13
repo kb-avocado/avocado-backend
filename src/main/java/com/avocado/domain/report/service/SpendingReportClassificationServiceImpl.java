@@ -12,7 +12,7 @@ import com.avocado.domain.report.mapper.ReportMapper;
 import com.avocado.domain.report.mapper.SpendingClassificationMapper;
 import com.avocado.domain.report.mapper.SpendingReportTypeMapper;
 import com.avocado.domain.user.domain.UserType;
-import com.avocado.domain.wallet.mapper.WalletMapper;
+import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -5,7 +5,7 @@ import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.report.dto.response.*;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.mapper.UserMapper;
-import com.avocado.domain.wallet.mapper.WalletMapper;
+import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.report.domain.MonthlySpentRow;
@@ -36,7 +36,6 @@ public class ReportServiceImpl implements ReportService {
 
     private final ReportMapper reportMapper;
     private final ReportConverter reportConverter;
-    private final WalletMapper walletMapper;
     private final UserMapper userMapper;
     private final FamilyRelationMapper familyRelationMapper;
 
@@ -117,7 +116,7 @@ public class ReportServiceImpl implements ReportService {
     /*
      * 요청받은 childId와 로그인 사용자 정보를 바탕으로
      * 실제 조회 대상 childId를 결정하고 접근 권한을 검증한다.
-     * News/Home 도메인의 resolveTargetChildId와 동일한 패턴이다.
+     * WalletServiceImpl의 validateChildWalletAccess와 동일한 패턴이다.
      * - childId가 없으면: 로그인 사용자가 CHILD일 때만 본인 ID로 대체한다. (PARENT는 필수)
      * - childId가 있으면: 본인(CHILD) 또는 연결된 보호자(PARENT)인지 검증한다.
      */
