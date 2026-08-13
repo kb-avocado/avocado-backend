@@ -47,4 +47,20 @@ public interface WalletService {
             Long amount,
             String traceId
     );
+
+    /**
+     * 해지된 저금통에서 반환된 금액을
+     * 아이 선불지갑에 입금한다.
+     *
+     * @param childId 아이 회원 ID
+     * @param walletId 입금할 선불지갑 ID
+     * @param amount 저금통에서 반환된 금액
+     * @param traceId 저금통 거래와 연결하기 위한 추적 ID
+     */
+    void depositFromPiggyBank(
+            Long childId,
+            Long walletId,
+            Long amount,
+            String traceId
+    );
 }

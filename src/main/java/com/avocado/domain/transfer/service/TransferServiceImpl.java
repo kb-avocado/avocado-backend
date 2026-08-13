@@ -6,11 +6,8 @@ import com.avocado.domain.family.service.FamilyService;
 import com.avocado.domain.transaction.service.AccountTxService;
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
-import com.avocado.domain.transfer.dto.request.WalletToPiggyBankTransferRequestDto;
 import com.avocado.domain.user.service.UserService;
 import com.avocado.domain.wallet.service.WalletService;
-import com.avocado.domain.piggybank.dto.response.PiggyBankDepositResultResponseDto;
-import com.avocado.domain.piggybank.service.PiggyBankDepositService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,7 +16,6 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 public class TransferServiceImpl implements TransferService {
 
     private final AccountService accountService;
@@ -27,7 +23,6 @@ public class TransferServiceImpl implements TransferService {
     private final FamilyService familyService;
     private final UserService userService;
     private final WalletService walletService;
-    private final PiggyBankDepositService piggyBankDepositService;
 
     /**
      * 부모 외부 계좌에서
@@ -37,7 +32,9 @@ public class TransferServiceImpl implements TransferService {
      */
     @Override
     @Transactional
-    public TransferResultVo transferAccountToWallet(AccountToWalletTransferRequestDto requestDto) {
+    public TransferResultVo transferAccountToWallet(
+            AccountToWalletTransferRequestDto requestDto
+    ) {
         Long parentId = requestDto.getParentId();
         Long childId = requestDto.getChildId();
         Long walletId = requestDto.getWalletId();
@@ -84,22 +81,31 @@ public class TransferServiceImpl implements TransferService {
 
     @Override
     @Transactional
-    public PiggyBankDepositResultResponseDto transferWalletToPiggyBank(WalletToPiggyBankTransferRequestDto requestDto) {
-        Long childId = requestDto.getChildId();
-        Long walletId = requestDto.getWalletId();
-        Long piggyBankId = requestDto.getPiggyBankId();
-        Long amount = requestDto.getAmount();
-
-        // 하나의 자금 이동을 연결하기 위한 추적 ID 생성
-        String traceId = UUID.randomUUID().toString();
-
-        // 아이 선불지갑에서 저금할 금액을 출금
-        walletService.withdrawForPiggyBank(childId, walletId, amount, traceId);
-
-        // 저금통에 금액을 입금하고, 그 결과(목표달성 여부 포함)를 그대로 반환
-        return piggyBankDepositService.depositFromWallet(
+    public void transferWalletToPiggyBank(
+            Long childId,
+            Long walletId,
+            Long amount,
+            String traceId
+    ) {
+        walletService.withdrawForPiggyBank(
                 childId,
-                piggyBankId,
+                walletId,
+                amount,
+                traceId
+        );
+    }
+
+    @Override
+    @Transactional
+    public void transferPiggyBankToWallet(
+            Long childId,
+            Long walletId,
+            Long amount,
+            String traceId
+    ) {
+        walletService.depositFromPiggyBank(
+                childId,
+                walletId,
                 amount,
                 traceId
         );
