@@ -130,6 +130,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .remainingAmount(remaining)
                 .bonusType(p.getBonusType() == null ? "NONE" : p.getBonusType().name())
                 .bonusValue(p.getBonusValue())
+                .bonusPaidAt(p.getBonusPaidAt())
                 .build();
     }
     @Override
