@@ -23,4 +23,7 @@ public interface PiggyBankService {
 
     // 7일 달성 승격 (스케줄러가 호출), 승격된 저금통 수 반환
     int promoteAchievements();
+
+    // 즐겨찾기
+    boolean toggleFavorite(Long piggyBankId, Long walletId);
 }

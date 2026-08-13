@@ -53,4 +53,10 @@ public interface PiggyBankMapper {
     );
     // 목표 도달 후 7일 경과분을 ACHIEVE로 승격, 승격된 행 수 반환
     int promoteToAchieve();
+
+    // 같은 지갑의 기존 즐겨찾기 모두 해제 (1개 보장용)
+    int clearFavoritesByWallet(@Param("walletId") Long walletId);
+
+    // 특정 저금통 즐겨찾기 on/off
+    int updateFavorite(@Param("id") Long id, @Param("favorite") boolean favorite);
 }
