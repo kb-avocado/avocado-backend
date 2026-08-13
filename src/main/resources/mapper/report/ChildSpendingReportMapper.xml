@@ -15,8 +15,8 @@
         SELECT id, child_id, report_type_id, report_year, report_month
         FROM child_spending_reports
         WHERE child_id = #{childId}
-        AND report_year = #{year}
-        AND report_month = #{month}
+          AND report_year = #{year}
+          AND report_month = #{month}
     </select>
 
     <insert id="upsert">
@@ -24,5 +24,20 @@
         VALUES (#{childId}, #{reportTypeId}, #{reportYear}, #{reportMonth})
         ON DUPLICATE KEY UPDATE report_type_id = VALUES(report_type_id)
     </insert>
+
+    <select id="countByReportTypeAndYearMonth" resultType="long">
+        SELECT COUNT(*)
+        FROM child_spending_reports
+        WHERE report_type_id = #{reportTypeId}
+          AND report_year = #{year}
+          AND report_month = #{month}
+    </select>
+
+    <select id="countAllByYearMonth" resultType="long">
+        SELECT COUNT(*)
+        FROM child_spending_reports
+        WHERE report_year = #{year}
+          AND report_month = #{month}
+    </select>
 
 </mapper>

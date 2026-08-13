@@ -10,4 +10,5 @@ public class SpendingReportTypeDto {
     private String name;
     private String childDescription;
     private String parentDescription;
+    private Integer percentage;
 }
