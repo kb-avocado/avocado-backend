@@ -1,6 +1,7 @@
 // report/service/ReportServiceImpl.java
 package com.avocado.domain.report.service;
 
+import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.report.dto.response.*;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.mapper.UserMapper;

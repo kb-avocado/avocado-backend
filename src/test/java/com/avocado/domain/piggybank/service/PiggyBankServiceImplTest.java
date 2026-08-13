@@ -208,7 +208,7 @@ class PiggyBankServiceImplTest {
     void getDetail_forbidden() {
         PiggyBank p = PiggyBank.builder().id(1L).walletId(999L)  // 저금통은 999 지갑
                 .targetAmount(1000L).balance(0L).status("ACTIVE").isFavorite(false)
-                .bonusType(piggyBankBonus.NONE).bonusValue(0L).build();
+                .bonusType(PiggyBankBonusType.NONE).bonusValue(0L).build();
         when(piggyBankMapper.selectById(1L)).thenReturn(p);
 
         assertThatThrownBy(() -> piggyBankService.getDetail(1L, 1L))  // 요청자는 1 지갑
