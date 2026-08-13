@@ -50,8 +50,12 @@ public class PiggyBankCheerMessageServiceImpl implements PiggyBankCheerMessageSe
     }
 
     @Override
-    public void deleteMessage(Long piggyBankId, Long messageId) {
-        int deletedRows = piggyBankCheerMessageMapper.deleteById(messageId);
+    public void deleteMessage(Long piggyBankId, Long messageId, AuthUser authUser) {
+        if (authUser == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        int deletedRows = piggyBankCheerMessageMapper.deleteById(messageId, authUser.getUserId());
 
         if (deletedRows == 0) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
