@@ -92,7 +92,7 @@
     <!--  지정 저금통 보너스 설정  -->
     <update id="updateBonus">
         UPDATE piggy_banks
-        SET bonus_type = #{bonusType},
+        SET bonus_type = #{piggyBankBonusType},
         bonus_value = #{bonusValue},
         updated_at = NOW()
         WHERE id = #{id}
