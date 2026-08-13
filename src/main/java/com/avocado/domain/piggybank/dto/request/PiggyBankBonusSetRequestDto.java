@@ -1,6 +1,6 @@
 package com.avocado.domain.piggybank.dto.request;
 
-import com.avocado.domain.piggybank.domain.BonusType;
+import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -12,7 +12,7 @@ import javax.validation.constraints.Positive;
 public class PiggyBankBonusSetRequestDto {
 
     @NotNull(message = "보너스 타입은 필수입니다.")
-    private BonusType bonusType;
+    private PiggyBankBonusType piggyBankBonusType;
 
     @NotNull(message = "보너스 값은 필수입니다.")
     @Positive(message = "보너스 값은 0보다 커야 합니다.")

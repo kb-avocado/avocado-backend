@@ -1,6 +1,6 @@
 package com.avocado.domain.piggybank.service;
 
-import com.avocado.domain.piggybank.service.PiggyBankServiceImpl;
+import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -12,7 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import com.avocado.domain.piggybank.domain.BonusType;
 import com.avocado.domain.piggybank.dto.response.PiggyBankDetailResponseDto;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
@@ -88,7 +87,7 @@ class PiggyBankServiceImplTest {
                 .id(1L).walletId(1L).name("레고 우주선")
                 .targetAmount(180000L).balance(135000L)
                 .status("ACTIVE").isFavorite(true)
-                .bonusType(BonusType.FIXED).bonusValue(10000L)
+                .bonusType(PiggyBankBonusType.FIXED).bonusValue(10000L)
                 .build();
         when(piggyBankMapper.selectById(1L)).thenReturn(p);
 
@@ -121,7 +120,7 @@ class PiggyBankServiceImplTest {
         PiggyBank p = PiggyBank.builder().id(5L).walletId(1L)
                 .id(5L).name("여행 가방").targetAmount(200000L).balance(200000L)
                 .status("ACHIEVE").isFavorite(false)
-                .bonusType(BonusType.NONE).bonusValue(0L)
+                .bonusType(PiggyBankBonusType.NONE).bonusValue(0L)
                 .build();
         when(piggyBankMapper.selectById(5L)).thenReturn(p);
 
@@ -139,7 +138,7 @@ class PiggyBankServiceImplTest {
                 .id(6L).walletId(1L)   // ★ .walletId(1L) 추가
                 .name("테스트").targetAmount(0L).balance(0L)
                 .status("ACTIVE").isFavorite(false)
-                .bonusType(BonusType.NONE).bonusValue(0L)
+                .bonusType(PiggyBankBonusType.NONE).bonusValue(0L)
                 .build();
         when(piggyBankMapper.selectById(6L)).thenReturn(p);
 
@@ -160,7 +159,7 @@ class PiggyBankServiceImplTest {
         when(piggyBankMapper.selectById(10L)).thenReturn(
                 PiggyBank.builder().id(10L).walletId(1L).name("게임기")
                         .targetAmount(120000L).balance(0L).status("ACTIVE")
-                        .isFavorite(false).bonusType(BonusType.NONE).bonusValue(0L).build());
+                        .isFavorite(false).bonusType(PiggyBankBonusType.NONE).bonusValue(0L).build());
 
         PiggyBankDetailResponseDto result = piggyBankService.create(1L, req);
 

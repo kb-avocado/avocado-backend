@@ -1,9 +1,7 @@
 package com.avocado.domain.transfer.service;
 
-import com.avocado.domain.piggybank.dto.response.PiggyBankDepositResultResponseDto;
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
-import com.avocado.domain.transfer.dto.request.WalletToPiggyBankTransferRequestDto;
 
 public interface TransferService {
 
@@ -12,11 +10,19 @@ public interface TransferService {
             AccountToWalletTransferRequestDto requestDto
     );
 
-    // 아이 선불지갑에서 아이 저금통으로 송금한다.
-    PiggyBankDepositResultResponseDto transferWalletToPiggyBank(
-            WalletToPiggyBankTransferRequestDto requestDto
+    // 저금통에 보낼 금액만 지갑에서 출금한다.
+    void transferWalletToPiggyBank(
+            Long childId,
+            Long walletId,
+            Long amount,
+            String traceId
     );
 
-    // 아이 저금통에서 아이 선불지갑으로 송금한다.
-
+    // 저금통에서 출금된 금액을 지갑에 반영한다.
+    void transferPiggyBankToWallet(
+            Long childId,
+            Long walletId,
+            Long amount,
+            String traceId
+    );
 }

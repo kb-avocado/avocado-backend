@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Builder
 @AllArgsConstructor
 public class PiggyBankCheerMessage {
-
     private final Long id;
     private final Long piggyBankId;
     private final Long parentId;

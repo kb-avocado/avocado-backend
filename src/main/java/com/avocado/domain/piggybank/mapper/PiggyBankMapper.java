@@ -1,6 +1,6 @@
 package com.avocado.domain.piggybank.mapper;
 
-import com.avocado.domain.piggybank.domain.BonusType;
+import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.domain.piggybank.domain.PiggyBank;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -15,7 +15,7 @@ public interface PiggyBankMapper {
 
     int updateBonus(
             @Param("id") Long id,
-            @Param("bonusType") BonusType bonusType,
+            @Param("bonusType") PiggyBankBonusType piggyBankBonusType,
             @Param("bonusValue") Long bonusValue
     );
 
