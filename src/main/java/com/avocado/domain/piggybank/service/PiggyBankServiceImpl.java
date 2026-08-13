@@ -191,4 +191,29 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         //   현재는 지갑 API 대기 → 상태 전이만. 환급은 close 환급과 함께 추후 배선.
         return promoted;
     }
+
+    // 저금통 즐겨찾기 토글 (아이당 1개만)
+    @Override
+    @Transactional
+    public boolean toggleFavorite(Long piggyBankId, Long walletId) {
+        PiggyBank p = piggyBankMapper.selectById(piggyBankId);
+        if (p == null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+        // 소유권 검증
+        if (!p.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        boolean next = !Boolean.TRUE.equals(p.getIsFavorite());
+        if (next) {
+            // 1개 제한: 같은 지갑 기존 즐겨찾기 해제 후 이 저금통만 등록
+            piggyBankMapper.clearFavoritesByWallet(walletId);
+            piggyBankMapper.updateFavorite(piggyBankId, true);
+        } else {
+            // 다시 누르면 해제 (0개 허용)
+            piggyBankMapper.updateFavorite(piggyBankId, false);
+        }
+        return next;
+    }
 }
