@@ -9,13 +9,18 @@ import lombok.RequiredArgsConstructor;
 @Getter
 @RequiredArgsConstructor
 public enum NotificationType {
-    WALLET("지갑 알림"),
 
-    PIGGY_BANK("저금통 알림"),
+    ALLOWANCE_RECEIVED("용돈이 도착했어요"),
 
-    NEWS("경제 신문 알림"),
+    FAMILY_INVITE_RECEIVED("가족 초대가 도착했어요"),
 
-    SYSTEM("시스템/공지 알림");
+    FAMILY_RELATION_APPROVED("가족 연결이 완료되었어요"),
 
-    private final String description;
+    SPENDING_REPORT_CREATED("이번 달 소비 리포트가 생성되었어요"),
+
+    CHEER_MESSAGE_RECEIVED("새 응원 메시지가 도착했어요"),
+
+    PIGGY_BANK_ACHIEVED("저금통 목표를 달성했어요");
+
+    private final String title;
 }
