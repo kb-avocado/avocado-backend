@@ -2,6 +2,7 @@ package com.avocado.domain.report.service;
 
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.domain.wallet.mapper.WalletMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.report.domain.ChildSpendingReport;
