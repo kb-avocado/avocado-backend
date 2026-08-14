@@ -1,16 +1,19 @@
 package com.avocado.domain.payment.repository;
 
+import com.avocado.domain.payment.domain.PaymentQrActiveTokenVo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.DefaultTypedTuple;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -136,6 +139,7 @@ class PaymentQrTokenRepositoryTest {
                 nowMillis
         )).thenReturn(Set.of("expired-token", "orphan-token"));
         when(valueOperations.get("payment:qr:token:expired-token")).thenReturn("102");
+        when(valueOperations.get("payment:qr:token:orphan-token")).thenReturn(null);
         when(valueOperations.get("payment:qr:user:102")).thenReturn("expired-token");
 
         // when
@@ -148,6 +152,30 @@ class PaymentQrTokenRepositoryTest {
         verify(stringRedisTemplate).delete("payment:qr:token:orphan-token");
         verify(zSetOperations).remove("payment:qr:active-tokens", "expired-token");
         verify(zSetOperations).remove("payment:qr:active-tokens", "orphan-token");
+    }
+
+    @Test
+    @DisplayName("활성 토큰 목록을 만료 시각과 남은 시간과 함께 조회한다")
+    void findActiveTokens() {
+        // given
+        long nowMillis = 1797220000000L;
+        long expiresAtMillis = nowMillis + Duration.ofSeconds(180).toMillis();
+
+        when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(zSetOperations.rangeByScoreWithScores(
+                "payment:qr:active-tokens",
+                nowMillis + 1,
+                Double.POSITIVE_INFINITY
+        )).thenReturn(Set.of(new DefaultTypedTuple<>("active-token", (double) expiresAtMillis)));
+
+        // when
+        List<PaymentQrActiveTokenVo> result = paymentQrTokenRepository.findActiveTokens(nowMillis);
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getToken()).isEqualTo("active-token");
+        assertThat(result.get(0).getExpiresAt()).isEqualTo(expiresAtMillis);
+        assertThat(result.get(0).getExpiresIn()).isEqualTo(180L);
     }
 
     @Test

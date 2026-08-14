@@ -1,10 +1,13 @@
 package com.avocado.domain.payment.repository;
 
+import com.avocado.domain.payment.domain.PaymentQrActiveTokenVo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ZSetOperations;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +78,25 @@ public class PaymentQrTokenRepository {
         return expiredTokens.size();
     }
 
+    public List<PaymentQrActiveTokenVo> findActiveTokens(long nowMillis) {
+        Set<ZSetOperations.TypedTuple<String>> activeTokens = stringRedisTemplate.opsForZSet()
+                .rangeByScoreWithScores(
+                        ACTIVE_TOKENS_KEY,
+                        nowMillis + 1,
+                        Double.POSITIVE_INFINITY
+                );
+
+        if (activeTokens == null || activeTokens.isEmpty()) {
+            return List.of();
+        }
+
+        return activeTokens.stream()
+                .filter(activeToken -> activeToken.getValue() != null)
+                .filter(activeToken -> activeToken.getScore() != null)
+                .map(activeToken -> toActiveToken(activeToken, nowMillis))
+                .toList();
+    }
+
     public long getTokenTtlSeconds(String token) {
         Long ttl = stringRedisTemplate.getExpire(
                 tokenUserKey(token),
@@ -118,5 +140,19 @@ public class PaymentQrTokenRepository {
     private void removeActiveToken(String token) {
         stringRedisTemplate.opsForZSet()
                 .remove(ACTIVE_TOKENS_KEY, token);
+    }
+
+    private PaymentQrActiveTokenVo toActiveToken(
+            ZSetOperations.TypedTuple<String> activeToken,
+            long nowMillis
+    ) {
+        long expiresAtMillis = activeToken.getScore().longValue();
+        long remainingMillis = Math.max(0L, expiresAtMillis - nowMillis);
+
+        return PaymentQrActiveTokenVo.builder()
+                .token(activeToken.getValue())
+                .expiresAt(expiresAtMillis)
+                .expiresIn((remainingMillis + 999L) / 1000L)
+                .build();
     }
 }

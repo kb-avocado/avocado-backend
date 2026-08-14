@@ -1,6 +1,7 @@
 package com.avocado.domain.payment.service;
 
 import com.avocado.domain.payment.domain.PaymentQrTokenVo;
+import com.avocado.domain.payment.dto.response.PaymentQrActiveTokenResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
 import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
 import com.avocado.global.exception.BusinessException;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -46,6 +48,17 @@ public class PaymentServiceImpl implements PaymentService {
         return PaymentQrTokenResponseDto.from(
                 issuePaymentQrToken(authUser.getUserId())
         );
+    }
+
+    @Override
+    public List<PaymentQrActiveTokenResponseDto> getActivePaymentQrTokens() {
+        long nowMillis = System.currentTimeMillis();
+
+        paymentQrTokenRepository.cleanupExpiredTokens(nowMillis);
+
+        return paymentQrTokenRepository.findActiveTokens(nowMillis).stream()
+                .map(PaymentQrActiveTokenResponseDto::from)
+                .toList();
     }
 
     private PaymentQrTokenVo issuePaymentQrToken(Long userId) {
