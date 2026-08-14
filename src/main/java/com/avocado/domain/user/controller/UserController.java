@@ -1,5 +1,6 @@
 package com.avocado.domain.user.controller;
 
+import com.avocado.domain.user.repository.RefreshTokenRepository;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.security.jwt.component.JwtTokenProvider;
 import com.avocado.global.security.jwt.component.JwtUtil;
@@ -32,6 +33,7 @@ public class UserController {
     private final UserSignUpService userSignUpService;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @ApiOperation(
             value = "회원가입",
@@ -46,14 +48,17 @@ public class UserController {
     ) {
         UserSignUpResponseDto responseDto = userSignUpService.signUp(request);
 
-        // 토큰 발급과 쿠키 전달은 HTTP 계층의 관심사라 컨트롤러에서 처리한다.
+        // Access Token
         String accessToken = jwtTokenProvider.createAccessToken(
                 responseDto.getUserId(),
                 responseDto.getRole(),
                 responseDto.getType()
         );
-
         jwtUtil.addAccessTokenCookie(response, accessToken);
+
+        // Refresh Token
+        String refreshToken = refreshTokenRepository.issue(responseDto.getUserId());
+        jwtUtil.addRefreshTokenCookie(response, refreshToken);
 
         return ResponseEntity
                 .status(SIGNUP_SUCCESS.getHttpStatus())
@@ -76,14 +81,17 @@ public class UserController {
     ) {
         LoginUserDto user = userLoginService.login(request);
 
-        // 토큰 발급과 쿠키 전달은 HTTP 계층의 관심사라 컨트롤러에서 처리한다.
+        // Access Token
         String accessToken = jwtTokenProvider.createAccessToken(
                 user.getUserId(),
                 user.getRole(),
                 user.getType()
         );
-
         jwtUtil.addAccessTokenCookie(response, accessToken);
+
+        // Refresh Token
+        String refreshToken = refreshTokenRepository.issue(user.getUserId());
+        jwtUtil.addRefreshTokenCookie(response, refreshToken);
 
         return ResponseEntity
                 .status(LOGIN_SUCCESS.getHttpStatus())
