@@ -16,6 +16,7 @@ public interface PiggyBankDepositService {
             Long childId,
             Long piggyBankId,
             Long amount,
-            String traceId
+            String traceId,
+            Long walletId
     );
 }
