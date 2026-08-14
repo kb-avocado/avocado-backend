@@ -91,6 +91,7 @@ class PaymentQrTokenRepositoryTest {
     void deleteByUserId() {
         // given
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
         when(valueOperations.get("payment:qr:user:102")).thenReturn("qr-token");
 
         // when
@@ -99,6 +100,25 @@ class PaymentQrTokenRepositoryTest {
         // then
         verify(stringRedisTemplate).delete("payment:qr:token:qr-token");
         verify(stringRedisTemplate).delete("payment:qr:user:102");
+        verify(zSetOperations).remove("payment:qr:active-tokens", "qr-token");
+    }
+
+    @Test
+    @DisplayName("토큰 기준 삭제 시 사용자 토큰과 활성 토큰 목록을 함께 삭제한다")
+    void deleteToken() {
+        // given
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(valueOperations.get("payment:qr:token:qr-token")).thenReturn("102");
+        when(valueOperations.get("payment:qr:user:102")).thenReturn("qr-token");
+
+        // when
+        paymentQrTokenRepository.deleteToken("qr-token");
+
+        // then
+        verify(stringRedisTemplate).delete("payment:qr:user:102");
+        verify(stringRedisTemplate).delete("payment:qr:token:qr-token");
+        verify(zSetOperations).remove("payment:qr:active-tokens", "qr-token");
     }
 
     @Test

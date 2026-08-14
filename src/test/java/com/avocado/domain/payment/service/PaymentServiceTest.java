@@ -51,7 +51,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("로그인 사용자 기준 결제 QR 토큰을 발급하고 Redis에 TTL과 함께 저장한다")
+    @DisplayName("기존 사용자 토큰을 제거한 뒤 결제 QR 토큰을 발급한다")
     void issuePaymentQrToken_success() {
         // given
         AuthUser authUser = authUser(102L);
@@ -67,6 +67,7 @@ class PaymentServiceTest {
         assertThat(result.getToken()).isNotBlank();
         assertThat(result.getExpiresIn()).isEqualTo(TOKEN_TTL_SECONDS);
 
+        verify(paymentQrTokenRepository).deleteByUserId(authUser.getUserId());
         verify(paymentQrTokenRepository).save(
                 eq(authUser.getUserId()),
                 tokenCaptor.capture(),

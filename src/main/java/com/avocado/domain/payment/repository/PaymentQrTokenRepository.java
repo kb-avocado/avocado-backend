@@ -47,12 +47,18 @@ public class PaymentQrTokenRepository {
     }
 
     public void deleteByUserId(Long userId) {
-        findTokenByUserId(userId).ifPresent(this::deleteToken);
+        findTokenByUserId(userId).ifPresent(token -> {
+            stringRedisTemplate.delete(tokenUserKey(token));
+            removeActiveToken(token);
+        });
         stringRedisTemplate.delete(userTokenKey(userId));
     }
 
     public void deleteToken(String token) {
+        findUserIdByToken(token)
+                .ifPresent(userId -> deleteUserTokenIfCurrent(userId, token));
         stringRedisTemplate.delete(tokenUserKey(token));
+        removeActiveToken(token);
     }
 
     public long getTokenTtlSeconds(String token) {
@@ -84,5 +90,19 @@ public class PaymentQrTokenRepository {
 
     private String reissueLockKey(Long userId) {
         return REISSUE_LOCK_KEY_PREFIX + userId;
+    }
+
+    private void deleteUserTokenIfCurrent(
+            Long userId,
+            String token
+    ) {
+        findTokenByUserId(userId)
+                .filter(token::equals)
+                .ifPresent(currentToken -> stringRedisTemplate.delete(userTokenKey(userId)));
+    }
+
+    private void removeActiveToken(String token) {
+        stringRedisTemplate.opsForZSet()
+                .remove(ACTIVE_TOKENS_KEY, token);
     }
 }

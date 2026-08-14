@@ -43,8 +43,6 @@ public class PaymentServiceImpl implements PaymentService {
         requireAuthenticated(authUser);
         validateReissueAllowed(authUser.getUserId());
 
-        paymentQrTokenRepository.deleteByUserId(authUser.getUserId());
-
         return PaymentQrTokenResponseDto.from(
                 issuePaymentQrToken(authUser.getUserId())
         );
@@ -53,6 +51,7 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentQrTokenVo issuePaymentQrToken(Long userId) {
         String token = generateToken();
 
+        paymentQrTokenRepository.deleteByUserId(userId);
         paymentQrTokenRepository.save(
                 userId,
                 token,
