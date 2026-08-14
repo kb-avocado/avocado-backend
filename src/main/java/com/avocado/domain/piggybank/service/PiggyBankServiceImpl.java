@@ -190,7 +190,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         if (refund > 0) {
             String traceId = UUID.randomUUID().toString();     // 저금통 ↔ 지갑 거래 연결용
             piggyBankMapper.zeroBalance(piggyBankId);           // 저금통 잔액 0
-            transferService.transferPiggyBankToWallet(childId, walletId, refund, traceId);  // 지갑 반영
+            transferService.transferPiggyBankToWallet(childId, refund, traceId);  // 지갑 반영
             // 저금통 출금 이력 (같은 traceId로 지갑 거래와 연결, before=원금 after=0)
             piggyBankHistoryMapper.insertWithdrawal(piggyBankId, refund, refund, 0L, traceId);
         }
