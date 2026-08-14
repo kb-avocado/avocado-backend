@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Repository
@@ -59,6 +60,19 @@ public class PaymentQrTokenRepository {
                 .ifPresent(userId -> deleteUserTokenIfCurrent(userId, token));
         stringRedisTemplate.delete(tokenUserKey(token));
         removeActiveToken(token);
+    }
+
+    public int cleanupExpiredTokens(long nowMillis) {
+        Set<String> expiredTokens = stringRedisTemplate.opsForZSet()
+                .rangeByScore(ACTIVE_TOKENS_KEY, Double.NEGATIVE_INFINITY, nowMillis);
+
+        if (expiredTokens == null || expiredTokens.isEmpty()) {
+            return 0;
+        }
+
+        expiredTokens.forEach(this::deleteToken);
+
+        return expiredTokens.size();
     }
 
     public long getTokenTtlSeconds(String token) {

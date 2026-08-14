@@ -12,6 +12,7 @@ import org.springframework.data.redis.core.ZSetOperations;
 
 import java.time.Duration;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -119,6 +120,34 @@ class PaymentQrTokenRepositoryTest {
         verify(stringRedisTemplate).delete("payment:qr:user:102");
         verify(stringRedisTemplate).delete("payment:qr:token:qr-token");
         verify(zSetOperations).remove("payment:qr:active-tokens", "qr-token");
+    }
+
+    @Test
+    @DisplayName("만료된 토큰을 조회해 관련 Redis 데이터를 함께 삭제한다")
+    void cleanupExpiredTokens() {
+        // given
+        long nowMillis = 1797220000000L;
+
+        when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(zSetOperations.rangeByScore(
+                "payment:qr:active-tokens",
+                Double.NEGATIVE_INFINITY,
+                nowMillis
+        )).thenReturn(Set.of("expired-token", "orphan-token"));
+        when(valueOperations.get("payment:qr:token:expired-token")).thenReturn("102");
+        when(valueOperations.get("payment:qr:user:102")).thenReturn("expired-token");
+
+        // when
+        int result = paymentQrTokenRepository.cleanupExpiredTokens(nowMillis);
+
+        // then
+        assertThat(result).isEqualTo(2);
+        verify(stringRedisTemplate).delete("payment:qr:user:102");
+        verify(stringRedisTemplate).delete("payment:qr:token:expired-token");
+        verify(stringRedisTemplate).delete("payment:qr:token:orphan-token");
+        verify(zSetOperations).remove("payment:qr:active-tokens", "expired-token");
+        verify(zSetOperations).remove("payment:qr:active-tokens", "orphan-token");
     }
 
     @Test
