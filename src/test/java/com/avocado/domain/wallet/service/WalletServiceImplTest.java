@@ -1,5 +1,7 @@
 package com.avocado.domain.wallet.service;
 
+import com.avocado.domain.family.mapper.FamilyRelationMapper;
+import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
@@ -29,8 +31,14 @@ class WalletServiceTest {
     @Mock
     private WalletMapper walletMapper;
 
+    @Mock
+    private UserMapper userMapper;
+
+    @Mock
+    private FamilyRelationMapper familyRelationMapper;
+
     @InjectMocks
-    private WalletService walletService;
+    private WalletServiceImpl walletService;
 
     @Test
     @DisplayName("자녀 본인은 자신의 선불지갑을 조회할 수 있다")
@@ -40,7 +48,7 @@ class WalletServiceTest {
         AuthUser authUser = authUser(childId, UserType.CHILD);
         WalletVo wallet = walletVo(childId);
 
-        when(walletMapper.existsChildById(childId)).thenReturn(true);
+        when(userMapper.existsChildById(childId)).thenReturn(true);
         when(walletMapper.findByChildId(childId)).thenReturn(Optional.of(wallet));
 
         // when
@@ -52,7 +60,7 @@ class WalletServiceTest {
         assertThat(result.getWalletNumber()).isEqualTo("WALLET-2026-0001");
         assertThat(result.getBalance()).isEqualTo(48000L);
         assertThat(result.getStatus()).isEqualTo("ACTIVE");
-        verify(walletMapper, never()).existsActiveFamilyRelation(authUser.getUserId(), childId);
+        verify(familyRelationMapper, never()).existsActiveRelation(authUser.getUserId(), childId);
     }
 
     @Test
@@ -64,8 +72,8 @@ class WalletServiceTest {
         AuthUser authUser = authUser(parentId, UserType.PARENT);
         WalletVo wallet = walletVo(childId);
 
-        when(walletMapper.existsChildById(childId)).thenReturn(true);
-        when(walletMapper.existsActiveFamilyRelation(parentId, childId)).thenReturn(true);
+        when(userMapper.existsChildById(childId)).thenReturn(true);
+        when(familyRelationMapper.existsActiveRelation(parentId, childId)).thenReturn(true);
         when(walletMapper.findByChildId(childId)).thenReturn(Optional.of(wallet));
 
         // when
@@ -85,7 +93,7 @@ class WalletServiceTest {
                 .extracting("errorCode")
                 .isEqualTo(ErrorCode.UNAUTHORIZED);
 
-        verify(walletMapper, never()).existsChildById(102L);
+        verify(userMapper, never()).existsChildById(102L);
     }
 
     @Test
@@ -95,7 +103,7 @@ class WalletServiceTest {
         Long childId = 999L;
         AuthUser authUser = authUser(101L, UserType.PARENT);
 
-        when(walletMapper.existsChildById(childId)).thenReturn(false);
+        when(userMapper.existsChildById(childId)).thenReturn(false);
 
         // when & then
         assertThatThrownBy(() -> walletService.getChildWallet(childId, authUser))
@@ -114,8 +122,8 @@ class WalletServiceTest {
         Long childId = 202L;
         AuthUser authUser = authUser(parentId, UserType.PARENT);
 
-        when(walletMapper.existsChildById(childId)).thenReturn(true);
-        when(walletMapper.existsActiveFamilyRelation(parentId, childId)).thenReturn(false);
+        when(userMapper.existsChildById(childId)).thenReturn(true);
+        when(familyRelationMapper.existsActiveRelation(parentId, childId)).thenReturn(false);
 
         // when & then
         assertThatThrownBy(() -> walletService.getChildWallet(childId, authUser))
@@ -133,7 +141,7 @@ class WalletServiceTest {
         Long requestedChildId = 103L;
         AuthUser authUser = authUser(102L, UserType.CHILD);
 
-        when(walletMapper.existsChildById(requestedChildId)).thenReturn(true);
+        when(userMapper.existsChildById(requestedChildId)).thenReturn(true);
 
         // when & then
         assertThatThrownBy(() -> walletService.getChildWallet(requestedChildId, authUser))
@@ -151,7 +159,7 @@ class WalletServiceTest {
         Long childId = 102L;
         AuthUser authUser = authUser(childId, UserType.CHILD);
 
-        when(walletMapper.existsChildById(childId)).thenReturn(true);
+        when(userMapper.existsChildById(childId)).thenReturn(true);
         when(walletMapper.findByChildId(childId)).thenReturn(Optional.empty());
 
         // when & then

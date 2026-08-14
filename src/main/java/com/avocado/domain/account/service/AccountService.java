@@ -22,5 +22,7 @@ public interface AccountService {
      * @param parentId 부모 회원 ID
      * @return 활성 상태의 외부 연동 계좌
      */
-    AccountVo getActiveAccount(Long parentId);
+    AccountVo getActiveAccount(
+            Long parentId
+    );
 }

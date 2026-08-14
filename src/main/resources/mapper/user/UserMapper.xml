@@ -163,18 +163,6 @@
         )
     </insert>
 
-    <!-- 해당 사용자가 활성화된 부모 계정인지 체크  -->
-    <select id="existsActiveParentById" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM users
-            WHERE id = #{userId}
-                AND role = 'USER'
-                AND user_type = 'PARENT'
-                AND status = 'ACTIVE'
-        )
-    </select>
-
     <!--
         부모 계정의 상태를 반환한다. 부모 계정이 아니면 결과가 없어 null이 된다.
     -->
@@ -228,6 +216,62 @@
            AND c.user_type = 'CHILD'
          ORDER BY fr.id
          LIMIT 1
+    </select>
+
+    <!--
+        회원 ID로 회원 기본 정보를 조회한다.
+        회원 상태와 관계없이 조회하며,
+        회원이 존재하지 않으면 조회 결과가 없다.
+    -->
+    <select id="findById" resultType="com.avocado.domain.user.domain.UserVo">
+        SELECT
+            id,
+            name,
+            user_type,
+            role,
+            status
+        FROM users
+        WHERE id = #{userId}
+    </select>
+
+    <!--
+        회원 ID로 ACTIVE 상태의 회원 기본 정보를 조회한다.
+        회원이 존재하더라도 상태가 ACTIVE가 아니면 조회 결과가 없다.
+    -->
+    <select id="findActiveById" resultType="com.avocado.domain.user.domain.UserVo">
+        SELECT
+            id,
+            name,
+            user_type,
+            role,
+            status
+        FROM users
+        WHERE id = #{userId}
+            AND status = 'ACTIVE'
+    </select>
+
+    <!-- 회원이 ACTIVE 상태의 부모 회원인지 확인한다. -->
+    <select id="existsActiveParentById" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM users
+            WHERE id = #{parentId}
+                AND role = 'USER'
+                AND user_type = 'PARENT'
+                AND status = 'ACTIVE'
+        )
+    </select>
+
+    <!-- 회원이 ACTIVE 상태의 자녀 회원인지 확인한다. -->
+    <select id="existsActiveChildById" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM users
+            WHERE id = #{childId}
+                AND role = 'USER'
+                AND user_type = 'CHILD'
+                AND status = 'ACTIVE'
+        )
     </select>
 
 </mapper>
