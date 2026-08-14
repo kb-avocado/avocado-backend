@@ -11,6 +11,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Refresh Token을 Redis에 보관한다.
@@ -20,6 +23,7 @@ import java.util.Base64;
 public class RefreshTokenRepository {
     private static final String TOKEN_KEY_PREFIX = "auth:refresh:token:";
     private static final String SESSIONS_KEY_PREFIX = "auth:refresh:sessions:";
+    private static final String USED_KEY_PREFIX = "auth:refresh:used:";
 
     private static final int TOKEN_BYTES = 32;
 
@@ -27,6 +31,18 @@ public class RefreshTokenRepository {
     private final JwtProperties jwtProperties;
 
     private final SecureRandom secureRandom = new SecureRandom();
+
+    private String tokenKey(String hash) {
+        return TOKEN_KEY_PREFIX + hash;
+    }
+
+    private String sessionsKey(Long userId) {
+        return SESSIONS_KEY_PREFIX + userId;
+    }
+
+    private String usedKey(String hash) {
+        return USED_KEY_PREFIX + hash;
+    }
 
     /**
      * 새 리프레시 토큰을 만들어 저장하고 원문(Refresh Token 그자체)을 반환한다.
@@ -59,7 +75,6 @@ public class RefreshTokenRepository {
         return token;
     }
 
-
     private String generateToken() {
         byte[] bytes = new byte[TOKEN_BYTES];
         secureRandom.nextBytes(bytes);
@@ -84,11 +99,76 @@ public class RefreshTokenRepository {
         }
     }
 
-    private String tokenKey(String hash) {
-        return TOKEN_KEY_PREFIX + hash;
+
+    /**
+     * 유효한 리프레시 토큰인지 확인하고, 유효하다면 주인을 반환한다. (유효하면 정상)
+     *
+     * @return userId. 만료됐거나 없는 토큰이면 비어있다.
+     */
+    public Optional<Long> findUserId(String token) {
+        return Optional.ofNullable(stringRedisTemplate.opsForValue().get(tokenKey(toHash(token))))
+                .map(Long::valueOf);
     }
 
-    private String sessionsKey(Long userId) {
-        return SESSIONS_KEY_PREFIX + userId;
+    /**
+     * 이미 회전되어 폐기된 토큰이면 주인을 반환한다. (유효하면 탈취)
+     *
+     * @return userId. 회전되지 않은 토큰이면 비어있다.
+     */
+    public Optional<Long> findUsedUserId(String token) {
+        return Optional.ofNullable(stringRedisTemplate.opsForValue().get(usedKey(toHash(token))))
+                .map(Long::valueOf);
+    }
+
+    /**
+     * 회전: 옛 토큰을 폐기하고 새 토큰을 발급한다.
+     * 옛 토큰은 'used'로 남긴다. 토큰이 탈취되었는지 그냥 없는 토큰인지 구분할 수 있다.
+     *
+     * @return 쿠키에 담을 새 토큰 원문
+     */
+    public String rotate(Long userId, String oldToken) {
+        String oldHash = toHash(oldToken);
+
+        Long remainingSeconds = stringRedisTemplate.getExpire(tokenKey(oldHash), TimeUnit.SECONDS);
+
+        if (remainingSeconds != null && remainingSeconds > 0) {
+            stringRedisTemplate.opsForValue()
+                    .set(usedKey(oldHash), String.valueOf(userId), Duration.ofSeconds(remainingSeconds));
+        }
+
+        stringRedisTemplate.delete(tokenKey(oldHash));
+        stringRedisTemplate.opsForZSet().remove(sessionsKey(userId), oldHash);
+
+        return issue(userId);
+    }
+
+    /**
+     * 한 세션만 끊음 (로그아웃)
+     */
+    public void revoke(String token) {
+        String hash = toHash(token);
+        String userId = stringRedisTemplate.opsForValue().get(tokenKey(hash));
+
+        stringRedisTemplate.delete(tokenKey(hash));
+
+        if (userId != null) {
+            stringRedisTemplate.opsForZSet().remove(sessionsKey(Long.valueOf(userId)), hash);
+        }
+    }
+
+    /**
+     * 이 회원의 모든 세션을 끊는다. (토큰 재사용 감지)
+     */
+    public void revokeAll(Long userId) {
+        String sessionsKey = sessionsKey(userId);
+
+        Set<String> hashes = stringRedisTemplate.opsForZSet().range(sessionsKey, 0, -1);
+
+        if (hashes != null) {
+            for (String hash: hashes) {
+                stringRedisTemplate.delete(tokenKey(hash));
+            }
+        }
+        stringRedisTemplate.delete(sessionsKey);
     }
 }

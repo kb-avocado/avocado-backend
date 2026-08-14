@@ -1,5 +1,6 @@
 package com.avocado.domain.user.controller;
 
+import com.avocado.domain.user.domain.RefreshResult;
 import com.avocado.domain.user.repository.RefreshTokenRepository;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.security.jwt.component.JwtTokenProvider;
@@ -18,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
@@ -120,12 +122,49 @@ public class UserController {
                     + "무상태 JWT라 서버에 남는 정보가 없으므로 쿠키 삭제만으로 로그아웃이 완료됩니다."
     )
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
-        // 토큰이 이미 만료된 상태에서도 쿠키는 지울 수 있어야 하므로 인증을 요구하지 않는다.
+    public ResponseEntity<ApiResponse<Void>> logout(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        // 해당 기기의 세션만 끊는다. 다른 기기의 로그인은 유지된다.
+        jwtUtil.resolveRefreshToken(request)
+                .ifPresent(refreshTokenRepository::revoke);
+
+        // 토큰이 이미 만료된 상태에서 쿠키를 지움
         jwtUtil.expireAccessTokenCookie(response);
+        jwtUtil.expireRefreshTokenCookie(response);
 
         return ResponseEntity
                 .status(LOGOUT_SUCCESS.getHttpStatus())
                 .body(ApiResponse.success(LOGOUT_SUCCESS));
+    }
+
+    @ApiOperation(
+            value = "액세스 토큰 재발급",
+            notes = "쿠키의 Refresh Token으로 새 토큰 한 쌍을 발급합니다. "
+                    + "회전 방식이라 Refresh Token도 매번 새것으로 교체됩니다."
+                    + "이미 사용된 Refresh Token이 다시 오면 탈취로 보고 해당 회원의 모든 세션을 끊습니다."
+    )
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginUserDto>> refresh(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        String refreshToken = jwtUtil.resolveRefreshToken(request).orElse(null);
+
+        RefreshResult result = userLoginService.refresh(refreshToken);
+        LoginUserDto user = result.getUser();
+
+        String accessToken = jwtTokenProvider.createAccessToken(
+                user.getUserId(),
+                user.getRole(),
+                user.getType()
+        );
+        jwtUtil.addAccessTokenCookie(response, accessToken);
+        jwtUtil.addRefreshTokenCookie(response, result.getRefreshToken());
+
+        return ResponseEntity
+                .status(TOKEN_REFRESHED.getHttpStatus())
+                .body(ApiResponse.success(TOKEN_REFRESHED, user));
     }
 }

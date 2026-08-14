@@ -5,7 +5,9 @@ import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.dto.request.UserLoginRequestDto;
 import com.avocado.domain.user.dto.response.LoginUserDto;
+import com.avocado.domain.user.domain.RefreshResult;
 import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.domain.user.repository.RefreshTokenRepository;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -21,6 +23,7 @@ public class UserLoginServiceImpl implements UserLoginService {
 
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     /**
      * 이메일과 비밀번호로 로그인하고, 회원 타입에 맞는 화면 진입 정보를 함께 반환한다.
@@ -113,5 +116,43 @@ public class UserLoginServiceImpl implements UserLoginService {
                 .type(user.getUserType())
                 .role(user.getRole())
                 .status(user.getStatus());
+    }
+
+    @Override
+    public RefreshResult refresh(String refreshToken) {
+        if (refreshToken == null || refreshToken.isEmpty()) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        Long userId = refreshTokenRepository.findUserId(refreshToken)
+                .orElseGet(() -> {
+                    // 유효하지 않은 토큰이라면, 이미 회전된 토큰인지 본다.
+                    refreshTokenRepository.findUsedUserId(refreshToken)
+                            .ifPresent(id -> {
+                                // 토큰이 탈취되었으므로, 연결된 세션을 전부 끊는다.
+                                refreshTokenRepository.revokeAll(id);
+                                throw new BusinessException(ErrorCode.REFRESH_TOKEN_REUSED);
+                            });
+                    // 만료됐거나 위조된 토큰
+                    throw new BusinessException(ErrorCode.UNAUTHORIZED);
+                });
+
+        User user = userMapper.selectById(userId);
+        if (user == null) {
+            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+        }
+
+        validateLoginable(user);
+
+        String newRefreshToken = refreshTokenRepository.rotate(userId, refreshToken);
+
+        LoginUserDto loginUser = user.getUserType() == UserType.PARENT
+                ? toParentInfo(user)
+                : toChildInfo(user);
+
+        return RefreshResult.builder()
+                .user(loginUser)
+                .refreshToken(newRefreshToken)
+                .build();
     }
 }

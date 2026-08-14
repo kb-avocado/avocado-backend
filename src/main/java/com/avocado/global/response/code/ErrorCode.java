@@ -17,6 +17,7 @@ public enum ErrorCode implements ResponseCode {
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUT-003", "이메일 또는 비밀번호가 올바르지 않습니다."),
     USER_SUSPENDED(HttpStatus.FORBIDDEN, "AUT-004", "이용이 정지된 계정입니다. 고객센터에 문의해주세요."),
     USER_DELETED(HttpStatus.FORBIDDEN, "AUT-005", "탈퇴한 계정입니다."),
+    REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "AUT-006", "보안을 위해 로그아웃되었습니다. 다시 로그인해주세요."),
 
     // 사용자 (USR)
     CHILD_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "자녀를 찾을 수 없습니다."),
