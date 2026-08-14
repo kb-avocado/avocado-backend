@@ -82,7 +82,6 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
     private final SpendingClassificationMapper spendingClassificationMapper;
     private final SpendingReportTypeMapper spendingReportTypeMapper;
     private final ChildSpendingReportMapper childSpendingReportMapper;
-    private final WalletMapper walletMapper;
     private final UserMapper userMapper;
     private final FamilyRelationMapper familyRelationMapper;
 
