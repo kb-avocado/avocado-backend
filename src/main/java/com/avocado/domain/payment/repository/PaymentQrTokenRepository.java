@@ -15,18 +15,22 @@ public class PaymentQrTokenRepository {
     private static final String USER_TOKEN_KEY_PREFIX = "payment:qr:user:";
     private static final String TOKEN_USER_KEY_PREFIX = "payment:qr:token:";
     private static final String REISSUE_LOCK_KEY_PREFIX = "payment:qr:reissue-lock:";
+    private static final String ACTIVE_TOKENS_KEY = "payment:qr:active-tokens";
 
     private final StringRedisTemplate stringRedisTemplate;
 
     public void save(
             Long userId,
             String token,
-            Duration ttl
+            Duration ttl,
+            long expiresAtMillis
     ) {
         stringRedisTemplate.opsForValue()
                 .set(userTokenKey(userId), token, ttl);
         stringRedisTemplate.opsForValue()
                 .set(tokenUserKey(token), String.valueOf(userId), ttl);
+        stringRedisTemplate.opsForZSet()
+                .add(ACTIVE_TOKENS_KEY, token, expiresAtMillis);
     }
 
     public Optional<String> findTokenByUserId(Long userId) {
