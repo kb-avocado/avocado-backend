@@ -5,6 +5,7 @@ import com.avocado.domain.payment.service.PaymentService;
 import com.avocado.global.response.ApiResponse;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,8 +27,21 @@ public class PaymentAdminController {
 
     @ApiOperation(
             value = "결제 대기 QR 토큰 목록 조회",
-            notes = "POS 시뮬레이터가 현재 결제 대기 중인 QR 토큰 목록을 조회합니다."
+            notes = "GET /api/admin/payments/qr-tokens\n"
+                    + "\n"
+                    + "POS 시뮬레이터가 QR을 직접 스캔하지 않고도 현재 결제 대기 중인 활성 QR 토큰 목록을 조회합니다.\n"
+                    + "조회 전 Redis의 만료 토큰을 정리하고, 유효한 토큰만 token, userId, expiresIn으로 반환합니다.",
+            response = PaymentQrActiveTokenResponseDto.class,
+            responseContainer = "List"
     )
+    @ApiResponses({
+            @io.swagger.annotations.ApiResponse(
+                    code = 200,
+                    message = "PAY-004: 결제 대기 중인 QR 토큰 목록을 조회했습니다.",
+                    response = PaymentQrActiveTokenResponseDto.class,
+                    responseContainer = "List"
+            )
+    })
     @GetMapping(
             value = "/qr-tokens",
             produces = MediaType.APPLICATION_JSON_VALUE

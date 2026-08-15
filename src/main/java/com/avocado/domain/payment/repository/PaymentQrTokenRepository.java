@@ -19,6 +19,7 @@ public class PaymentQrTokenRepository {
     private static final String USER_TOKEN_KEY_PREFIX = "payment:qr:user:";
     private static final String TOKEN_USER_KEY_PREFIX = "payment:qr:token:";
     private static final String REISSUE_LOCK_KEY_PREFIX = "payment:qr:reissue-lock:";
+    // POS 목록 조회용 인덱스. member는 token, score는 expiresAt epoch millis이다.
     private static final String ACTIVE_TOKENS_KEY = "payment:qr:active-tokens";
 
     private final StringRedisTemplate stringRedisTemplate;
@@ -33,6 +34,7 @@ public class PaymentQrTokenRepository {
                 .set(userTokenKey(userId), token, ttl);
         stringRedisTemplate.opsForValue()
                 .set(tokenUserKey(token), String.valueOf(userId), ttl);
+        // TTL이 있는 key와 별도로 ZSET에 만료 시각을 저장해야 목록 조회와 만료 정리가 가능하다.
         stringRedisTemplate.opsForZSet()
                 .add(ACTIVE_TOKENS_KEY, token, expiresAtMillis);
     }
@@ -66,6 +68,7 @@ public class PaymentQrTokenRepository {
     }
 
     public int cleanupExpiredTokens(long nowMillis) {
+        // score가 현재 시각 이하이면 결제 대기 시간이 끝난 토큰이다.
         Set<String> expiredTokens = stringRedisTemplate.opsForZSet()
                 .rangeByScore(ACTIVE_TOKENS_KEY, Double.NEGATIVE_INFINITY, nowMillis);
 
@@ -79,6 +82,7 @@ public class PaymentQrTokenRepository {
     }
 
     public List<PaymentQrActiveTokenVo> findActiveTokens(long nowMillis) {
+        // 만료되지 않은 score만 조회한다. cleanup 직후라도 Redis key TTL 만료와 ZSET 정리가 어긋날 수 있다.
         Set<ZSetOperations.TypedTuple<String>> activeTokens = stringRedisTemplate.opsForZSet()
                 .rangeByScoreWithScores(
                         ACTIVE_TOKENS_KEY,
@@ -162,6 +166,7 @@ public class PaymentQrTokenRepository {
 
         Optional<Long> userId = findUserIdByToken(token);
         if (userId.isEmpty()) {
+            // token -> user 역인덱스가 없으면 이미 TTL 만료된 고아 ZSET member이므로 응답에서 제외한다.
             removeActiveToken(token);
             return Optional.empty();
         }
