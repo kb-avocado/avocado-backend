@@ -56,9 +56,12 @@ class PaymentServiceTest {
         // given
         AuthUser authUser = authUser(102L);
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Long> expiresAtCaptor = ArgumentCaptor.forClass(Long.class);
+        long beforeIssueExpiresAt = System.currentTimeMillis() + Duration.ofSeconds(TOKEN_TTL_SECONDS).toMillis();
 
         // when
         PaymentQrTokenResponseDto result = paymentService.issuePaymentQrToken(authUser);
+        long afterIssueExpiresAt = System.currentTimeMillis() + Duration.ofSeconds(TOKEN_TTL_SECONDS).toMillis();
 
         // then
         assertThat(result.getToken()).isNotBlank();
@@ -67,9 +70,12 @@ class PaymentServiceTest {
         verify(paymentQrTokenRepository).save(
                 eq(authUser.getUserId()),
                 tokenCaptor.capture(),
-                eq(Duration.ofSeconds(TOKEN_TTL_SECONDS))
+                eq(Duration.ofSeconds(TOKEN_TTL_SECONDS)),
+                expiresAtCaptor.capture()
         );
         assertThat(tokenCaptor.getValue()).isEqualTo(result.getToken());
+        assertThat(expiresAtCaptor.getValue())
+                .isBetween(beforeIssueExpiresAt, afterIssueExpiresAt);
     }
 
     @Test
@@ -88,23 +94,29 @@ class PaymentServiceTest {
         // given
         AuthUser authUser = authUser(102L);
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Long> expiresAtCaptor = ArgumentCaptor.forClass(Long.class);
 
         when(paymentQrTokenRepository.acquireReissueLock(
                 authUser.getUserId(),
                 Duration.ofSeconds(3)
         )).thenReturn(true);
+        long beforeIssueExpiresAt = System.currentTimeMillis() + Duration.ofSeconds(TOKEN_TTL_SECONDS).toMillis();
 
         // when
         PaymentQrTokenResponseDto result = paymentService.reissuePaymentQrToken(authUser);
+        long afterIssueExpiresAt = System.currentTimeMillis() + Duration.ofSeconds(TOKEN_TTL_SECONDS).toMillis();
 
         // then
         verify(paymentQrTokenRepository).deleteByUserId(authUser.getUserId());
         verify(paymentQrTokenRepository).save(
                 eq(authUser.getUserId()),
                 tokenCaptor.capture(),
-                eq(Duration.ofSeconds(TOKEN_TTL_SECONDS))
+                eq(Duration.ofSeconds(TOKEN_TTL_SECONDS)),
+                expiresAtCaptor.capture()
         );
         assertThat(tokenCaptor.getValue()).isEqualTo(result.getToken());
+        assertThat(expiresAtCaptor.getValue())
+                .isBetween(beforeIssueExpiresAt, afterIssueExpiresAt);
     }
 
     @Test

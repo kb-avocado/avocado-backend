@@ -8,6 +8,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.ZSetOperations;
 
 import java.time.Duration;
 import java.util.Optional;
@@ -26,6 +27,9 @@ class PaymentQrTokenRepositoryTest {
     @Mock
     private ValueOperations<String, String> valueOperations;
 
+    @Mock
+    private ZSetOperations<String, String> zSetOperations;
+
     private PaymentQrTokenRepository paymentQrTokenRepository;
 
     @BeforeEach
@@ -40,15 +44,18 @@ class PaymentQrTokenRepositoryTest {
         Long userId = 102L;
         String token = "qr-token";
         Duration ttl = Duration.ofSeconds(180);
+        long expiresAtMillis = 1797220000000L;
 
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
 
         // when
-        paymentQrTokenRepository.save(userId, token, ttl);
+        paymentQrTokenRepository.save(userId, token, ttl, expiresAtMillis);
 
         // then
         verify(valueOperations).set("payment:qr:user:102", token, ttl);
         verify(valueOperations).set("payment:qr:token:qr-token", "102", ttl);
+        verify(zSetOperations).add("payment:qr:active-tokens", token, expiresAtMillis);
     }
 
     @Test
@@ -84,6 +91,7 @@ class PaymentQrTokenRepositoryTest {
     void deleteByUserId() {
         // given
         when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
         when(valueOperations.get("payment:qr:user:102")).thenReturn("qr-token");
 
         // when
@@ -92,6 +100,7 @@ class PaymentQrTokenRepositoryTest {
         // then
         verify(stringRedisTemplate).delete("payment:qr:token:qr-token");
         verify(stringRedisTemplate).delete("payment:qr:user:102");
+        verify(zSetOperations).remove("payment:qr:active-tokens", "qr-token");
     }
 
     @Test

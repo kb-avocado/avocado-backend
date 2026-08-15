@@ -56,7 +56,8 @@ public class PaymentServiceImpl implements PaymentService {
         paymentQrTokenRepository.save(
                 userId,
                 token,
-                paymentQrTokenTtl()
+                paymentQrTokenTtl(),
+                paymentQrTokenExpiresAtMillis()
         );
 
         return PaymentQrTokenVo.builder()
@@ -94,6 +95,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     private Duration paymentQrTokenTtl() {
         return Duration.ofSeconds(paymentQrTokenTtlSeconds);
+    }
+
+    private long paymentQrTokenExpiresAtMillis() {
+        return System.currentTimeMillis() + paymentQrTokenTtl().toMillis();
     }
 
     private Duration paymentQrReissueLockTtl() {
