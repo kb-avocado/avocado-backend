@@ -12,15 +12,44 @@
         <result property="createdAt" column="created_at"/>
     </resultMap>
 
+    <!--
+        completed 필터링을 위해 news_activities를 LEFT JOIN한다.
+        - completed = null  → 전체 (조건 없음)
+        - completed = true  → na.completed_at IS NOT NULL (활동완료)
+        - completed = false → na.completed_at IS NULL (진행중/미완료)
+        LEFT JOIN 조건에 child_id를 함께 걸어야, 해당 아이의 활동 기록이 없는 기사(activity 자체가 없는 경우)도
+        "진행중"으로 정상 집계된다.
+    -->
     <select id="findList" resultMap="newsArticleResultMap">
-        SELECT id, title, subtitle, link, today_challenge, published_at, created_at
-        FROM news_articles
-        ORDER BY published_at DESC, id DESC
+        SELECT a.id, a.title, a.subtitle, a.link, a.today_challenge, a.published_at, a.created_at
+        FROM news_articles a
+        LEFT JOIN news_activities na
+        ON na.article_id = a.id AND na.child_id = #{childId}
+        <where>
+            <if test="completed != null and completed">
+                AND na.completed_at IS NOT NULL
+            </if>
+            <if test="completed != null and !completed">
+                AND na.completed_at IS NULL
+            </if>
+        </where>
+        ORDER BY a.published_at DESC, a.id DESC
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
     <select id="countAll" resultType="long">
-        SELECT COUNT(*) FROM news_articles
+        SELECT COUNT(*)
+        FROM news_articles a
+        LEFT JOIN news_activities na
+        ON na.article_id = a.id AND na.child_id = #{childId}
+        <where>
+            <if test="completed != null and completed">
+                AND na.completed_at IS NOT NULL
+            </if>
+            <if test="completed != null and !completed">
+                AND na.completed_at IS NULL
+            </if>
+        </where>
     </select>
 
     <select id="findById" resultMap="newsArticleResultMap">
