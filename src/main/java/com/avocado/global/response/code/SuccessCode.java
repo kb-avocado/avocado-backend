@@ -37,7 +37,10 @@ public enum SuccessCode implements ResponseCode {
     PIGGY_BANK_DETAIL_FETCHED(HttpStatus.OK, "PIG-005", "저금통 상세 조회에 성공했습니다."),
     PIGGY_BANK_CLOSED(HttpStatus.OK, "PIG-006", "저금통을 중도 포기했습니다."),
     PIGGY_BANK_DEPOSITED(HttpStatus.OK, "PIG-007", "저금통에 성공적으로 입금되었습니다."),
+    PIGGY_BANK_FAVORITE_UPDATED(HttpStatus.OK, "PIG-008", "저금통 즐겨찾기가 변경되었습니다."),
 
+    //홈
+    HOME_FOUND(HttpStatus.OK, "HOM-000", "홈 정보를 조회했습니다."),
     // 계좌 (ACC)
     ACCOUNT_CREATED(HttpStatus.CREATED, "ACC-000", "계좌가 성공적으로 등록되었습니다."),
 
@@ -48,6 +51,7 @@ public enum SuccessCode implements ResponseCode {
     PAYMENT_SUCCESS(HttpStatus.OK, "PAY-000", "결제가 성공적으로 완료되었습니다."),
     PAYMENT_QR_TOKEN_ISSUED(HttpStatus.CREATED, "PAY-001", "결제 QR 토큰이 발급되었습니다."),
     PAYMENT_QR_TOKEN_REISSUED(HttpStatus.OK, "PAY-002", "결제 QR 토큰이 재발급되었습니다."),
+    PAYMENT_QR_ACTIVE_TOKENS_FOUND(HttpStatus.OK, "PAY-003", "결제 대기 중인 QR 토큰 목록을 조회했습니다."),
 
     // 송금 (TRF)
     TRANSFER_SUCCESS(HttpStatus.OK, "TRF-000", "송금이 완료되었습니다."),

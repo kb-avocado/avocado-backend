@@ -16,4 +16,13 @@ public interface NewsArticleMapper {
     // RSS 크롤링용
     boolean existsByLink(@Param("link") String link);
     void insert(NewsArticle article);
+
+    // 조회 대상 자녀 회원이 존재하는지 확인
+    boolean existsChildById(@Param("childId") Long childId);
+
+    // 보호자와 자녀의 활성 가족 관계가 존재하는지 확인
+    boolean existsActiveFamilyRelation(
+            @Param("parentId") Long parentId,
+            @Param("childId") Long childId
+    );
 }

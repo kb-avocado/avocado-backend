@@ -8,34 +8,15 @@
 
     <!-- 사용자 ID로 해당 자녀가 보유한 선불지갑 ID를 조회한다. -->
     <select id="findWalletIdByUserId" resultType="long">
-        SELECT id
+        SELECT
+            id
         FROM wallets
         WHERE child_id = #{userId}
     </select>
 
-    <!-- childId에 해당하는 회원이 자녀(CHILD) 유형으로 존재하는지 확인한다. -->
-    <select id="existsChildById" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1
-            FROM users
-            WHERE id = #{childId}
-              AND user_type = 'CHILD'
-        )
-    </select>
-
-    <!-- 로그인한 보호자와 조회 대상 자녀 사이에 활성 가족 관계가 있는지 확인한다. -->
-    <select id="existsActiveFamilyRelation" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1
-            FROM family_relations
-            WHERE parent_id = #{parentId}
-              AND child_id = #{childId}
-              AND status = 'ACTIVE'
-        )
-    </select>
-
     <!-- childId 기준으로 자녀의 선불지갑 단건 정보를 조회한다. -->
-    <select id="findByChildId" resultType="com.avocado.domain.wallet.domain.WalletVo">
+    <select id="findByChildId"
+            resultType="com.avocado.domain.wallet.domain.WalletVo">
         SELECT
             id,
             child_id      AS childId,
@@ -48,7 +29,40 @@
         WHERE child_id = #{childId}
     </select>
 
-    <!-- 아이 선불지갑 잔액 증가 -->
+    <!--
+        해당 선불지갑이 실제 자녀 소유이며 ACTIVE 상태인지 확인한다.
+        지갑 ID, 자녀 ID, 지갑 상태가 모두 일치하는 경우에만 true를 반환한다.
+    -->
+    <select id="existsActiveByIdAndChildId" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM wallets
+            WHERE id = #{walletId}
+                AND child_id = #{childId}
+                AND status = 'ACTIVE'
+        )
+    </select>
+
+    <!-- 자녀 회원 ID로 ACTIVE 상태의 선불지갑을 조회한다. -->
+    <select id="findActiveByChildId"
+            resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id      AS childId,
+            wallet_number AS walletNumber,
+            balance,
+            status,
+            created_at    AS createdAt,
+            updated_at    AS updatedAt
+        FROM wallets
+        WHERE child_id = #{childId}
+            AND status = 'ACTIVE'
+    </select>
+
+    <!--
+        ACTIVE 상태의 아이 선불지갑 잔액을 증가시킨다.
+        조건에 맞는 지갑이 없으면 변경된 행 수는 0이다.
+    -->
     <update id="increaseBalance">
         UPDATE wallets
         SET balance = balance + #{amount}
@@ -56,7 +70,10 @@
             AND status = 'ACTIVE'
     </update>
 
-    <!-- 아이 선불지갑 잔액 감소 -->
+    <!--
+        ACTIVE 상태의 아이 선불지갑 잔액을 감소시킨다.
+        현재 잔액이 출금 금액 이상인 경우에만 잔액을 변경한다.
+    -->
     <update id="decreaseBalance">
         UPDATE wallets
         SET balance = balance - #{amount}
@@ -65,8 +82,12 @@
             AND balance >= #{amount}
     </update>
 
-    <!--  실제 해당 아이의 지갑인지 검증 및 동시 잔액 변경을 방지  -->
-    <select id="findForUpdateByIdAndChildId" resultType="com.avocado.domain.wallet.domain.WalletVo">
+    <!--
+        해당 자녀가 실제 소유한 선불지갑을 잠금 조회한다.
+        SELECT ... FOR UPDATE를 사용해 같은 지갑의 동시 잔액 변경을 방지한다.
+    -->
+    <select id="findForUpdateByChildId"
+            resultType="com.avocado.domain.wallet.domain.WalletVo">
         SELECT
             id,
             child_id      AS childId,
@@ -74,8 +95,7 @@
             balance,
             status
         FROM wallets
-        WHERE id = #{walletId}
-            AND child_id = #{childId}
+        WHERE child_id = #{childId}
         FOR UPDATE
     </select>
 

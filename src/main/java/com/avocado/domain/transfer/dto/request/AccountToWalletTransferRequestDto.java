@@ -19,10 +19,6 @@ public class AccountToWalletTransferRequestDto {
     @NotNull
     private Long childId;
 
-    // 충전 대상 아이의 선불지갑 ID
-    @NotNull
-    private Long walletId;
-
     // 충전할 금액
     @NotNull
     @Positive

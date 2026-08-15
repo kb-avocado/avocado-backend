@@ -1,5 +1,8 @@
 package com.avocado.domain.report.service;
 
+import com.avocado.domain.family.mapper.FamilyRelationMapper;
+import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.domain.wallet.mapper.WalletMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.report.domain.ChildSpendingReport;
@@ -9,6 +12,9 @@ import com.avocado.domain.report.mapper.ChildSpendingReportMapper;
 import com.avocado.domain.report.mapper.ReportMapper;
 import com.avocado.domain.report.mapper.SpendingClassificationMapper;
 import com.avocado.domain.report.mapper.SpendingReportTypeMapper;
+import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +23,13 @@ import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
+import static com.avocado.global.response.code.ErrorCode.*;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class SpendingReportClassificationServiceImpl implements SpendingReportClassificationService {
 
-    // TODO: 아래 기준값들은 문서 설명 기준 임의 해석. 기획 확정되면 조정할 것.
     private static final int SAVING_DREAMER_MIN_ACHIEVED = 2;
     private static final int FREQUENT_SPARROW_MIN_DAYS = 25;
     private static final double BIG_SPENDER_MIN_AVG_AMOUNT = 15000;
@@ -76,24 +83,28 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
     private final SpendingClassificationMapper spendingClassificationMapper;
     private final SpendingReportTypeMapper spendingReportTypeMapper;
     private final ChildSpendingReportMapper childSpendingReportMapper;
+    private final UserMapper userMapper;
+    private final FamilyRelationMapper familyRelationMapper;
 
     @Override
-    public SpendingReportTypeDto classifyAndSave(String yearMonth, Long childId) {
+    public SpendingReportTypeDto classifyAndSave(String yearMonth, Long childId, AuthUser authUser) {
+        Long targetChildId = resolveTargetChildId(childId, authUser);
+
         YearMonth targetMonth = YearMonth.parse(yearMonth);
 
         // 이미 이 달에 계산된 기록이 있으면 재계산하지 않고 그대로 반환 (한 달에 한 번만 계산)
         ChildSpendingReport existing = childSpendingReportMapper.findByChildAndYearMonth(
-                childId, targetMonth.getYear(), targetMonth.getMonthValue());
+                targetChildId, targetMonth.getYear(), targetMonth.getMonthValue());
 
         if (existing != null) {
             SpendingReportType cachedType = spendingReportTypeMapper.findById(existing.getReportTypeId());
             if (cachedType == null) {
                 throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
             }
-            return toDto(cachedType);
+            return toDto(cachedType, targetMonth);
         }
 
-        return calculateAndSave(yearMonth, childId, targetMonth);
+        return calculateAndSave(yearMonth, targetChildId, targetMonth);
     }
 
     /**
@@ -125,10 +136,10 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
         report.setReportMonth(targetMonth.getMonthValue());
         childSpendingReportMapper.upsert(report);
 
-        return toDto(type);
+        return toDto(type, targetMonth);
     }
 
-    private SpendingReportTypeDto toDto(SpendingReportType type) {
+    private SpendingReportTypeDto toDto(SpendingReportType type, YearMonth targetMonth) {
         String[] descriptions = DESCRIPTIONS.getOrDefault(
                 type.getCode(), new String[]{type.getDescription(), type.getDescription()});
 
@@ -137,7 +148,22 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
                 .name(type.getName())
                 .childDescription(descriptions[0])
                 .parentDescription(descriptions[1])
+                .percentage(calculatePercentage(type.getId(), targetMonth))
                 .build();
+    }
+
+    // 같은 달, 같은 유형으로 분류된 아이 비율(%). 아직 아무도 집계 안 됐으면(분모 0) null.
+    private Integer calculatePercentage(Long reportTypeId, YearMonth targetMonth) {
+        long total = childSpendingReportMapper.countAllByYearMonth(
+                targetMonth.getYear(), targetMonth.getMonthValue());
+        if (total == 0) {
+            return null;
+        }
+
+        long sameType = childSpendingReportMapper.countByReportTypeAndYearMonth(
+                reportTypeId, targetMonth.getYear(), targetMonth.getMonthValue());
+
+        return (int) Math.round(sameType * 100.0 / total);
     }
 
     /**
@@ -192,5 +218,53 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
         }
 
         return "SPROUT";
+    }
+
+    /*
+     * 요청받은 childId와 로그인 사용자 정보를 바탕으로
+     * 실제 조회 대상 childId를 결정하고 접근 권한을 검증한다.
+     * News/Home/ReportServiceImpl과 동일한 패턴이다.
+     */
+    private Long resolveTargetChildId(Long childId, AuthUser authUser) {
+        if (authUser == null) {
+            throw new BusinessException(UNAUTHORIZED);
+        }
+
+        Long targetChildId = childId;
+        if (targetChildId == null) {
+            if (!UserType.CHILD.equals(authUser.getUserType())) {
+                throw new BusinessException(INVALID_REQUEST);
+            }
+            targetChildId = authUser.getUserId();
+        }
+
+        validateChildAccess(targetChildId, authUser);
+        return targetChildId;
+    }
+
+    private void validateChildAccess(Long childId, AuthUser authUser) {
+        if (!userMapper.existsChildById(childId)) {
+            throw new BusinessException(CHILD_NOT_FOUND);
+        }
+
+        if (isChildOwner(childId, authUser)) {
+            return;
+        }
+
+        if (isConnectedParent(childId, authUser)) {
+            return;
+        }
+
+        throw new BusinessException(FORBIDDEN);
+    }
+
+    private boolean isChildOwner(Long childId, AuthUser authUser) {
+        return UserType.CHILD.equals(authUser.getUserType())
+                && childId.equals(authUser.getUserId());
+    }
+
+    private boolean isConnectedParent(Long childId, AuthUser authUser) {
+        return UserType.PARENT.equals(authUser.getUserType())
+                && familyRelationMapper.existsActiveRelation(authUser.getUserId(), childId);
     }
 }

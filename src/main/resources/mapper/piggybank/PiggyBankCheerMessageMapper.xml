@@ -30,6 +30,7 @@
     <delete id="deleteById">
         DELETE FROM piggy_bank_cheer_messages
         WHERE id = #{messageId}
+        AND parent_id = #{parentId}
     </delete>
 
 </mapper>

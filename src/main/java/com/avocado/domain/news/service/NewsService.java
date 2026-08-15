@@ -5,9 +5,10 @@ import com.avocado.domain.news.dto.request.NewsAnswerRequestDto;
 import com.avocado.domain.news.dto.response.NewsAnswerResponseDto;
 import com.avocado.domain.news.dto.response.NewsDetailResponseDto;
 import com.avocado.domain.news.dto.response.NewsListResponseDto;
+import com.avocado.global.security.jwt.dto.AuthUser;
 
 public interface NewsService {
-    NewsListResponseDto getNewsList(int page, int size, Long childId);
-    NewsDetailResponseDto getNewsDetail(Long newsId, Long childId);
-    NewsAnswerResponseDto saveAnswer(Long newsId, Long childId, NewsAnswerRequestDto request);
+    NewsListResponseDto getNewsList(int page, int size, Long childId, AuthUser authUser);
+    NewsDetailResponseDto getNewsDetail(Long newsId, Long childId, AuthUser authUser);
+    NewsAnswerResponseDto saveAnswer(Long newsId, Long childId, AuthUser authUser, NewsAnswerRequestDto request);
 }

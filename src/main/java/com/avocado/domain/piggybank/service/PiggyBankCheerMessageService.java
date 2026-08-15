@@ -14,5 +14,5 @@ public interface PiggyBankCheerMessageService {
 
     List<PiggyBankCheerMessageResponseDto> getMessages(Long piggyBankId);
 
-    void deleteMessage(Long piggyBankId, Long messageId);
+    void deleteMessage(Long piggyBankId, Long messageId, AuthUser authUser);
 }

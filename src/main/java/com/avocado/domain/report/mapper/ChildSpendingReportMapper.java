@@ -16,4 +16,17 @@ public interface ChildSpendingReportMapper {
 
     // 같은 아이-같은 달 조합이면 유형만 갱신 (uk_child_report_month 활용)
     void upsert(ChildSpendingReport report);
+
+    //같은 달, 특정 유형으로 분류된 아이 수
+    long countByReportTypeAndYearMonth(
+        @Param("reportTypeId") Long reportTypeId,
+        @Param("year") int year,
+        @Param("month") int month
+    );
+
+    //같은 달, 유형이 집계된 전체 아이 수
+    long countAllByYearMonth(
+            @Param("year") int year,
+            @Param("month")int month
+    );
 }

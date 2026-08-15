@@ -15,13 +15,19 @@ public enum ErrorCode implements ResponseCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUT-001", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "AUT-002", "접근 권한이 없습니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUT-003", "이메일 또는 비밀번호가 올바르지 않습니다."),
-    USER_SUSPENDED(HttpStatus.FORBIDDEN, "AUT-004", "이용이 정지된 계정입니다. 고객센터에 문의해주세요."),
-    USER_DELETED(HttpStatus.FORBIDDEN, "AUT-005", "탈퇴한 계정입니다."),
     REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "AUT-006", "보안을 위해 로그아웃되었습니다. 다시 로그인해주세요."),
 
     // 사용자 (USR)
-    CHILD_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "자녀를 찾을 수 없습니다."),
-    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-002", "사용자를 찾을 수 없습니다."),
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "사용자를 찾을 수 없습니다."),
+    CHILD_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-002", "자녀를 찾을 수 없습니다."),
+    USER_SUSPENDED(HttpStatus.FORBIDDEN, "USR-003", "이용이 정지된 계정입니다. 고객센터에 문의해주세요."),
+    USER_DELETED(HttpStatus.FORBIDDEN, "USR-004", "탈퇴한 계정입니다."),
+    USER_PENDING(HttpStatus.CONFLICT, "USR-005", "아직 활성화되지 않은 계정입니다."),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USR-006", "이미 가입된 이메일입니다."),
+    DUPLICATE_PHONE(HttpStatus.CONFLICT, "USR-007", "이미 가입된 전화번호입니다."),
+    NOT_PARENT_USER(HttpStatus.FORBIDDEN, "USR-008", "보호자 계정이 아닙니다."),
+    NOT_CHILD_USER(HttpStatus.FORBIDDEN, "USR-009", "자녀 계정이 아닙니다."),
+    USER_NOT_ACTIVE(HttpStatus.FORBIDDEN, "USR-010", "활성 상태의 사용자가 아닙니다."),
 
     // 저금통 (PIG)
     PIGGY_BANK_NOT_FOUND(HttpStatus.NOT_FOUND, "PIG-001", "저금통을 찾을 수 없습니다."),

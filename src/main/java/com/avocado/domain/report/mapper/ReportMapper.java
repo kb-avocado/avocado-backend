@@ -33,4 +33,7 @@ public interface ReportMapper {
 
     // 이 지갑의 최초 거래 월 (이전 달 화살표 활성화 판단용)
     String findEarliestTransactionMonth(@Param("walletId") Long walletId);
+
+    // 특정 날짜(하루) 소비 금액 (홈 화면 "오늘 사용"에 표시할 데이터)
+    Long sumSpentAmountByDate(@Param("walletId") Long walletId, @Param("date") java.time.LocalDate date);
 }

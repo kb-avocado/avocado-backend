@@ -24,12 +24,13 @@ public class TransferController {
 
     @PostMapping("/account-to-wallet")
     public ResponseEntity<ApiResponse<AccountToWalletTransferResponseDto>> transferAccountToWallet(
-            @Valid @RequestBody
+            @Valid
+            @RequestBody
             AccountToWalletTransferRequestDto requestDto
     ) {
-        TransferResultVo result = transferService.transferAccountToWallet(requestDto);
+        TransferResultVo resultVo = transferService.transferAccountToWallet(requestDto);
 
-        AccountToWalletTransferResponseDto response = AccountToWalletTransferResponseDto.from(result);
+        AccountToWalletTransferResponseDto response = AccountToWalletTransferResponseDto.from(resultVo);
 
         return ResponseEntity
                 .status(SuccessCode.TRANSFER_SUCCESS.getHttpStatus())

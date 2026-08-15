@@ -3,17 +3,24 @@ package com.avocado.global.config;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.*;
+import org.springframework.stereotype.Controller;
 
 import javax.sql.DataSource;
 
 @Configuration
 @PropertySource("classpath:config/application-local.properties")
+@ComponentScan(
+        basePackages = "com.avocado.domain",
+        excludeFilters = @ComponentScan.Filter(
+                type = FilterType.ANNOTATION,
+                classes = Controller.class
+        )
+)
 @Import({
-        MyBatisConfig.class
+        MyBatisConfig.class,
+        RedisConfig.class,
+        SchedulingConfig.class
 })
 public class RootConfig {
 

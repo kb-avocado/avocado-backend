@@ -56,9 +56,10 @@ public class PiggyBankCheerMessageController {
     @ApiOperation(value = "응원 메시지 삭제", notes = "보호자가 본인이 작성한 응원 메시지를 삭제합니다.")
     public ResponseEntity<ApiResponse<Void>> deleteMessage(
             @PathVariable Long piggyBankId,
-            @PathVariable Long messageId
+            @PathVariable Long messageId,
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        piggyBankCheerMessageService.deleteMessage(piggyBankId, messageId);
+        piggyBankCheerMessageService.deleteMessage(piggyBankId, messageId, authUser);
 
         return ResponseEntity
                 .status(CHEER_MESSAGE_DELETED.getHttpStatus())

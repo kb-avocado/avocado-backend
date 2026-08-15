@@ -14,7 +14,9 @@ public interface AccountMapper {
     );
 
     // 부모 회원의 은행 계좌 정보를 등록하고, 저장된 행의 개수를 반환
-    int insertAccount(AccountVo accountVo);
+    int insertAccount(
+            AccountVo accountVo
+    );
 
     // 부모에게 연결된 ACTIVE 외부 계좌를 조회한다.
     Optional<AccountVo> findActiveByUserId(

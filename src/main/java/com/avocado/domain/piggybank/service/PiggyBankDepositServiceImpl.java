@@ -1,5 +1,6 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.transfer.service.TransferService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -22,6 +23,7 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
 
     private final PiggyBankMapper piggyBankMapper;
     private final PiggyBankHistoryMapper piggyBankHistoryMapper;
+    private final TransferService transferService;
 
     @Override
     public List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId) {
@@ -48,9 +50,6 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
         if (request.getAmount() > remaining) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET);
         }
-
-        // TODO: 지갑 잔액 검증 및 차감 (WalletService 준비되면 연결)
-        // walletService.deductBalance(piggyBank.getWalletId(), request.getAmount());
 
         Long balanceBefore = piggyBank.getBalance();
         Long balanceAfter = balanceBefore + request.getAmount();
@@ -85,12 +84,18 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
             Long childId,
             Long piggyBankId,
             Long amount,
-            String traceId
+            String traceId,
+            Long walletId
     ) {
         PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
 
         if (piggyBank == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        // 소유권 검증: 이 저금통이 요청자의 지갑 소속인지
+        if (!piggyBank.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
         }
 
         if (!"ACTIVE".equals(piggyBank.getStatus())) {
@@ -101,6 +106,10 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
         if (amount > remaining) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET);
         }
+
+        // 지갑에서 저금할 금액 출금 — 같은 @Transactional 안에 묶여서
+        // 아래 적립 로직이 실패하면 출금도 같이 롤백됨
+        transferService.transferWalletToPiggyBank(childId, amount, traceId);
 
         Long balanceBefore = piggyBank.getBalance();
         Long balanceAfter = balanceBefore + amount;

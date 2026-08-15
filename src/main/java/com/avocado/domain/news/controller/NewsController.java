@@ -1,6 +1,7 @@
 package com.avocado.domain.news.controller;
 
 import com.avocado.global.response.ApiResponse;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import com.avocado.domain.news.batch.NewsRssCrawlService;
 import com.avocado.domain.news.dto.request.NewsAnswerRequestDto;
 import com.avocado.domain.news.dto.response.NewsAnswerResponseDto;
@@ -12,26 +13,26 @@ import javax.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import static com.avocado.global.response.code.SuccessCode.*;
 
-// TODO: 로그인 붙으면 @AuthenticationPrincipal 등으로 childId를 토큰에서 꺼내도록 교체
-// 지금은 데모용으로 임시 고정값 사용
 @RestController
 @RequestMapping("/api/news")
 @RequiredArgsConstructor
 public class NewsController {
     private final NewsService newsService;
-    private static final Long TEMP_CHILD_ID = 102L; // TODO: 로그인 붙으면 제거
     private final NewsRssCrawlService newsRssCrawlService;
 
     @GetMapping
     public ResponseEntity<ApiResponse<NewsListResponseDto>> getNewsList(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Long childId,
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        NewsListResponseDto data = newsService.getNewsList(page, size, TEMP_CHILD_ID);
+        NewsListResponseDto data = newsService.getNewsList(page, size, childId, authUser);
 
         return ResponseEntity
                 .status(NEWS_LIST_FOUND.getHttpStatus())
@@ -40,10 +41,11 @@ public class NewsController {
 
     @GetMapping("/{newsId}")
     public ResponseEntity<ApiResponse<NewsDetailResponseDto>> getNewsDetail(
-            @PathVariable Long newsId
+            @PathVariable Long newsId,
+            @RequestParam(required = false) Long childId,
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        NewsDetailResponseDto data =
-                newsService.getNewsDetail(newsId, TEMP_CHILD_ID);
+        NewsDetailResponseDto data = newsService.getNewsDetail(newsId, childId, authUser);
 
         return ResponseEntity
                 .status(NEWS_DETAIL_FOUND.getHttpStatus())
@@ -53,9 +55,11 @@ public class NewsController {
     @PutMapping("/{newsId}/answers")
     public ResponseEntity<ApiResponse<NewsAnswerResponseDto>> saveAnswer(
             @PathVariable Long newsId,
+            @RequestParam(required = false) Long childId,
+            @AuthenticationPrincipal AuthUser authUser,
             @Valid @RequestBody NewsAnswerRequestDto request
     ) {
-        NewsAnswerResponseDto data = newsService.saveAnswer(newsId, TEMP_CHILD_ID, request);
+        NewsAnswerResponseDto data = newsService.saveAnswer(newsId, childId, authUser, request);
 
         return ResponseEntity
                 .status(NEWS_ANSWER_SAVED.getHttpStatus())

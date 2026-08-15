@@ -1,6 +1,6 @@
 package com.avocado.domain.piggybank.mapper;
 
-import com.avocado.domain.piggybank.domain.BonusType;
+import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.domain.piggybank.domain.PiggyBank;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -15,7 +15,7 @@ public interface PiggyBankMapper {
 
     int updateBonus(
             @Param("id") Long id,
-            @Param("bonusType") BonusType bonusType,
+            @Param("bonusType") PiggyBankBonusType piggyBankBonusType,
             @Param("bonusValue") Long bonusValue
     );
 
@@ -53,4 +53,13 @@ public interface PiggyBankMapper {
     );
     // 목표 도달 후 7일 경과분을 ACHIEVE로 승격, 승격된 행 수 반환
     int promoteToAchieve();
+
+    // 같은 지갑의 기존 즐겨찾기 모두 해제 (1개 보장용)
+    int clearFavoritesByWallet(@Param("walletId") Long walletId);
+
+    // 특정 저금통 즐겨찾기 on/off
+    int updateFavorite(@Param("id") Long id, @Param("favorite") boolean favorite);
+
+    // 환급: 저금통 잔액 0 처리
+    int zeroBalance(@Param("id") Long id);
 }
