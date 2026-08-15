@@ -3,6 +3,7 @@ package com.avocado.domain.user.service;
 import com.avocado.domain.user.domain.User;
 import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.user.domain.UserVo;
 import com.avocado.domain.user.dto.request.UserLoginRequestDto;
 import com.avocado.domain.user.dto.response.LoginUserDto;
 import com.avocado.domain.user.domain.RefreshResult;
@@ -43,11 +44,13 @@ public class UserLoginServiceImpl implements UserLoginService {
             throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        validateLoginable(user);
+        UserVo userVo = toUserVo(user);
 
-        return user.getUserType() == UserType.PARENT
-                ? toParentInfo(user)
-                : toChildInfo(user);
+        validateLoginable(userVo);
+
+        return userVo.getUserType() == UserType.PARENT
+                ? toParentInfo(userVo)
+                : toChildInfo(userVo);
     }
 
     /**
@@ -63,11 +66,8 @@ public class UserLoginServiceImpl implements UserLoginService {
             throw new BusinessException(ErrorCode.UNAUTHORIZED);
         }
 
-        User user = userMapper.selectById(authUser.getUserId());
-
-        if (user == null) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
+        UserVo user = userMapper.findById(authUser.getUserId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         validateLoginable(user);
 
@@ -76,8 +76,19 @@ public class UserLoginServiceImpl implements UserLoginService {
                 : toChildInfo(user);
     }
 
+    // 로그인은 비밀번호 검증 때문에 User로 읽지만, 이후 조립은 UserVo만 있으면 된다.
+    private UserVo toUserVo(User user) {
+        return UserVo.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .userType(user.getUserType())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .build();
+    }
+
     // PENDING은 로그인은 되지만 진입 화면이 다른 상태라 여기서 막지 않는다.
-    private void validateLoginable(User user) {
+    private void validateLoginable(UserVo user) {
         if (user.getStatus() == UserStatus.SUSPENDED) {
             throw new BusinessException(ErrorCode.USER_SUSPENDED);
         }
@@ -88,7 +99,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     }
 
     // 부모는 계좌가 연동되지 않았으면 PENDING이므로 accountId가 비어 있을 수 있다.
-    private LoginUserDto toParentInfo(User user) {
+    private LoginUserDto toParentInfo(UserVo user) {
         return baseInfo(user)
                 .accountId(userMapper.selectAccountIdByParentId(user.getId()))
                 .child(userMapper.selectChildrenByParentId(user.getId()))
@@ -96,7 +107,7 @@ public class UserLoginServiceImpl implements UserLoginService {
     }
 
     // 아이는 부모와 연결되지 않았으면 PENDING이므로, 부모 ID 대신 연결 요청 정보를 내려준다.
-    private LoginUserDto toChildInfo(User user) {
+    private LoginUserDto toChildInfo(UserVo user) {
         LoginUserDto.LoginUserDtoBuilder builder = baseInfo(user)
                 .walletId(userMapper.selectWalletIdByChildId(user.getId()));
 
@@ -109,7 +120,7 @@ public class UserLoginServiceImpl implements UserLoginService {
         return builder.build();
     }
 
-    private LoginUserDto.LoginUserDtoBuilder baseInfo(User user) {
+    private LoginUserDto.LoginUserDtoBuilder baseInfo(UserVo user) {
         return LoginUserDto.builder()
                 .userId(user.getId())
                 .name(user.getName())
@@ -137,10 +148,8 @@ public class UserLoginServiceImpl implements UserLoginService {
                     throw new BusinessException(ErrorCode.UNAUTHORIZED);
                 });
 
-        User user = userMapper.selectById(userId);
-        if (user == null) {
-            throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-        }
+        UserVo user = userMapper.findById(userId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         validateLoginable(user);
 

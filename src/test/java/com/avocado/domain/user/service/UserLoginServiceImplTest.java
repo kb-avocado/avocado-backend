@@ -1,7 +1,7 @@
 package com.avocado.domain.user.service;
 
 import com.avocado.domain.user.domain.RefreshResult;
-import com.avocado.domain.user.domain.User;
+import com.avocado.domain.user.domain.UserVo;
 import com.avocado.domain.user.domain.UserRole;
 import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.domain.UserType;
@@ -65,7 +65,7 @@ class UserLoginServiceImplTest {
     void refresh_success() {
         // given
         when(refreshTokenRepository.findUserId(OLD_TOKEN)).thenReturn(Optional.of(USER_ID));
-        when(userMapper.selectById(USER_ID)).thenReturn(parent(UserStatus.ACTIVE));
+        when(userMapper.findById(USER_ID)).thenReturn(Optional.of(parent(UserStatus.ACTIVE)));
         when(refreshTokenRepository.rotate(USER_ID, OLD_TOKEN)).thenReturn(NEW_TOKEN);
 
         // when
@@ -130,7 +130,7 @@ class UserLoginServiceImplTest {
     void refresh_suspendedUser() {
         // given
         when(refreshTokenRepository.findUserId(OLD_TOKEN)).thenReturn(Optional.of(USER_ID));
-        when(userMapper.selectById(USER_ID)).thenReturn(parent(UserStatus.SUSPENDED));
+        when(userMapper.findById(USER_ID)).thenReturn(Optional.of(parent(UserStatus.SUSPENDED)));
 
         // when & then
         assertThatThrownBy(() -> userLoginService.refresh(OLD_TOKEN))
@@ -140,8 +140,8 @@ class UserLoginServiceImplTest {
         verify(refreshTokenRepository, never()).rotate(anyLong(), anyString());
     }
 
-    private User parent(UserStatus status) {
-        return User.builder()
+    private UserVo parent(UserStatus status) {
+        return UserVo.builder()
                 .id(USER_ID)
                 .name("MeTest")
                 .userType(UserType.PARENT)

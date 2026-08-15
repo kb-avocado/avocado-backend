@@ -22,9 +22,6 @@ public interface UserMapper {
             @Param("email") String email
     );
 
-    // 새로고침으로 화면 정보가 날아갔을 때, 토큰에서 꺼낸 회원 ID로 다시 조회한다. (id는 PK)
-    User selectById(@Param("id") Long id);
-
     // [PARENT] 연동 계좌 ID. 계좌가 여러 개면 먼저 연동한 ACTIVE 계좌를 사용한다.
     Long selectAccountIdByParentId(
             @Param("parentId") Long parentId
