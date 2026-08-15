@@ -113,4 +113,13 @@
             AND created_at >= NOW() - INTERVAL 7 DAY
 
     </update>
+
+    <!-- 회원이 수신한 알림을 삭제한다. -->
+    <delete id="deleteByIdAndUserId">
+
+        DELETE FROM notifications
+        WHERE id = #{notificationId}
+            AND receiver_id = #{userId}
+
+    </delete>
 </mapper>

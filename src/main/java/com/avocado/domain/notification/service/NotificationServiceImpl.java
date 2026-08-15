@@ -10,7 +10,6 @@ import com.avocado.domain.notification.event.NotificationCreatedEvent;
 import com.avocado.domain.notification.mapper.NotificationMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.PageResponse;
-import com.avocado.global.response.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -195,5 +194,58 @@ public class NotificationServiceImpl implements NotificationService {
         notificationMapper.updateAllReadByUserId(
                 userId
         );
+    }
+
+    /**
+     * 회원이 수신한 최근 7일 알림을 단건 조회한다.
+     *
+     * @param userId         회원 ID
+     * @param notificationId 알림 ID
+     * @return 알림 상세 정보
+     * @throws BusinessException 알림을 찾을 수 없는 경우
+     */
+    @Override
+    public NotificationResponseDto getNotification(
+            Long userId,
+            Long notificationId
+    ) {
+
+        // 알림 ID와 회원 ID를 기준으로 최근 7일 알림을 조회
+        NotificationVo notification = notificationMapper
+                .findRecentByIdAndUserId(
+                        notificationId,
+                        userId
+                )
+                .orElseThrow(() -> new BusinessException(NOTIFICATION_NOT_FOUND));
+
+        // 응답 DTO로 변환하여 반환
+        return NotificationResponseDto.from(
+                notification
+        );
+    }
+
+    /**
+     * 회원이 수신한 알림을 삭제한다.
+     *
+     * @param userId         회원 ID
+     * @param notificationId 알림 ID
+     * @throws BusinessException 삭제할 알림을 찾을 수 없는 경우
+     */
+    @Override
+    @Transactional
+    public void deleteNotification(
+            Long userId,
+            Long notificationId
+    ) {
+        // 알림 ID와 회원 ID를 기준으로 알림을 삭제
+        int deleted = notificationMapper.deleteByIdAndUserId(
+                notificationId,
+                userId
+        );
+
+        // 삭제된 알림이 없으면 현재 회원이 삭제할 수 있는 알림이 없는 것으로 처리
+        if (deleted == 0) {
+            throw new BusinessException(NOTIFICATION_NOT_FOUND);
+        }
     }
 }
