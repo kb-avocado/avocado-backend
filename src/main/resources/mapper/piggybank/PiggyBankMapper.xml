@@ -150,4 +150,11 @@
         SELECT 1 FROM piggy_banks WHERE wallet_id = #{walletId}
         )
     </select>
+    <!-- 환급: 저금통 잔액 0 -->
+    <update id="zeroBalance">
+        UPDATE piggy_banks
+        SET balance = 0,
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper>

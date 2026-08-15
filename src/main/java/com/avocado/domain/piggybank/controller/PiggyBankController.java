@@ -87,9 +87,9 @@ public class PiggyBankController {
             @PathVariable Long piggyBankId,
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        Long walletId = walletService.getChildWallet(authUser.getUserId(), authUser).getWalletId();
-
-        piggyBankService.close(piggyBankId, walletId);
+        Long childId = authUser.getUserId();
+        Long walletId = walletService.getChildWallet(childId, authUser).getWalletId();
+        piggyBankService.close(piggyBankId, childId, walletId);
 
         return ResponseEntity
                 .status(PIGGY_BANK_CLOSED.getHttpStatus())

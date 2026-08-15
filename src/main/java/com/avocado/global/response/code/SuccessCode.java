@@ -67,6 +67,14 @@ public enum SuccessCode implements ResponseCode {
     CHEER_MESSAGE_FETCHED(HttpStatus.OK, "CHE-001", "응원 메시지 조회에 성공했습니다."),
     CHEER_MESSAGE_DELETED(HttpStatus.OK, "CHE-002", "응원 메시지가 삭제되었습니다."),
 
+    // 알림 (NOT)
+    NOTIFICATION_LIST_FETCHED(HttpStatus.OK, "NOT-000", "알림 목록 조회에 성공했습니다."),
+    NOTIFICATION_READ(HttpStatus.OK, "NOT-001", "알림을 읽음 처리했습니다."),
+    NOTIFICATION_ALL_READ(HttpStatus.OK, "NOT-002", "모든 알림을 읽음 처리했습니다."),
+    NOTIFICATION_DELETED(HttpStatus.OK, "NOT-003", "알림이 삭제되었습니다."),
+    NOTIFICATION_UNREAD_COUNT_FOUND(HttpStatus.OK, "NOT-004", "미읽음 알림 개수를 조회했습니다."),
+    NOTIFICATION_FOUND(HttpStatus.OK, "NOT-005", "알림을 조회했습니다."),
+
     // 리포트(RPT)
     REPORT_FOUND(HttpStatus.OK, "RPT-000", "월별 리포트를 조회했습니다."),
     SPENDING_REPORT_TYPE_FOUND(HttpStatus.OK, "RPT-001", "이번 달 소비 유형을 조회했습니다."),

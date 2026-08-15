@@ -84,6 +84,7 @@ dependencies {
 
     // Servlet API
     compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+    testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
 
     // Java standard annotations
     implementation 'javax.inject:javax.inject:1'
@@ -143,6 +144,8 @@ dependencies {
     // Redis
     implementation "org.springframework.data:spring-data-redis:${springDataRedisVersion}"
     implementation "io.lettuce:lettuce-core:${lettuceVersion}"
+
+
 
     // RSS/Atom 피드 파싱
 //    implementation 'com.rometools:rome:2.1.0'

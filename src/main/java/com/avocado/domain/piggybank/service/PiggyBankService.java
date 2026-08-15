@@ -18,12 +18,12 @@ public interface PiggyBankService {
     // 저금통 생성
     PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request);
 
-    // 저금통 삭제 (소유권 검증용 walletId)
-    void close(Long piggyBankId, Long walletId);
-
     // 7일 달성 승격 (스케줄러가 호출), 승격된 저금통 수 반환
     int promoteAchievements();
 
     // 즐겨찾기
     boolean toggleFavorite(Long piggyBankId, Long walletId);
+
+    // 저금통 중도 포기 + 잔액 환급 (childId: 지갑 반영 대상)
+    void close(Long piggyBankId, Long childId, Long walletId);
 }

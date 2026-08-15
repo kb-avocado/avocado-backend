@@ -65,6 +65,12 @@ public enum ErrorCode implements ResponseCode {
     DUPLICATE_PAYMENT_REQUEST(HttpStatus.CONFLICT, "PAY-002", "이미 처리된 결제 요청입니다."),
     PAYMENT_QR_REISSUE_TOO_FREQUENT(HttpStatus.TOO_MANY_REQUESTS, "PAY-003", "QR 토큰 재발급 요청이 너무 잦습니다. 잠시 후 다시 시도해주세요."),
 
+    // 알림 (NTF)
+    NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "NTF-001", "알림을 찾을 수 없습니다."),
+    NOTIFICATION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "NTF-002", "해당 알림에 접근할 권한이 없습니다."),
+    NOTIFICATION_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-003", "알림 저장에 실패했습니다."),
+    NOTIFICATION_READ_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "NTF-004", "알림 읽음 상태 변경에 실패했습니다."),
+
     // 신문 (NWS)
     NEWS_NOT_FOUND(HttpStatus.NOT_FOUND, "NWS-001", "신문 기사를 찾을 수 없습니다."),
 

@@ -63,4 +63,6 @@ public interface PiggyBankMapper {
 
     // 상태/즐겨찾기 여부와 무관하게, 이 지갑에 저금통이 하나라도 있는지 (홈 화면 빈 상태 문구 분기용)
     boolean existsByWalletId(@Param("walletId") Long walletId);
+    // 환급: 저금통 잔액 0 처리
+    int zeroBalance(@Param("id") Long id);
 }

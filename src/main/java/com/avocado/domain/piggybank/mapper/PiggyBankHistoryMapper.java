@@ -18,4 +18,13 @@ public interface PiggyBankHistoryMapper {
             @Param("balanceAfter") Long balanceAfter,
             @Param("traceId") String traceId
     );
+
+    // 환급(중도해지) 출금 내역 기록
+    int insertWithdrawal(
+            @Param("piggyBankId") Long piggyBankId,
+            @Param("amount") Long amount,
+            @Param("balanceBefore") Long balanceBefore,
+            @Param("balanceAfter") Long balanceAfter,
+            @Param("traceId") String traceId
+    );
 }
