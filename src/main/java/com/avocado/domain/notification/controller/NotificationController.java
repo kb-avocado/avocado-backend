@@ -2,6 +2,7 @@ package com.avocado.domain.notification.controller;
 
 import com.avocado.domain.notification.dto.request.NotificationListRequestDto;
 import com.avocado.domain.notification.dto.response.NotificationListItemResponseDto;
+import com.avocado.domain.notification.dto.response.NotificationResponseDto;
 import com.avocado.domain.notification.dto.response.NotificationUnreadCountResponseDto;
 import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.global.response.ApiResponse;
@@ -112,5 +113,30 @@ public class NotificationController {
         return ResponseEntity
                 .status(NOTIFICATION_ALL_READ.getHttpStatus())
                 .body(ApiResponse.success(NOTIFICATION_ALL_READ));
+    }
+
+    /**
+     * 인증 회원이 수신한 최근 7일 알림을 단건 조회한다.
+     *
+     * @param authUser       인증 사용자
+     * @param notificationId 알림 ID
+     * @return 알림 상세 정보 응답
+     */
+    @GetMapping("/{notificationId}")
+    public ResponseEntity<ApiResponse<NotificationResponseDto>> getNotification(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long notificationId
+    ) {
+
+        // 현재 회원이 수신한 최근 7일 알림을 단건 조회
+        NotificationResponseDto response = notificationService.getNotification(
+                authUser.getUserId(),
+                notificationId
+        );
+
+        // 알림 상세 정보를 반환
+        return ResponseEntity
+                .status(NOTIFICATION_FOUND.getHttpStatus())
+                .body(ApiResponse.success(NOTIFICATION_FOUND, response));
     }
 }
