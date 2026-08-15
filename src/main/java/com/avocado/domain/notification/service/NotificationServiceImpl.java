@@ -180,4 +180,20 @@ public class NotificationServiceImpl implements NotificationService {
             throw new BusinessException(INTERNAL_SERVER_ERROR);
         }
     }
+
+    /**
+     * 회원이 수신한 최근 7일 미읽음 알림을 모두 읽음 처리한다.
+     *
+     * @param userId 회원 ID
+     */
+    @Override
+    @Transactional
+    public void readAllNotifications(
+            Long userId
+    ) {
+        // 회원이 수신한 최근 7일 미읽음 알림을 모두 읽음 상태로 변경
+        notificationMapper.updateAllReadByUserId(
+                userId
+        );
+    }
 }

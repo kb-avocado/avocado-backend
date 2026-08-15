@@ -54,4 +54,13 @@ public interface NotificationService {
             Long userId,
             Long notificationId
     );
+
+    /**
+     * 회원이 수신한 최근 7일 미읽음 알림을 모두 읽음 처리한다.
+     *
+     * @param userId 회원 ID
+     */
+    void readAllNotifications(
+            Long userId
+    );
 }

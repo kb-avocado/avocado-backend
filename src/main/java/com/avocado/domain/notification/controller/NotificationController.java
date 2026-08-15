@@ -92,4 +92,25 @@ public class NotificationController {
                 .body(ApiResponse.success(NOTIFICATION_READ));
     }
 
+    /**
+     * 인증 회원이 수신한 최근 7일 미읽음 알림을 모두 읽음 처리한다.
+     *
+     * @param authUser 인증 사용자
+     * @return 전체 알림 읽음 처리 성공 응답
+     */
+    @PatchMapping("/read-all")
+    public ResponseEntity<ApiResponse<Void>> readAllNotifications(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+
+        // 현재 회원이 수신한 최근 7일 미읽음 알림을 모두 읽음 처리
+        notificationService.readAllNotifications(
+                authUser.getUserId()
+        );
+
+        // 별도의 응답 데이터 없이 전체 읽음 처리 성공 응답을 반환
+        return ResponseEntity
+                .status(NOTIFICATION_ALL_READ.getHttpStatus())
+                .body(ApiResponse.success(NOTIFICATION_ALL_READ));
+    }
 }
