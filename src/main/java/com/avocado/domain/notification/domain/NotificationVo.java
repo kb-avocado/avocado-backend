@@ -10,18 +10,25 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class NotificationVo {
     // DB INSERT 후 MyBatis가 generated key를 여기에 넣는다.
+    // 알림 PK
     private Long id;
 
+    // 알림 수신 회원 ID
     private Long receiverId;
 
+    // 알림 유형
     private NotificationType type;
 
+    // 알림 제목
     private String title;
 
+    // 알림 내용
     private String message;
 
+    // 읽음 여부
     private boolean isRead;
 
+    // 알림 생성 일시
     private LocalDateTime createdAt;
 
     /**
