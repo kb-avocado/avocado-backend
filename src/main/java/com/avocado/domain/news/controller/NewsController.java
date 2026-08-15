@@ -30,9 +30,10 @@ public class NewsController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(required = false) Long childId,
+            @RequestParam(required=false) Boolean completed,
             @AuthenticationPrincipal AuthUser authUser
     ) {
-        NewsListResponseDto data = newsService.getNewsList(page, size, childId, authUser);
+        NewsListResponseDto data = newsService.getNewsList(page, size, childId,completed, authUser);
 
         return ResponseEntity
                 .status(NEWS_LIST_FOUND.getHttpStatus())

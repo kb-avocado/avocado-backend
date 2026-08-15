@@ -9,8 +9,14 @@ import java.util.List;
 
 @MapperScan
 public interface NewsArticleMapper {
-    List<NewsArticle> findList(@Param("offset") int offset, @Param("limit") int limit);
-    long countAll();
+    // completed: null이면 전체, true면 완료된 것만, false면 진행중(미완료)인 것만
+    List<NewsArticle> findList(
+            @Param("offset") int offset,
+            @Param("limit") int limit,
+            @Param("childId") Long childId,
+            @Param("completed") Boolean completed
+    );
+    long countAll(@Param("childId") Long childId, @Param("completed") Boolean completed);
     NewsArticle findById(@Param("id") Long id);
 
     // RSS 크롤링용
