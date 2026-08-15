@@ -13,8 +13,9 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(SpringExtension.class)
 @ContextConfiguration(classes = {RootConfig.class, SecurityConfig.class})
@@ -52,6 +53,47 @@ class NotificationMapperTest {
         assertThat(notification.getId())
                 .isNotNull()
                 .isPositive();
+    }
+
+    /**
+     * 회원의 최근 7일 알림 개수를 조회한다.
+     */
+    @Test
+    @DisplayName("회원의 최근 7일 알림 개수 조회")
+    void countRecentByUserId() {
+        // given
+        Long userId = 101L;
+
+        // when
+        long count = notificationMapper.countRecentByUserId(userId);
+
+        // then
+        assertThat(count).isEqualTo(4L);
+
+    }
+
+    /**
+     * 회원의 최근 7일 알림 목록을 최신순으로 조회한다.
+     */
+    @Test
+    void findRecentByUserId() {
+        // given
+        Long userId = 101L;
+        int offset = 0;
+        int size = 20;
+
+        // when
+        List<NotificationVo> notifications = notificationMapper.findRecentByUserId(
+                userId,
+                offset,
+                size
+        );
+
+        // then
+        assertThat(notifications).hasSize(4);
+
+        // 가장 최근 알림이 먼저 조회되었는지 확인
+        assertThat(notifications.get(0).getReceiverId()).isEqualTo(userId);
     }
 
 }
