@@ -1,6 +1,8 @@
 package com.avocado.domain.piggybank.service;
 
 import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
+import com.avocado.domain.piggybank.mapper.PiggyBankHistoryMapper;
+import com.avocado.domain.transfer.service.TransferService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -16,6 +18,7 @@ import com.avocado.domain.piggybank.dto.request.PiggyBankCreateRequestDto;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,6 +29,8 @@ public class PiggyBankServiceImpl implements PiggyBankService {
     private static final int MAX_COUNT = 3;
 
     private final PiggyBankMapper piggyBankMapper;
+    private final TransferService transferService;
+    private final PiggyBankHistoryMapper piggyBankHistoryMapper;
 
     @Override
     public PiggyBankListResponseDto getList(Long walletId, String status) {
@@ -53,8 +58,8 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
     /**
      * 화면 탭을 실제 저장 상태값으로 매핑.
-     *  - CLOSED      : ACHIEVE(달성), CANCEL(취소)
-     *  - IN_PROGRESS : ACTIVE(진행중), PENDING_ACHIEVE(7일 대기중)
+     * - CLOSED      : ACHIEVE(달성), CANCEL(취소)
+     * - IN_PROGRESS : ACTIVE(진행중), PENDING_ACHIEVE(7일 대기중)
      */
     private List<String> toStatuses(String group) {
         if ("CLOSED".equalsIgnoreCase(group)) {
@@ -85,7 +90,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
     // 저금통 목록 조회 보너스 정보 포함
     // 도메인의 보너스 필드 → bonus DTO
     private PiggyBankResponseDto.BonusDto toBonusDto(PiggyBank p) {
-        PiggyBankBonusType type = p.getBonusType() ;
+        PiggyBankBonusType type = p.getBonusType();
         if (type == null || type == PiggyBankBonusType.NONE) {
             return PiggyBankResponseDto.BonusDto.builder()
                     .status("UNPAID").type("NONE").build();
@@ -133,6 +138,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .bonusPaidAt(p.getBonusPaidAt())
                 .build();
     }
+
     @Override
     @Transactional
     public PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request) {
@@ -156,10 +162,11 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         Long newId = piggyBankMapper.selectLastInsertId();
         return getDetail(newId, walletId);
     }
+
     // 저금통 삭제
     @Override
     @Transactional
-    public void close(Long piggyBankId, Long walletId) {
+    public void close(Long piggyBankId, Long childId, Long walletId) {
         PiggyBank p = piggyBankMapper.selectById(piggyBankId);
         if (p == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
@@ -175,15 +182,21 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         if ("ACHIEVE".equals(status) || "CANCEL".equals(status)) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_ALREADY_CLOSED);
         }
-
-        // 중도 포기 = 상태만 CANCEL로 변경 (balance 유지)
+        // 1) 상태 CANCEL
         piggyBankMapper.cancel(piggyBankId);
 
-        // TODO: 지갑 환급 (돈 이동 인프라 완성 후)
-        //   1) wallet.balance += p.getBalance()  (이자 제외)
-        //   2) piggy_banks.balance = 0
-        //   3) 거래 이력 기록 (piggy_bank_histories WITHDRAWAL, wallet_histories/ledger)
+        // 2) 환급: 저금통 원금을 지갑으로 (잔액 있을 때만)
+        long refund = (p.getBalance() == null) ? 0 : p.getBalance();
+        if (refund > 0) {
+            String traceId = UUID.randomUUID().toString();     // 저금통 ↔ 지갑 거래 연결용
+            piggyBankMapper.zeroBalance(piggyBankId);           // 저금통 잔액 0
+            transferService.transferPiggyBankToWallet(childId, refund, traceId);  // 지갑 반영
+            // 저금통 출금 이력 (같은 traceId로 지갑 거래와 연결, before=원금 after=0)
+            piggyBankHistoryMapper.insertWithdrawal(piggyBankId, refund, refund, 0L, traceId);
+        }
+
     }
+
     @Override
     @Transactional
     public int promoteAchievements() {
@@ -192,6 +205,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         //   현재는 지갑 API 대기 → 상태 전이만. 환급은 close 환급과 함께 추후 배선.
         return promoted;
     }
+
 
     // 저금통 즐겨찾기 토글 (아이당 1개만)
     @Override

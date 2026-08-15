@@ -142,4 +142,12 @@
         updated_at = NOW()
         WHERE id = #{id}
     </update>
+
+    <!-- 환급: 저금통 잔액 0 -->
+    <update id="zeroBalance">
+        UPDATE piggy_banks
+        SET balance = 0,
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper>

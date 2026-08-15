@@ -59,4 +59,7 @@ public interface PiggyBankMapper {
 
     // 특정 저금통 즐겨찾기 on/off
     int updateFavorite(@Param("id") Long id, @Param("favorite") boolean favorite);
+
+    // 환급: 저금통 잔액 0 처리
+    int zeroBalance(@Param("id") Long id);
 }
