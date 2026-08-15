@@ -75,10 +75,6 @@ public enum ErrorCode implements ResponseCode {
     // 거래 (TXN)
     WALLET_TX_NOT_FOUND(HttpStatus.NOT_FOUND, "TXN-001", "선불지갑 거래 내역을 찾을 수 없습니다."),
 
-    // 회원 (USR)
-    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USR-001", "이미 가입된 이메일입니다."),
-    DUPLICATE_PHONE(HttpStatus.CONFLICT, "USR-002", "이미 가입된 전화번호입니다."),
-
     // 가족 연결 (FAM)
     FAMILY_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "FAM-001", "가족 연결 요청을 찾을 수 없습니다."),
     INVITE_CODE_NOT_FOUND(HttpStatus.NOT_FOUND, "FAM-002", "초대 코드와 일치하는 보호자가 없습니다."),
