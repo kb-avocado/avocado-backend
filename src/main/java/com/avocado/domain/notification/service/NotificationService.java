@@ -42,4 +42,16 @@ public interface NotificationService {
     NotificationUnreadCountResponseDto getUnreadCount(
             Long userId
     );
+
+    /**
+     * 회원이 수신한 알림을 읽음 처리한다.
+     *
+     * @param userId 회원 ID
+     * @param notificationId 알림 ID
+     * @throws BusinessException 알림을 찾을 수 없는 경우
+     */
+    void readNotification(
+            Long userId,
+            Long notificationId
+    );
 }
