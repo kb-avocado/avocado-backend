@@ -71,4 +71,35 @@
             AND created_at >= NOW() - INTERVAL 7 DAY
 
     </select>
+
+    <!-- 회원이 수신한 최근 7일 알림을 ID로 조회한다. -->
+    <select id="findRecentByIdAndUserId"
+            resultType="com.avocado.domain.notification.domain.NotificationVo">
+
+        SELECT
+            id,
+            receiver_id,
+            type,
+            title,
+            message,
+            is_read,
+            created_at
+        FROM notifications
+        WHERE id = #{notificationId}
+            AND receiver_id = #{userId}
+            AND created_at >= NOW() - INTERVAL 7 DAY
+
+    </select>
+
+    <!-- 회원의 미읽음 알림을 읽음 상태로 변경한다. -->
+    <update id="updateReadByIdAndUserId">
+
+        UPDATE notifications
+        SET is_read = TRUE
+        WHERE id = #{notificationId}
+            AND receiver_id = #{userId}
+            AND is_read = FALSE
+            AND created_at >= NOW() - INTERVAL 7 DAY
+
+    </update>
 </mapper>

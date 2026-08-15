@@ -4,6 +4,7 @@ import com.avocado.domain.notification.domain.NotificationVo;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface NotificationMapper {
     /**
@@ -47,6 +48,23 @@ public interface NotificationMapper {
      * @return 최근 7일 미읽음 알림 개수
      */
     long countUnreadRecentByUserId(
+            @Param("userId") Long userId
+    );
+
+    /**
+     * 회원이 수신한 최근 7일 알림을 ID로 조회한다.
+     *
+     * @param notificationId 알림 ID
+     * @param userId 회원 ID
+     * @return 조회된 알림
+     */
+    Optional<NotificationVo> findRecentByIdAndUserId(
+            @Param("notificationId") Long notificationId,
+            @Param("userId") Long userId
+    );
+
+    int updateReadByIdAndUserId(
+            @Param("notificationId") Long notificationId,
             @Param("userId") Long userId
     );
 }
