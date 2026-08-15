@@ -77,4 +77,16 @@ public interface NotificationMapper {
     int updateAllReadByUserId(
             @Param("userId") Long userId
     );
+
+    /**
+     * 회원이 수신한 알림을 삭제한다.
+     *
+     * @param notificationId 알림 ID
+     * @param userId 회원 ID
+     * @return 삭제된 행 수
+     */
+    int deleteByIdAndUserId(
+            @Param("notificationId") Long notificationId,
+            @Param("userId") Long userId
+    );
 }

@@ -9,6 +9,7 @@ import com.avocado.global.response.ApiResponse;
 import com.avocado.global.response.PageResponse;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -17,6 +18,7 @@ import javax.validation.Valid;
 
 import static com.avocado.global.response.code.SuccessCode.*;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/notifications")
@@ -138,5 +140,30 @@ public class NotificationController {
         return ResponseEntity
                 .status(NOTIFICATION_FOUND.getHttpStatus())
                 .body(ApiResponse.success(NOTIFICATION_FOUND, response));
+    }
+
+    /**
+     * 인증 회원이 수신한 알림을 삭제한다.
+     *
+     * @param authUser       인증 사용자
+     * @param notificationId 알림 ID
+     * @return 알림 삭제 성공 응답
+     */
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<ApiResponse<Void>> deleteNotification(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long notificationId
+    ) {
+
+        // 현재 회원이 수신한 알림을 삭제
+        notificationService.deleteNotification(
+                authUser.getUserId(),
+                notificationId
+        );
+
+        // 별도의 응답 데이터 없이 알림 삭제 성공 응답을 반환한다.
+        return ResponseEntity
+                .status(NOTIFICATION_DELETED.getHttpStatus())
+                .body(ApiResponse.success(NOTIFICATION_DELETED));
     }
 }
