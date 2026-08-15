@@ -39,4 +39,14 @@ public interface NotificationMapper {
             @Param("offset") int offset,
             @Param("size") int size
     );
+
+    /**
+     * 회원이 수신한 최근 7일 미읽음 알림 개수를 조회한다.
+     *
+     * @param userId 회원 ID
+     * @return 최근 7일 미읽음 알림 개수
+     */
+    long countUnreadRecentByUserId(
+            @Param("userId") Long userId
+    );
 }

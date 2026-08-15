@@ -59,4 +59,16 @@
         LIMIT #{size} OFFSET #{offset}
 
     </select>
+
+    <!-- 회원이 수신한 최근 7일 미읽음 알림 개수를 조회한다. -->
+    <select id="countUnreadRecentByUserId"
+            resultType="long">
+
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE receiver_id = #{userId}
+            AND is_read = FALSE
+            AND created_at >= NOW() - INTERVAL 7 DAY
+
+    </select>
 </mapper>

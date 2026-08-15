@@ -5,12 +5,11 @@ import com.avocado.domain.notification.domain.NotificationVo;
 import com.avocado.domain.notification.dto.request.NotificationListRequestDto;
 import com.avocado.domain.notification.dto.response.NotificationListItemResponseDto;
 import com.avocado.domain.notification.dto.response.NotificationResponseDto;
+import com.avocado.domain.notification.dto.response.NotificationUnreadCountResponseDto;
 import com.avocado.domain.notification.event.NotificationCreatedEvent;
 import com.avocado.domain.notification.mapper.NotificationMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.PageResponse;
-import com.avocado.global.response.code.ErrorCode;
-import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -80,7 +79,7 @@ public class NotificationServiceImpl implements NotificationService {
     /**
      * 회원이 수신한 최근 7일 알림 목록을 페이지 단위로 조회한다.
      *
-     * @param userId 회원 아이디
+     * @param userId     회원 아이디
      * @param requestDto 페이지 조회 조건
      * @return 알림 목록 페이지
      */
@@ -118,6 +117,21 @@ public class NotificationServiceImpl implements NotificationService {
                 size,
                 totalElements,
                 items
+        );
+    }
+
+    @Override
+    public NotificationUnreadCountResponseDto getUnreadCount(
+            Long userId
+    ) {
+        // 회원이 수신한 최근 7일 이내 미읽음 알림 개수를 조회
+        long count = notificationMapper.countUnreadRecentByUserId(
+                userId
+        );
+
+        // 조회된 미읽음 알림 개수를 응답 DTO로 변환하여 반환
+        return NotificationUnreadCountResponseDto.from(
+                count
         );
     }
 }

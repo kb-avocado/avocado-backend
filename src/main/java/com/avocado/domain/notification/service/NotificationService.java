@@ -3,6 +3,7 @@ package com.avocado.domain.notification.service;
 import com.avocado.domain.notification.domain.NotificationType;
 import com.avocado.domain.notification.dto.request.NotificationListRequestDto;
 import com.avocado.domain.notification.dto.response.NotificationListItemResponseDto;
+import com.avocado.domain.notification.dto.response.NotificationUnreadCountResponseDto;
 import com.avocado.global.response.PageResponse;
 import com.avocado.global.security.jwt.dto.AuthUser;
 
@@ -30,5 +31,15 @@ public interface NotificationService {
     PageResponse<NotificationListItemResponseDto> getNotificationList(
             Long userId,
             NotificationListRequestDto requestDto
+    );
+
+    /**
+     * 회원이 수신한 최근 7일 미읽음 알림 개수를 조회한다.
+     *
+     * @param userId 회원 ID
+     * @return 미읽음 알림 개수 응답
+     */
+    NotificationUnreadCountResponseDto getUnreadCount(
+            Long userId
     );
 }

@@ -2,6 +2,7 @@ package com.avocado.domain.notification.controller;
 
 import com.avocado.domain.notification.dto.request.NotificationListRequestDto;
 import com.avocado.domain.notification.dto.response.NotificationListItemResponseDto;
+import com.avocado.domain.notification.dto.response.NotificationUnreadCountResponseDto;
 import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.response.PageResponse;
@@ -44,10 +45,29 @@ public class NotificationController {
                 requestDto
         );
 
-        // 알림 목록 반환
+        // 알림 목록 응답 반환
         return ResponseEntity
                 .status(NOTIFICATION_LIST_FETCHED.getHttpStatus())
                 .body(ApiResponse.success(NOTIFICATION_LIST_FETCHED, response));
+    }
+
+    /**
+     * 인증 회원이 수신한 최근 7일 미읽음 알림 개수를 조회한다.
+     *
+     * @param authUser 인증 사용자
+     * @return 미읽음 알림 개수 응답
+     */
+    @GetMapping("/unread-count")
+    public ResponseEntity<ApiResponse<NotificationUnreadCountResponseDto>> getUnreadCount(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        // 회원이 수신한 최근 7일 미읽음 알림 개수를 조회
+        NotificationUnreadCountResponseDto response = notificationService.getUnreadCount(authUser.getUserId());
+
+        // 미읽음 알림 개수 응답 반환
+        return ResponseEntity
+                .status(NOTIFICATION_UNREAD_COUNT_FOUND.getHttpStatus())
+                .body(ApiResponse.success(NOTIFICATION_UNREAD_COUNT_FOUND, response));
     }
 
 }

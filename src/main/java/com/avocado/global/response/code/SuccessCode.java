@@ -72,6 +72,7 @@ public enum SuccessCode implements ResponseCode {
     NOTIFICATION_READ(HttpStatus.OK, "NOT-001", "알림을 읽음 처리했습니다."),
     NOTIFICATION_ALL_READ(HttpStatus.OK, "NOT-002", "모든 알림을 읽음 처리했습니다."),
     NOTIFICATION_DELETED(HttpStatus.OK, "NOT-003", "알림이 삭제되었습니다."),
+    NOTIFICATION_UNREAD_COUNT_FOUND(HttpStatus.OK, "NOT-004", "미읽음 알림 개수를 조회했습니다."),
 
     // 리포트(RPT)
     REPORT_FOUND(HttpStatus.OK, "RPT-000", "월별 리포트를 조회했습니다."),
