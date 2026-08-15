@@ -10,10 +10,7 @@ import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 
@@ -68,6 +65,31 @@ public class NotificationController {
         return ResponseEntity
                 .status(NOTIFICATION_UNREAD_COUNT_FOUND.getHttpStatus())
                 .body(ApiResponse.success(NOTIFICATION_UNREAD_COUNT_FOUND, response));
+    }
+
+    /**
+     * 인증 회원이 수신한 알림을 읽음 처리한다.
+     *
+     * @param authUser       인증 사용자
+     * @param notificationId 알림 ID
+     * @return 알림 읽음 처리 성공 응답
+     */
+    @PatchMapping("/{notificationId}/read")
+    public ResponseEntity<ApiResponse<Void>> readNotification(
+            @AuthenticationPrincipal AuthUser authUser,
+            @PathVariable Long notificationId
+    ) {
+
+        // 현재 회원이 수신한 알림을 읽음 상태로 변경
+        notificationService.readNotification(
+                authUser.getUserId(),
+                notificationId
+        );
+
+        // 별도의 응답 데이터 없이 읽음 처리 성공 응답을 반환
+        return ResponseEntity
+                .status(NOTIFICATION_READ.getHttpStatus())
+                .body(ApiResponse.success(NOTIFICATION_READ));
     }
 
 }
