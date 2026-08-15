@@ -10,6 +10,7 @@
             useGeneratedKeys="true"
             keyProperty="id"
             keyColumn="id">
+
         INSERT INTO notifications (
             receiver_id,
             type,
@@ -25,5 +26,37 @@
             #{isRead},
             #{createdAt}
         )
+
     </insert>
+
+    <!-- 회원이 수신한 최근 7일 알림의 전체 개수를 조회한다. -->
+    <select id="countRecentByUserId"
+            resultType="long">
+
+        SELECT COUNT(*)
+        FROM notifications
+        WHERE receiver_id = #{userId}
+            AND created_at >= NOW() - INTERVAL 7 DAY
+
+    </select>
+
+    <!-- 회원이 수신한 최근 7일 알림 목록을 최신순으로 조회한다. -->
+    <select id="findRecentByUserId"
+            resultType="com.avocado.domain.notification.domain.NotificationVo">
+
+        SELECT
+            id,
+            receiver_id,
+            type,
+            title,
+            message,
+            is_read,
+            created_at
+        FROM notifications
+        WHERE receiver_id = #{userId}
+            AND created_at >= NOW() - INTERVAL 7 DAY
+        ORDER BY created_at DESC, id DESC
+        LIMIT #{size} OFFSET #{offset}
+
+    </select>
 </mapper>

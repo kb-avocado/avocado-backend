@@ -2,17 +2,22 @@ package com.avocado.domain.notification.service;
 
 import com.avocado.domain.notification.domain.NotificationType;
 import com.avocado.domain.notification.domain.NotificationVo;
+import com.avocado.domain.notification.dto.request.NotificationListRequestDto;
+import com.avocado.domain.notification.dto.response.NotificationListItemResponseDto;
 import com.avocado.domain.notification.dto.response.NotificationResponseDto;
 import com.avocado.domain.notification.event.NotificationCreatedEvent;
 import com.avocado.domain.notification.mapper.NotificationMapper;
 import com.avocado.global.exception.BusinessException;
+import com.avocado.global.response.PageResponse;
 import com.avocado.global.response.code.ErrorCode;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static com.avocado.global.response.code.ErrorCode.*;
 
@@ -69,6 +74,50 @@ public class NotificationServiceImpl implements NotificationService {
                         receiverId,
                         response
                 )
+        );
+    }
+
+    /**
+     * 회원이 수신한 최근 7일 알림 목록을 페이지 단위로 조회한다.
+     *
+     * @param userId 회원 아이디
+     * @param requestDto 페이지 조회 조건
+     * @return 알림 목록 페이지
+     */
+    @Override
+    public PageResponse<NotificationListItemResponseDto> getNotificationList(
+            Long userId,
+            NotificationListRequestDto requestDto
+    ) {
+        // 요청한 페이지 번호와 페이지 크기 조회
+        int page = requestDto.getPage();
+        int size = requestDto.getSize();
+
+        // 현재 페이지에서 조회를 시작할 offset을 계산
+        int offset = page * size;
+
+        // 최근 7일 알림의 전체 개수를 조회
+        long totalElements = notificationMapper.countRecentByUserId(
+                userId
+        );
+
+        // 최근 7일 알림 목록을 최신순으로 조회
+        List<NotificationVo> notifications = notificationMapper.findRecentByUserId(
+                userId,
+                offset,
+                size
+        );
+
+        // 조회된 알림을 응답 DTO로 변환
+        List<NotificationListItemResponseDto> items = notifications.stream()
+                .map(NotificationListItemResponseDto::from)
+                .toList();
+
+        return PageResponse.of(
+                page,
+                size,
+                totalElements,
+                items
         );
     }
 }
