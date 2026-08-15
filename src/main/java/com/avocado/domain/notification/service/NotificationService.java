@@ -6,7 +6,6 @@ import com.avocado.domain.notification.dto.response.NotificationListItemResponse
 import com.avocado.domain.notification.dto.response.NotificationResponseDto;
 import com.avocado.domain.notification.dto.response.NotificationUnreadCountResponseDto;
 import com.avocado.global.response.PageResponse;
-import com.avocado.global.security.jwt.dto.AuthUser;
 
 public interface NotificationService {
     /**
@@ -74,6 +73,18 @@ public interface NotificationService {
      * @throws BusinessException 알림을 찾을 수 없는 경우
      */
     NotificationResponseDto getNotification(
+            Long userId,
+            Long notificationId
+    );
+
+    /**
+     * 회원이 수신한 알림을 삭제한다.
+     *
+     * @param userId 회원 ID
+     * @param notificationId 알림 ID
+     * @throws BusinessException 삭제할 알림을 찾을 수 없는 경우
+     */
+    void deleteNotification(
             Long userId,
             Long notificationId
     );

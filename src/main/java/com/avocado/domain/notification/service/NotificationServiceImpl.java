@@ -223,4 +223,29 @@ public class NotificationServiceImpl implements NotificationService {
                 notification
         );
     }
+
+    /**
+     * 회원이 수신한 알림을 삭제한다.
+     *
+     * @param userId         회원 ID
+     * @param notificationId 알림 ID
+     * @throws BusinessException 삭제할 알림을 찾을 수 없는 경우
+     */
+    @Override
+    @Transactional
+    public void deleteNotification(
+            Long userId,
+            Long notificationId
+    ) {
+        // 알림 ID와 회원 ID를 기준으로 알림을 삭제
+        int deleted = notificationMapper.deleteByIdAndUserId(
+                notificationId,
+                userId
+        );
+
+        // 삭제된 알림이 없으면 현재 회원이 삭제할 수 있는 알림이 없는 것으로 처리
+        if (deleted == 0) {
+            throw new BusinessException(NOTIFICATION_NOT_FOUND);
+        }
+    }
 }
