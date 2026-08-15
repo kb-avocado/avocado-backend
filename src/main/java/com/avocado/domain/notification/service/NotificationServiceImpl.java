@@ -10,7 +10,6 @@ import com.avocado.domain.notification.event.NotificationCreatedEvent;
 import com.avocado.domain.notification.mapper.NotificationMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.PageResponse;
-import com.avocado.global.response.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -194,6 +193,34 @@ public class NotificationServiceImpl implements NotificationService {
         // 회원이 수신한 최근 7일 미읽음 알림을 모두 읽음 상태로 변경
         notificationMapper.updateAllReadByUserId(
                 userId
+        );
+    }
+
+    /**
+     * 회원이 수신한 최근 7일 알림을 단건 조회한다.
+     *
+     * @param userId         회원 ID
+     * @param notificationId 알림 ID
+     * @return 알림 상세 정보
+     * @throws BusinessException 알림을 찾을 수 없는 경우
+     */
+    @Override
+    public NotificationResponseDto getNotification(
+            Long userId,
+            Long notificationId
+    ) {
+
+        // 알림 ID와 회원 ID를 기준으로 최근 7일 알림을 조회
+        NotificationVo notification = notificationMapper
+                .findRecentByIdAndUserId(
+                        notificationId,
+                        userId
+                )
+                .orElseThrow(() -> new BusinessException(NOTIFICATION_NOT_FOUND));
+
+        // 응답 DTO로 변환하여 반환
+        return NotificationResponseDto.from(
+                notification
         );
     }
 }

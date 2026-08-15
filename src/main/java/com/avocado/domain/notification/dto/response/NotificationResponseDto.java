@@ -10,19 +10,23 @@ import java.time.LocalDateTime;
 @Getter
 @Builder
 public class NotificationResponseDto {
-    // 식별자
+
+    // 알림 ID
     private Long id;
 
-    // 분류
+    // 알림 유형
     private NotificationType type;
 
-    // 제목
+    // 알림 제목
     private String title;
 
-    // 내용
+    // 알림 내용
     private String message;
 
-    // 생성 일시
+    // 읽음 여부
+    private boolean isRead;
+
+    // 알림 생성 일시
     private LocalDateTime createdAt;
 
     /**
@@ -39,6 +43,7 @@ public class NotificationResponseDto {
                 .type(notification.getType())
                 .title(notification.getTitle())
                 .message(notification.getMessage())
+                .isRead(notification.isRead())
                 .createdAt(notification.getCreatedAt())
                 .build();
     }
