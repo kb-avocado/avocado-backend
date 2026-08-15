@@ -102,4 +102,15 @@
             AND created_at >= NOW() - INTERVAL 7 DAY
 
     </update>
+
+    <!-- 회원이 수신한 최근 7일 미읽음 알림을 모두 읽음 상태로 변경한다. -->
+    <update id="updateAllReadByUserId">
+
+        UPDATE notifications
+        SET is_read = TRUE
+        WHERE receiver_id = #{userId}
+            AND is_read = FALSE
+            AND created_at >= NOW() - INTERVAL 7 DAY
+
+    </update>
 </mapper>

@@ -67,4 +67,14 @@ public interface NotificationMapper {
             @Param("notificationId") Long notificationId,
             @Param("userId") Long userId
     );
+
+    /**
+     * 회원이 수신한 최근 7일 미읽음 알림을 모두 읽음 상태로 변경한다.
+     *
+     * @param userId 회원 ID
+     * @return 변경된 알림 개수
+     */
+    int updateAllReadByUserId(
+            @Param("userId") Long userId
+    );
 }
