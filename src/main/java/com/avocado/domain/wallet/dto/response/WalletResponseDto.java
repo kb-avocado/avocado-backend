@@ -78,7 +78,7 @@ public class WalletResponseDto {
                 .childId(wallet.getChildId())
                 .walletNumber(wallet.getWalletNumber())
                 .balance(wallet.getBalance())
-                .status(wallet.getStatus())
+                .status(wallet.getStatus().name())
                 .createdAt(wallet.getCreatedAt())
                 .updatedAt(wallet.getUpdatedAt())
                 .build();

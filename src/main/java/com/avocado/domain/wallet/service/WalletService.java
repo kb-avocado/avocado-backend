@@ -27,6 +27,15 @@ public interface WalletService {
     );
 
     /**
+     * 정상 상태가 된 아이 회원에게 아보카도 선불지갑을 발급한다.
+     *
+     * @param childId 선불지갑을 발급할 아이 회원 ID
+     */
+    void issueWallet(
+            Long childId
+    );
+
+    /**
      * 해당 선불지갑이 자녀 소유이며 ACTIVE 상태인지 검증한다.
      *
      * @param childId 선불지갑 소유 자녀 ID

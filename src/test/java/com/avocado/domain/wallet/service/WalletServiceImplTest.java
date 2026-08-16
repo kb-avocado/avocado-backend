@@ -1,35 +1,29 @@
 package com.avocado.domain.wallet.service;
 
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
+import com.avocado.domain.transaction.mapper.WalletTxMapper;
 import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.domain.wallet.domain.WalletStatus;
 import com.avocado.domain.wallet.domain.WalletVo;
-import com.avocado.global.exception.BusinessException;
-import com.avocado.global.response.code.ErrorCode;
-import com.avocado.global.security.jwt.dto.AuthUser;
-import com.avocado.domain.user.domain.UserRole;
-import com.avocado.domain.user.domain.UserType;
-import com.avocado.domain.wallet.dto.response.WalletResponseDto;
 import com.avocado.domain.wallet.mapper.WalletMapper;
+import com.avocado.global.exception.BusinessException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class WalletServiceTest {
-
-    @Mock
-    private WalletMapper walletMapper;
+class WalletServiceImplTest {
 
     @Mock
     private UserMapper userMapper;
@@ -37,156 +31,106 @@ class WalletServiceTest {
     @Mock
     private FamilyRelationMapper familyRelationMapper;
 
+    @Mock
+    private WalletMapper walletMapper;
+
+    @Mock
+    private WalletTxMapper walletTxMapper;
+
     @InjectMocks
     private WalletServiceImpl walletService;
 
+    /**
+     * 선불지갑이 없는 아이에게 초기 상태의 선불지갑을 발급하는지 확인한다.
+     */
     @Test
-    @DisplayName("자녀 본인은 자신의 선불지갑을 조회할 수 있다")
-    void getChildWallet_childOwner_success() {
+    @DisplayName("아이 선불지갑 발급 성공")
+    void issueWalletSuccess() {
         // given
         Long childId = 102L;
-        AuthUser authUser = authUser(childId, UserType.CHILD);
-        WalletVo wallet = walletVo(childId);
 
-        when(userMapper.existsChildById(childId)).thenReturn(true);
-        when(walletMapper.findByChildId(childId)).thenReturn(Optional.of(wallet));
+        given(walletMapper.existsByChildId(childId))
+                .willReturn(false);
+
+        // 생성되는 임의의 계좌번호는 기존에 존재하지 않는 것으로 처리한다.
+        given(walletMapper.existsByWalletNumber(anyString()))
+                .willReturn(false);
+
+        given(walletMapper.insert(any(WalletVo.class)))
+                .willReturn(1);
 
         // when
-        WalletResponseDto result = walletService.getChildWallet(childId, authUser);
+        walletService.issueWallet(childId);
 
         // then
-        assertThat(result.getWalletId()).isEqualTo(2001L);
-        assertThat(result.getChildId()).isEqualTo(childId);
-        assertThat(result.getWalletNumber()).isEqualTo("WALLET-2026-0001");
-        assertThat(result.getBalance()).isEqualTo(48000L);
-        assertThat(result.getStatus()).isEqualTo("ACTIVE");
-        verify(familyRelationMapper, never()).existsActiveRelation(authUser.getUserId(), childId);
+        ArgumentCaptor<WalletVo> captor =
+                ArgumentCaptor.forClass(WalletVo.class);
+
+        verify(walletMapper).insert(captor.capture());
+
+        WalletVo wallet = captor.getValue();
+
+        assertThat(wallet.getChildId()).isEqualTo(childId);
+        assertThat(wallet.getBalance()).isEqualTo(0L);
+        assertThat(wallet.getStatus()).isEqualTo(WalletStatus.ACTIVE);
+
+        // 계좌번호가 12자리 숫자로 생성되었는지 확인한다.
+        assertThat(wallet.getWalletNumber())
+                .matches("\\d{12}");
+
+        // 첫 번째 자리가 0이 아닌지 확인한다.
+        assertThat(wallet.getWalletNumber())
+                .doesNotStartWith("0");
     }
 
+    /**
+     * 이미 선불지갑을 보유한 아이에게는 추가 지갑을 발급하지 않는지 확인한다.
+     */
     @Test
-    @DisplayName("연결된 보호자는 자녀의 선불지갑을 조회할 수 있다")
-    void getChildWallet_connectedParent_success() {
-        // given
-        Long parentId = 101L;
-        Long childId = 102L;
-        AuthUser authUser = authUser(parentId, UserType.PARENT);
-        WalletVo wallet = walletVo(childId);
-
-        when(userMapper.existsChildById(childId)).thenReturn(true);
-        when(familyRelationMapper.existsActiveRelation(parentId, childId)).thenReturn(true);
-        when(walletMapper.findByChildId(childId)).thenReturn(Optional.of(wallet));
-
-        // when
-        WalletResponseDto result = walletService.getChildWallet(childId, authUser);
-
-        // then
-        assertThat(result.getWalletId()).isEqualTo(2001L);
-        assertThat(result.getChildId()).isEqualTo(childId);
-    }
-
-    @Test
-    @DisplayName("인증 정보가 없으면 UNAUTHORIZED 예외를 반환한다")
-    void getChildWallet_unauthenticated_fail() {
-        // when & then
-        assertThatThrownBy(() -> walletService.getChildWallet(102L, null))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.UNAUTHORIZED);
-
-        verify(userMapper, never()).existsChildById(102L);
-    }
-
-    @Test
-    @DisplayName("존재하지 않는 자녀이면 CHILD_NOT_FOUND 예외를 반환한다")
-    void getChildWallet_childNotFound_fail() {
-        // given
-        Long childId = 999L;
-        AuthUser authUser = authUser(101L, UserType.PARENT);
-
-        when(userMapper.existsChildById(childId)).thenReturn(false);
-
-        // when & then
-        assertThatThrownBy(() -> walletService.getChildWallet(childId, authUser))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.CHILD_NOT_FOUND);
-
-        verify(walletMapper, never()).findByChildId(childId);
-    }
-
-    @Test
-    @DisplayName("다른 가족 자녀의 선불지갑은 조회할 수 없다")
-    void getChildWallet_otherFamilyChild_fail() {
-        // given
-        Long parentId = 101L;
-        Long childId = 202L;
-        AuthUser authUser = authUser(parentId, UserType.PARENT);
-
-        when(userMapper.existsChildById(childId)).thenReturn(true);
-        when(familyRelationMapper.existsActiveRelation(parentId, childId)).thenReturn(false);
-
-        // when & then
-        assertThatThrownBy(() -> walletService.getChildWallet(childId, authUser))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.FORBIDDEN);
-
-        verify(walletMapper, never()).findByChildId(childId);
-    }
-
-    @Test
-    @DisplayName("자녀가 다른 자녀의 선불지갑을 조회하면 FORBIDDEN 예외를 반환한다")
-    void getChildWallet_otherChild_fail() {
-        // given
-        Long requestedChildId = 103L;
-        AuthUser authUser = authUser(102L, UserType.CHILD);
-
-        when(userMapper.existsChildById(requestedChildId)).thenReturn(true);
-
-        // when & then
-        assertThatThrownBy(() -> walletService.getChildWallet(requestedChildId, authUser))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.FORBIDDEN);
-
-        verify(walletMapper, never()).findByChildId(requestedChildId);
-    }
-
-    @Test
-    @DisplayName("자녀는 존재하지만 선불지갑이 없으면 WALLET_NOT_FOUND 예외를 반환한다")
-    void getChildWallet_walletNotFound_fail() {
+    @DisplayName("이미 선불지갑이 존재하면 발급 실패")
+    void issueWalletAlreadyExists() {
         // given
         Long childId = 102L;
-        AuthUser authUser = authUser(childId, UserType.CHILD);
 
-        when(userMapper.existsChildById(childId)).thenReturn(true);
-        when(walletMapper.findByChildId(childId)).thenReturn(Optional.empty());
+        given(walletMapper.existsByChildId(childId))
+                .willReturn(true);
 
         // when & then
-        assertThatThrownBy(() -> walletService.getChildWallet(childId, authUser))
-                .isInstanceOf(BusinessException.class)
-                .extracting("errorCode")
-                .isEqualTo(ErrorCode.WALLET_NOT_FOUND);
+        assertThatThrownBy(
+                () -> walletService.issueWallet(childId)
+        )
+                .isInstanceOf(BusinessException.class);
+
+        // 기존 지갑이 있으면 계좌번호 생성 및 지갑 저장까지 진행하지 않는다.
+        verify(walletMapper, never())
+                .existsByWalletNumber(anyString());
+
+        verify(walletMapper, never())
+                .insert(any(WalletVo.class));
     }
 
-    private AuthUser authUser(
-            Long userId,
-            UserType userType
-    ) {
-        return AuthUser.builder()
-                .userId(userId)
-                .role(UserRole.USER)
-                .userType(userType)
-                .build();
-    }
+    /**
+     * 지갑 저장에 실패하면 예외가 발생하는지 확인한다.
+     */
+    @Test
+    @DisplayName("선불지갑 저장 실패")
+    void issueWalletInsertFail() {
+        // given
+        Long childId = 102L;
 
-    private WalletVo walletVo(Long childId) {
-        WalletVo wallet = new WalletVo();
-        wallet.setId(2001L);
-        wallet.setChildId(childId);
-        wallet.setWalletNumber("WALLET-2026-0001");
-        wallet.setBalance(48000L);
-        wallet.setStatus("ACTIVE");
-        return wallet;
+        given(walletMapper.existsByChildId(childId))
+                .willReturn(false);
+
+        given(walletMapper.existsByWalletNumber(anyString()))
+                .willReturn(false);
+
+        given(walletMapper.insert(any(WalletVo.class)))
+                .willReturn(0);
+
+        // when & then
+        assertThatThrownBy(
+                () -> walletService.issueWallet(childId)
+        )
+                .isInstanceOf(BusinessException.class);
     }
 }
