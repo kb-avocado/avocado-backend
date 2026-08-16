@@ -3,6 +3,8 @@ package com.avocado.domain.account.domain;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Arrays;
+
 /**
  * 계좌 및 선불지갑 송금에서 사용하는 은행 식별 코드를 정의한다.
  */
@@ -65,4 +67,21 @@ public enum BankCode {
     private final String code;
 
     private final String description;
+
+    /**
+     * 은행 코드 값으로 BankCode를 조회한다.
+     *
+     * @param code 은행 코드
+     * @return 일치하는 BankCode
+     * @throws IllegalArgumentException 지원하지 않는 은행 코드인 경우
+     */
+    public static BankCode fromCode(
+            String code
+    ) {
+        // 등록된 금융기관 코드 중 전달받은 코드와 일치하는 값을 조회
+        return Arrays.stream(values())
+                .filter(bankCode -> bankCode.code.equals(code))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("지원하지 않는 은행 코드입니다."));
+    }
 }

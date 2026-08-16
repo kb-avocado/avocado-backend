@@ -56,6 +56,7 @@ public enum SuccessCode implements ResponseCode {
     // 송금 (TRF)
     TRANSFER_SUCCESS(HttpStatus.OK, "TRF-000", "송금이 완료되었습니다."),
     TRANSFER_RECIPIENT_FOUND(HttpStatus.OK, "TRF-001", "송금 대상을 조회했습니다."),
+    TRANSFER_RECENT_RECIPIENTS_FOUND(HttpStatus.OK, "TRF-002", "최근 수취처를 조회했습니다."),
 
     // 거래(TXN)
     DEPOSIT_HISTORY_FETCHED(HttpStatus.OK, "TXN-000", "거래 내역 조회에 성공했습니다."),
