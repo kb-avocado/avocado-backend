@@ -8,12 +8,15 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
+import org.springframework.data.redis.core.script.RedisScript;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -77,6 +80,42 @@ class PaymentQrTokenRepositoryTest {
 
         // then
         assertThat(result).contains(102L);
+    }
+
+    @Test
+    @DisplayName("토큰 사용자 역인덱스를 원자적으로 소비하고 사용자 ID를 반환한다")
+    void consumeUserIdByToken_success() {
+        // given
+        when(stringRedisTemplate.execute(
+                org.mockito.ArgumentMatchers.<RedisScript<String>>any(),
+                eq(List.of("payment:qr:token:qr-token")),
+                eq("payment:qr:user:"),
+                eq("qr-token")
+        )).thenReturn("102");
+
+        // when
+        Optional<Long> result = paymentQrTokenRepository.consumeUserIdByToken("qr-token");
+
+        // then
+        assertThat(result).contains(102L);
+    }
+
+    @Test
+    @DisplayName("소비할 QR 토큰이 없으면 빈 결과를 반환한다")
+    void consumeUserIdByToken_notFound() {
+        // given
+        when(stringRedisTemplate.execute(
+                org.mockito.ArgumentMatchers.<RedisScript<String>>any(),
+                eq(List.of("payment:qr:token:missing-token")),
+                eq("payment:qr:user:"),
+                eq("missing-token")
+        )).thenReturn(null);
+
+        // when
+        Optional<Long> result = paymentQrTokenRepository.consumeUserIdByToken("missing-token");
+
+        // then
+        assertThat(result).isEmpty();
     }
 
     @Test

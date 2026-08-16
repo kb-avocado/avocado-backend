@@ -2,9 +2,12 @@ package com.avocado.domain.payment.repository;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Repository;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -15,6 +18,24 @@ public class PaymentQrTokenRepository {
     private static final String USER_TOKEN_KEY_PREFIX = "payment:qr:user:";
     private static final String TOKEN_USER_KEY_PREFIX = "payment:qr:token:";
     private static final String REISSUE_LOCK_KEY_PREFIX = "payment:qr:reissue-lock:";
+    private static final RedisScript<String> CONSUME_TOKEN_SCRIPT = new DefaultRedisScript<>(
+            """
+            local userId = redis.call('GET', KEYS[1])
+            if not userId then
+                return nil
+            end
+
+            local userTokenKey = ARGV[1] .. userId
+            local currentToken = redis.call('GET', userTokenKey)
+            if currentToken == ARGV[2] then
+                redis.call('DEL', userTokenKey)
+            end
+
+            redis.call('DEL', KEYS[1])
+            return userId
+            """,
+            String.class
+    );
 
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -39,6 +60,18 @@ public class PaymentQrTokenRepository {
         return Optional.ofNullable(
                         stringRedisTemplate.opsForValue().get(tokenUserKey(token))
                 )
+                .map(Long::valueOf);
+    }
+
+    public Optional<Long> consumeUserIdByToken(String token) {
+        String userId = stringRedisTemplate.execute(
+                CONSUME_TOKEN_SCRIPT,
+                List.of(tokenUserKey(token)),
+                USER_TOKEN_KEY_PREFIX,
+                token
+        );
+
+        return Optional.ofNullable(userId)
                 .map(Long::valueOf);
     }
 
