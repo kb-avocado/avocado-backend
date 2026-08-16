@@ -1,6 +1,7 @@
 package com.avocado.domain.piggybank.service;
 
 import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
+import com.avocado.domain.piggybank.domain.PiggyBankRefundTarget;
 import com.avocado.domain.piggybank.mapper.PiggyBankHistoryMapper;
 import com.avocado.domain.transfer.service.TransferService;
 import com.avocado.global.exception.BusinessException;
@@ -200,10 +201,21 @@ public class PiggyBankServiceImpl implements PiggyBankService {
     @Override
     @Transactional
     public int promoteAchievements() {
-        int promoted = piggyBankMapper.promoteToAchieve();
-        // TODO(PGB-012): 승격된 저금통 원금 자동 환급 (지갑 잔액 증가 메서드 준비되면 연결)
-        //   현재는 지갑 API 대기 → 상태 전이만. 환급은 close 환급과 함께 추후 배선.
-        return promoted;
+        List<PiggyBankRefundTarget> targets = piggyBankMapper.selectPromotable();
+
+        for (PiggyBankRefundTarget target : targets) {
+            piggyBankMapper.promoteById(target.getPiggyBankId());
+
+            long refund = target.getBalance() == null ? 0 : target.getBalance();
+            if (refund > 0) {
+                String traceId = UUID.randomUUID().toString();
+                piggyBankMapper.zeroBalance(target.getPiggyBankId());
+                transferService.transferPiggyBankToWallet(target.getChildId(), refund, traceId);
+                piggyBankHistoryMapper.insertWithdrawal(target.getPiggyBankId(), refund, refund, 0L, traceId);
+            }
+        }
+
+        return targets.size();
     }
 
 
