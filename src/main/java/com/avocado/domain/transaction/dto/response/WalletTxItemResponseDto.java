@@ -1,13 +1,19 @@
 package com.avocado.domain.transaction.dto.response;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Getter
+@Setter
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class WalletTxItemResponseDto {
 
     // 거래 내역 고유 ID
