@@ -36,12 +36,12 @@ public class NewsServiceImpl implements NewsService {
     private final NewsConverter newsConverter;
 
     @Override
-    public NewsListResponseDto getNewsList(int page, int size, Long childId, AuthUser authUser) {
+    public NewsListResponseDto getNewsList(int page, int size, Long childId, Boolean completed, AuthUser authUser) {
         Long targetChildId = resolveTargetChildId(childId, authUser);
 
         int offset = page * size;
-        List<NewsArticle> articles = newsArticleMapper.findList(offset, size);
-        long totalCount = newsArticleMapper.countAll();
+        List<NewsArticle> articles = newsArticleMapper.findList(offset, size, targetChildId, completed);
+        long totalCount = newsArticleMapper.countAll(targetChildId, completed);
 
         List<Long> articleIds = articles.stream()
                 .map(NewsArticle::getId)

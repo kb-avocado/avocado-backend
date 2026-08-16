@@ -1,9 +1,12 @@
 package com.avocado.domain.payment.service;
 
 import com.avocado.domain.payment.dto.request.PaymentSimulationRequestDto;
-import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
+import com.avocado.domain.payment.dto.response.PaymentQrActiveTokenResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
+import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
 import com.avocado.global.security.jwt.dto.AuthUser;
+
+import java.util.List;
 
 /**
  * 아이 선불지갑 결제를 위한 QR 토큰 발급과 POS 결제 시뮬레이션을 담당하는 서비스.
@@ -28,4 +31,9 @@ public interface PaymentService {
     PaymentSimulationResponseDto simulatePayment(
             PaymentSimulationRequestDto request
     );
+
+    /**
+     * POS 화면에서 결제 대기 중인 활성 QR 토큰 목록을 조회한다.
+     */
+    List<PaymentQrActiveTokenResponseDto> getActivePaymentQrTokens();
 }

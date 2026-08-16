@@ -1,6 +1,8 @@
 package com.avocado.domain.piggybank.service;
 
 import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
+import com.avocado.domain.piggybank.mapper.PiggyBankHistoryMapper;
+import com.avocado.domain.transfer.service.TransferService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -14,8 +16,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import com.avocado.domain.piggybank.dto.response.PiggyBankDetailResponseDto;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyString;
+
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+
 import com.avocado.domain.piggybank.dto.request.PiggyBankCreateRequestDto;
 import java.util.List;
 
@@ -27,6 +33,12 @@ class PiggyBankServiceImplTest {
 
     @Mock
     private PiggyBankMapper piggyBankMapper;
+
+    @Mock
+    private TransferService transferService;                 // ← 추가
+
+    @Mock
+    private PiggyBankHistoryMapper piggyBankHistoryMapper;
 
     @InjectMocks
     private PiggyBankServiceImpl piggyBankService;
@@ -188,7 +200,7 @@ class PiggyBankServiceImplTest {
         PiggyBank p = PiggyBank.builder().id(1L).walletId(1L).status("ACTIVE").build();  // ★ .walletId(1L)
         when(piggyBankMapper.selectById(1L)).thenReturn(p);
 
-        piggyBankService.close(1L, 1L);
+        piggyBankService.close(1L, 1L,1L);
 
         verify(piggyBankMapper).cancel(1L);
     }
@@ -199,7 +211,7 @@ class PiggyBankServiceImplTest {
         PiggyBank p = PiggyBank.builder().id(1L).walletId(1L).status("CANCEL").build();  // ★ .walletId(1L)
         when(piggyBankMapper.selectById(1L)).thenReturn(p);
 
-        assertThatThrownBy(() -> piggyBankService.close(1L, 1L))
+        assertThatThrownBy(() -> piggyBankService.close(1L, 1L,1L))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PIGGY_BANK_ALREADY_CLOSED);
     }
@@ -208,10 +220,28 @@ class PiggyBankServiceImplTest {
     void getDetail_forbidden() {
         PiggyBank p = PiggyBank.builder().id(1L).walletId(999L)  // 저금통은 999 지갑
                 .targetAmount(1000L).balance(0L).status("ACTIVE").isFavorite(false)
-                .bonusType(BonusType.NONE).bonusValue(0L).build();
+                .bonusType(PiggyBankBonusType.NONE).bonusValue(0L).build();
         when(piggyBankMapper.selectById(1L)).thenReturn(p);
 
         assertThatThrownBy(() -> piggyBankService.getDetail(1L, 1L))  // 요청자는 1 지갑
                 .isInstanceOf(BusinessException.class);
     }
+    @Test
+    @DisplayName("중도 포기 - 잔액 있으면 지갑 환급 + 출금 이력")
+    void close_refund() {
+        // given: 잔액 3000원짜리 진행중 저금통
+        PiggyBank p = PiggyBank.builder()
+                .id(1L).walletId(1L).status("ACTIVE").balance(3000L).build();
+        when(piggyBankMapper.selectById(1L)).thenReturn(p);
+
+        // when: 중도 포기 (piggyBankId, childId, walletId)
+        piggyBankService.close(1L, 1L, 1L);
+
+        // then: 환급 관련 메서드들이 올바르게 호출됐는지
+        verify(piggyBankMapper).cancel(1L);
+        verify(piggyBankMapper).zeroBalance(1L);
+        verify(transferService).transferPiggyBankToWallet(eq(1L), eq(3000L), anyString());
+        verify(piggyBankHistoryMapper).insertWithdrawal(eq(1L), eq(3000L), eq(3000L), eq(0L), anyString());
+    }
+
 }

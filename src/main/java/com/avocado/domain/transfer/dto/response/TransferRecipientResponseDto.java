@@ -1,42 +1,23 @@
 package com.avocado.domain.transfer.dto.response;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
 
+/**
+ * 최근 송금 수취처 정보를 반환
+ */
 @Getter
-@Setter
-@ApiModel(description = "송금 대상 조회 응답 데이터")
+@Builder
 public class TransferRecipientResponseDto {
-
-    @ApiModelProperty(
-            value = "송금 대상 유형",
-            example = "WALLET"
-    )
-    private String recipientType;
-
-    @ApiModelProperty(
-            value = "송금 대상 ID",
-            example = "15"
-    )
-    private Long recipientId;
-
-    @ApiModelProperty(
-            value = "송금 대상 이름",
-            example = "김효정"
-    )
+    // 수취인 이름
     private String recipientName;
 
-    @ApiModelProperty(
-            value = "마스킹된 지갑 계좌번호",
-            example = "1000-****-5678"
-    )
-    private String accountNumber;
+    // 수취 금융기관 코드
+    private String bankCode;
 
-    @ApiModelProperty(
-            value = "사용자 코드",
-            example = "AVO1234"
-    )
-    private String userCode;
+    // 수취 금융기관 이름
+    private String bankName;
+
+    // 수취 계좌 또는 선불지갑 번호
+    private String recipientNumber;
 }

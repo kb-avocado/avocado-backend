@@ -35,12 +35,13 @@ public class PiggyBank {
     // FIXED이면 금액, RATE이면 비율
     private final Long bonusValue;
 
-    // 즐겨찾기 여부
-    private final Boolean isFavorite;
-
+    //저금통 상태, 즐겨찾기 여부 에러때문에 임시로 자리 바꿔놓음
     // 저금통 상태
     // ACTIVE, PENDING_ACHIEVE, ACHIEVE, CANCEL
     private final String status;
+
+    // 즐겨찾기 여부
+    private final Boolean isFavorite;
 
     // 최초 입금 일시
     private final LocalDateTime firstDepositedAt;

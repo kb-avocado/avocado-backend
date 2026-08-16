@@ -49,7 +49,7 @@ class AdminPaymentControllerTest {
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().isSuccess()).isTrue();
-        assertThat(result.getBody().getCode()).isEqualTo("PAY-004");
+        assertThat(result.getBody().getCode()).isEqualTo("PAY-005");
         assertThat(result.getBody().getData().getWalletHistoryId()).isEqualTo(9001L);
         assertThat(result.getBody().getData().getMerchantName()).isEqualTo("아보카도 편의점");
         assertThat(result.getBody().getData().getStatus()).isEqualTo("SUCCESS");

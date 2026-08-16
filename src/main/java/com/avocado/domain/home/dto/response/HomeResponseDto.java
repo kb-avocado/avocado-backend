@@ -9,6 +9,8 @@ import java.util.List;
 @Getter
 @Builder
 public class HomeResponseDto {
+    //저금통이 아예 없는지 하나라도 있는지
+    private final Boolean hasPiggyBanks;
     // 아이가 즐겨찾기 해둔 저금통 목록 ("나의 저금통" 섹션)
     private final List<HomeFavoritePiggyBankDto> favoritePiggyBanks;
 

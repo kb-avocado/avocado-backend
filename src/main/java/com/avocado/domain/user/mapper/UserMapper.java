@@ -2,6 +2,7 @@ package com.avocado.domain.user.mapper;
 
 import com.avocado.domain.user.domain.User;
 import com.avocado.domain.user.domain.UserStatus;
+import com.avocado.domain.user.domain.UserVo;
 import com.avocado.domain.user.dto.response.LoginChildDto;
 import com.avocado.domain.user.dto.response.LoginFamilyDto;
 import com.avocado.domain.user.dto.response.MyPageResponseDto;
@@ -61,11 +62,6 @@ public interface UserMapper {
             @Param("inviteCode") String inviteCode
     );
 
-    // [PARENT] 부모 계정 활성화 여부 검사
-    boolean existsActiveParentById(
-            @Param("userId") Long userId
-    );
-
     // 조회 대상 자녀 회원이 존재하는지 확인
     boolean existsChildById(
             @Param("childId") Long childId
@@ -119,6 +115,50 @@ public interface UserMapper {
      * @return 아이 회원의 마이페이지 정보. 회원이 없거나 아이 계정이 아니면 null
      */
     MyPageResponseDto selectChildMyPageById(
+            @Param("childId") Long childId
+    );
+
+    /**
+     * 회원 ID로 회원 기본 정보를 조회한다.
+     *
+     * @param userId 조회할 회원 ID
+     * @return 회원 정보. 회원이 없으면 Optional.empty()
+     */
+    Optional<UserVo> findById(
+            @Param("userId") Long userId
+    );
+
+    /**
+     * 회원 ID로 ACTIVE 상태의 회원 정보를 조회한다.
+     *
+     * 회원이 존재하더라도 상태가 PENDING, SUSPENDED, DELETED이면
+     * 조회 결과에 포함하지 않는다.
+     *
+     * @param userId 조회할 회원 ID
+     * @return ACTIVE 상태의 회원 정보.
+     *         회원이 없거나 ACTIVE 상태가 아니면 Optional.empty()
+     */
+    Optional<UserVo> findActiveById(
+            @Param("userId") Long userId
+    );
+
+    /**
+     * 회원이 ACTIVE 상태의 부모 회원인지 확인한다.
+     *
+     * @param parentId 확인할 부모 회원 ID
+     * @return ACTIVE 부모 회원이면 true
+     */
+    boolean existsActiveParentById(
+            @Param("parentId") Long parentId
+    );
+
+    /**
+     * 회원이 ACTIVE 상태의 자녀 회원인지 확인한다.
+     *
+     * @param childId 확인할 자녀 회원 ID
+     * @return ACTIVE 자녀 회원이면 true
+     */
+    boolean existsActiveChildById(
             @Param("childId") Long childId
     );
 }

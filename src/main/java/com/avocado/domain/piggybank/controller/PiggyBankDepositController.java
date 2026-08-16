@@ -4,8 +4,6 @@ import com.avocado.domain.piggybank.dto.request.PiggyBankDepositRequestDto;
 import com.avocado.domain.piggybank.dto.response.PiggyBankDepositResponseDto;
 import com.avocado.domain.piggybank.dto.response.PiggyBankDepositResultResponseDto;
 import com.avocado.domain.piggybank.service.PiggyBankDepositService;
-import com.avocado.domain.transfer.dto.request.WalletToPiggyBankTransferRequestDto;
-import com.avocado.domain.transfer.service.TransferService;
 import com.avocado.domain.wallet.service.WalletService;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -18,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 
 import static com.avocado.global.response.code.SuccessCode.*;
 
@@ -29,7 +28,6 @@ public class PiggyBankDepositController {
 
     private final PiggyBankDepositService piggyBankDepositService;
     private final WalletService walletService;
-    private final TransferService transferService;
 
     @GetMapping
     @ApiOperation(value = "저금통 거래내역 조회", notes = "저금통의 입금 내역을 조회합니다.")
@@ -52,22 +50,14 @@ public class PiggyBankDepositController {
     ) {
         Long childId = authUser.getUserId();
         Long walletId = walletService.getChildWallet(childId, authUser).getWalletId();
+        String traceId = UUID.randomUUID().toString();
 
-        WalletToPiggyBankTransferRequestDto transferRequest = WalletToPiggyBankTransferRequestDto.builder()
-                .childId(childId)
-                .walletId(walletId)
-                .piggyBankId(piggyBankId)
-                .amount(request.getAmount())
-                .build();
+        PiggyBankDepositResultResponseDto response = piggyBankDepositService.depositFromWallet(
+                childId, piggyBankId, request.getAmount(), traceId, walletId
+        );
 
-//        PiggyBankDepositResultResponseDto response = transferService.transferWalletToPiggyBank(transferRequest);
-//        transferService.transferWalletToPiggyBank();
-//
-//
-//        return ResponseEntity
-//                .status(PIGGY_BANK_DEPOSITED.getHttpStatus())
-//                .body(ApiResponse.success(PIGGY_BANK_DEPOSITED, response));
-
-        return null;
+        return ResponseEntity
+                .status(PIGGY_BANK_DEPOSITED.getHttpStatus())
+                .body(ApiResponse.success(PIGGY_BANK_DEPOSITED, response));
     }
 }

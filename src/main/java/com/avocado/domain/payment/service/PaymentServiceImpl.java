@@ -3,8 +3,9 @@ package com.avocado.domain.payment.service;
 import com.avocado.domain.payment.domain.PaymentQrTokenVo;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.payment.dto.request.PaymentSimulationRequestDto;
-import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
+import com.avocado.domain.payment.dto.response.PaymentQrActiveTokenResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
+import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
 import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
 import com.avocado.domain.wallet.service.WalletService;
 import com.avocado.global.exception.BusinessException;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -48,8 +50,6 @@ public class PaymentServiceImpl implements PaymentService {
         requireAuthenticated(authUser);
         validateReissueAllowed(authUser.getUserId());
 
-        paymentQrTokenRepository.deleteByUserId(authUser.getUserId());
-
         return PaymentQrTokenResponseDto.from(
                 issuePaymentQrToken(authUser.getUserId())
         );
@@ -75,13 +75,28 @@ public class PaymentServiceImpl implements PaymentService {
                 ));
     }
 
+    @Override
+    public List<PaymentQrActiveTokenResponseDto> getActivePaymentQrTokens() {
+        long nowMillis = System.currentTimeMillis();
+
+        // POS 목록은 항상 조회 시점 기준으로 만료 토큰을 먼저 걷어낸 뒤 만든다.
+        paymentQrTokenRepository.cleanupExpiredTokens(nowMillis);
+
+        return paymentQrTokenRepository.findActiveTokens(nowMillis).stream()
+                .map(PaymentQrActiveTokenResponseDto::from)
+                .toList();
+    }
+
     private PaymentQrTokenVo issuePaymentQrToken(Long userId) {
         String token = generateToken();
 
+        // 사용자별 QR은 하나만 활성화한다. 재발급과 신규 발급 모두 기존 토큰을 먼저 무효화한다.
+        paymentQrTokenRepository.deleteByUserId(userId);
         paymentQrTokenRepository.save(
                 userId,
                 token,
-                paymentQrTokenTtl()
+                paymentQrTokenTtl(),
+                paymentQrTokenExpiresAtMillis()
         );
 
         return PaymentQrTokenVo.builder()
@@ -119,6 +134,10 @@ public class PaymentServiceImpl implements PaymentService {
 
     private Duration paymentQrTokenTtl() {
         return Duration.ofSeconds(paymentQrTokenTtlSeconds);
+    }
+
+    private long paymentQrTokenExpiresAtMillis() {
+        return System.currentTimeMillis() + paymentQrTokenTtl().toMillis();
     }
 
     private Duration paymentQrReissueLockTtl() {

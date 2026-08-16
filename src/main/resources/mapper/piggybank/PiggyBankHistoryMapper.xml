@@ -27,4 +27,12 @@
         (#{piggyBankId}, 'DEPOSIT', #{amount}, #{balanceBefore}, #{balanceAfter}, #{traceId}, NOW())
     </insert>
 
+    <!-- 환급(중도해지) 출금 내역 기록 -->
+    <insert id="insertWithdrawal">
+        INSERT INTO piggy_bank_histories
+        (piggy_bank_id, history_type, amount, balance_before, balance_after, trace_id, created_at)
+        VALUES
+        (#{piggyBankId}, 'WITHDRAWAL', #{amount}, #{balanceBefore}, #{balanceAfter}, #{traceId}, NOW())
+    </insert>
+
 </mapper>

@@ -1,8 +1,11 @@
 package com.avocado.domain.user.controller;
 
+import com.avocado.domain.user.domain.RefreshResult;
+import com.avocado.domain.user.repository.RefreshTokenRepository;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.security.jwt.component.JwtTokenProvider;
 import com.avocado.global.security.jwt.component.JwtUtil;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import com.avocado.domain.user.dto.request.UserLoginRequestDto;
 import com.avocado.domain.user.dto.request.UserSignUpRequestDto;
 import com.avocado.domain.user.dto.response.LoginUserDto;
@@ -13,8 +16,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
@@ -30,6 +35,7 @@ public class UserController {
     private final UserSignUpService userSignUpService;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtUtil jwtUtil;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @ApiOperation(
             value = "회원가입",
@@ -44,14 +50,17 @@ public class UserController {
     ) {
         UserSignUpResponseDto responseDto = userSignUpService.signUp(request);
 
-        // 토큰 발급과 쿠키 전달은 HTTP 계층의 관심사라 컨트롤러에서 처리한다.
+        // Access Token
         String accessToken = jwtTokenProvider.createAccessToken(
                 responseDto.getUserId(),
                 responseDto.getRole(),
                 responseDto.getType()
         );
-
         jwtUtil.addAccessTokenCookie(response, accessToken);
+
+        // Refresh Token
+        String refreshToken = refreshTokenRepository.issue(responseDto.getUserId());
+        jwtUtil.addRefreshTokenCookie(response, refreshToken);
 
         return ResponseEntity
                 .status(SIGNUP_SUCCESS.getHttpStatus())
@@ -74,18 +83,37 @@ public class UserController {
     ) {
         LoginUserDto user = userLoginService.login(request);
 
-        // 토큰 발급과 쿠키 전달은 HTTP 계층의 관심사라 컨트롤러에서 처리한다.
+        // Access Token
         String accessToken = jwtTokenProvider.createAccessToken(
                 user.getUserId(),
                 user.getRole(),
                 user.getType()
         );
-
         jwtUtil.addAccessTokenCookie(response, accessToken);
+
+        // Refresh Token
+        String refreshToken = refreshTokenRepository.issue(user.getUserId());
+        jwtUtil.addRefreshTokenCookie(response, refreshToken);
 
         return ResponseEntity
                 .status(LOGIN_SUCCESS.getHttpStatus())
                 .body(ApiResponse.success(LOGIN_SUCCESS, user));
+    }
+
+    @ApiOperation(
+            value = "내 로그인 정보 조회",
+            notes = "쿠키의 Access Token으로 로그인한 회원의 정보를 다시 조회합니다. "
+                    + "새로고침하면 브라우저에 있던 회원 정보가 사라지는데, 토큰은 HttpOnly 쿠키라 JS가 읽을 수 없어 서버에 되물어야 합니다. "
+    )
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<LoginUserDto>> me(
+            @AuthenticationPrincipal AuthUser authUser
+    ) {
+        LoginUserDto user = userLoginService.me(authUser);
+
+        return ResponseEntity
+                .status(SESSION_FOUND.getHttpStatus())
+                .body(ApiResponse.success(SESSION_FOUND, user));
     }
 
     @ApiOperation(
@@ -94,12 +122,49 @@ public class UserController {
                     + "무상태 JWT라 서버에 남는 정보가 없으므로 쿠키 삭제만으로 로그아웃이 완료됩니다."
     )
     @PostMapping("/logout")
-    public ResponseEntity<ApiResponse<Void>> logout(HttpServletResponse response) {
-        // 토큰이 이미 만료된 상태에서도 쿠키는 지울 수 있어야 하므로 인증을 요구하지 않는다.
+    public ResponseEntity<ApiResponse<Void>> logout(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        // 해당 기기의 세션만 끊는다. 다른 기기의 로그인은 유지된다.
+        jwtUtil.resolveRefreshToken(request)
+                .ifPresent(refreshTokenRepository::revoke);
+
+        // 토큰이 이미 만료된 상태에서 쿠키를 지움
         jwtUtil.expireAccessTokenCookie(response);
+        jwtUtil.expireRefreshTokenCookie(response);
 
         return ResponseEntity
                 .status(LOGOUT_SUCCESS.getHttpStatus())
                 .body(ApiResponse.success(LOGOUT_SUCCESS));
+    }
+
+    @ApiOperation(
+            value = "액세스 토큰 재발급",
+            notes = "쿠키의 Refresh Token으로 새 토큰 한 쌍을 발급합니다. "
+                    + "회전 방식이라 Refresh Token도 매번 새것으로 교체됩니다."
+                    + "이미 사용된 Refresh Token이 다시 오면 탈취로 보고 해당 회원의 모든 세션을 끊습니다."
+    )
+    @PostMapping("/refresh")
+    public ResponseEntity<ApiResponse<LoginUserDto>> refresh(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        String refreshToken = jwtUtil.resolveRefreshToken(request).orElse(null);
+
+        RefreshResult result = userLoginService.refresh(refreshToken);
+        LoginUserDto user = result.getUser();
+
+        String accessToken = jwtTokenProvider.createAccessToken(
+                user.getUserId(),
+                user.getRole(),
+                user.getType()
+        );
+        jwtUtil.addAccessTokenCookie(response, accessToken);
+        jwtUtil.addRefreshTokenCookie(response, result.getRefreshToken());
+
+        return ResponseEntity
+                .status(TOKEN_REFRESHED.getHttpStatus())
+                .body(ApiResponse.success(TOKEN_REFRESHED, user));
     }
 }

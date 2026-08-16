@@ -116,15 +116,24 @@
         updated_at = NOW()
         WHERE id = #{id}
     </update>
-    <!-- 최초 입금(first_deposited_at) 후 7일 경과한 PENDING_ACHIEVE → ACHIEVE 승격 -->
-    <update id="promoteToAchieve">
+
+    <!--  7일 경과 만기 저금통 조회  -->
+    <select id="selectPromotable" resultType="com.avocado.domain.piggybank.domain.PiggyBankRefundTarget">
+        SELECT pb.id AS piggyBankId, w.child_id AS childId, pb.balance AS balance
+        FROM piggy_banks pb
+        JOIN wallets w ON pb.wallet_id = w.id
+        WHERE pb.status = 'PENDING_ACHIEVE'
+        AND pb.first_deposited_at IS NOT NULL
+        AND pb.first_deposited_at &lt;= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    </select>
+
+    <!--  만기 저금통 승격  -->
+    <update id="promoteById">
         UPDATE piggy_banks
         SET status = 'ACHIEVE',
         achieved_at = NOW(),
         updated_at = NOW()
-        WHERE status = 'PENDING_ACHIEVE'
-        AND first_deposited_at IS NOT NULL
-        AND first_deposited_at &lt;= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        WHERE id = #{id}
     </update>
 
     <!-- 즐겨찾기 추가-->
@@ -139,6 +148,21 @@
     <update id="updateFavorite">
         UPDATE piggy_banks
         SET is_favorite = #{favorite},
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
+
+
+    <!-- 상태와 무관하게 이 지갑에 저금통이 하나라도 있는지 확인 -->
+    <select id="existsByWalletId" resultType="boolean">
+        SELECT EXISTS(
+        SELECT 1 FROM piggy_banks WHERE wallet_id = #{walletId}
+        )
+    </select>
+    <!-- 환급: 저금통 잔액 0 -->
+    <update id="zeroBalance">
+        UPDATE piggy_banks
+        SET balance = 0,
         updated_at = NOW()
         WHERE id = #{id}
     </update>

@@ -54,15 +54,20 @@ public class HomeServiceImpl implements HomeService {
                 ? Collections.emptyList()
                 : getFavoritePiggyBanks(walletId);
 
+        // 즐겨찾기가 0개인 이유가 "저금통 자체가 없어서"인지 "즐겨찾기만 안 해서"인지
+        // 홈 화면에서 구분해서 안내해야 해서 별도로 조회한다.
+        boolean hasPiggyBanks = walletId != null && piggyBankMapper.existsByWalletId(walletId);
+
         Long todaySpent = walletId == null ? 0L : reportMapper.sumSpentAmountByDate(walletId, LocalDate.now());
         Long monthSpent = walletId == null ? 0L : reportMapper.sumSpentAmount(walletId, currentYearMonth());
 
         List<NewsListItemDto> news = newsService
-                .getNewsList(0, NEWS_PREVIEW_SIZE, targetChildId, authUser)
+                .getNewsList(0, NEWS_PREVIEW_SIZE, targetChildId, null, authUser)
                 .getNews();
 
         return HomeResponseDto.builder()
                 .favoritePiggyBanks(favoritePiggyBanks)
+                .hasPiggyBanks(hasPiggyBanks)
                 .todaySpent(todaySpent)
                 .monthSpent(monthSpent)
                 .news(news)

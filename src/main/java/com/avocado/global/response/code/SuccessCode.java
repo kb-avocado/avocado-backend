@@ -19,6 +19,7 @@ public enum SuccessCode implements ResponseCode {
     SIGNUP_SUCCESS(HttpStatus.CREATED, "AUT-003", "회원가입 성공"),
     ACCOUNT_LINK_REQUIRED(HttpStatus.OK, "AUT-004", "로그인에 성공했습니다. 계좌 연결이 필요합니다."),
     FAMILY_LINK_REQUIRED(HttpStatus.OK, "AUT-005", "로그인에 성공했습니다. 가족 연결이 필요합니다."),
+    SESSION_FOUND(HttpStatus.OK, "AUT-006", "로그인 정보를 조회했습니다."),
 
     // 사용자 (USR)
     MY_PAGE_FOUND(HttpStatus.OK, "USR-000", "내 정보를 조회했습니다."),
@@ -50,11 +51,13 @@ public enum SuccessCode implements ResponseCode {
     PAYMENT_SUCCESS(HttpStatus.OK, "PAY-000", "결제가 성공적으로 완료되었습니다."),
     PAYMENT_QR_TOKEN_ISSUED(HttpStatus.CREATED, "PAY-001", "결제 QR 토큰이 발급되었습니다."),
     PAYMENT_QR_TOKEN_REISSUED(HttpStatus.OK, "PAY-002", "결제 QR 토큰이 재발급되었습니다."),
-    PAYMENT_SIMULATION_PROCESSED(HttpStatus.OK, "PAY-004", "결제 시뮬레이션이 처리되었습니다."),
+    PAYMENT_QR_ACTIVE_TOKENS_FOUND(HttpStatus.OK, "PAY-004", "결제 대기 중인 QR 토큰 목록을 조회했습니다."),
+    PAYMENT_SIMULATION_PROCESSED(HttpStatus.OK, "PAY-005", "결제 시뮬레이션이 처리되었습니다."),
 
     // 송금 (TRF)
     TRANSFER_SUCCESS(HttpStatus.OK, "TRF-000", "송금이 완료되었습니다."),
     TRANSFER_RECIPIENT_FOUND(HttpStatus.OK, "TRF-001", "송금 대상을 조회했습니다."),
+    TRANSFER_RECENT_RECIPIENTS_FOUND(HttpStatus.OK, "TRF-002", "최근 수취처를 조회했습니다."),
 
     // 거래(TXN)
     DEPOSIT_HISTORY_FETCHED(HttpStatus.OK, "TXN-000", "거래 내역 조회에 성공했습니다."),
@@ -66,6 +69,14 @@ public enum SuccessCode implements ResponseCode {
     CHEER_MESSAGE_SENT(HttpStatus.CREATED, "CHE-000", "응원 메시지가 전송되었습니다."),
     CHEER_MESSAGE_FETCHED(HttpStatus.OK, "CHE-001", "응원 메시지 조회에 성공했습니다."),
     CHEER_MESSAGE_DELETED(HttpStatus.OK, "CHE-002", "응원 메시지가 삭제되었습니다."),
+
+    // 알림 (NOT)
+    NOTIFICATION_LIST_FETCHED(HttpStatus.OK, "NOT-000", "알림 목록 조회에 성공했습니다."),
+    NOTIFICATION_READ(HttpStatus.OK, "NOT-001", "알림을 읽음 처리했습니다."),
+    NOTIFICATION_ALL_READ(HttpStatus.OK, "NOT-002", "모든 알림을 읽음 처리했습니다."),
+    NOTIFICATION_DELETED(HttpStatus.OK, "NOT-003", "알림이 삭제되었습니다."),
+    NOTIFICATION_UNREAD_COUNT_FOUND(HttpStatus.OK, "NOT-004", "미읽음 알림 개수를 조회했습니다."),
+    NOTIFICATION_FOUND(HttpStatus.OK, "NOT-005", "알림을 조회했습니다."),
 
     // 리포트(RPT)
     REPORT_FOUND(HttpStatus.OK, "RPT-000", "월별 리포트를 조회했습니다."),

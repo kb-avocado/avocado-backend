@@ -1,10 +1,12 @@
 package com.avocado.domain.payment.service;
 
+import com.avocado.domain.payment.domain.PaymentQrActiveTokenVo;
 import com.avocado.domain.payment.domain.PaymentRequestedResult;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.payment.dto.request.PaymentSimulationRequestDto;
-import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
+import com.avocado.domain.payment.dto.response.PaymentQrActiveTokenResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
+import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
 import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
 import com.avocado.domain.user.domain.UserRole;
 import com.avocado.domain.user.domain.UserType;
@@ -22,10 +24,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -65,20 +69,27 @@ class PaymentServiceTest {
         // given
         AuthUser authUser = authUser(102L);
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Long> expiresAtCaptor = ArgumentCaptor.forClass(Long.class);
+        long beforeIssueExpiresAt = System.currentTimeMillis() + Duration.ofSeconds(TOKEN_TTL_SECONDS).toMillis();
 
         // when
         PaymentQrTokenResponseDto result = paymentService.issuePaymentQrToken(authUser);
+        long afterIssueExpiresAt = System.currentTimeMillis() + Duration.ofSeconds(TOKEN_TTL_SECONDS).toMillis();
 
         // then
         assertThat(result.getToken()).isNotBlank();
         assertThat(result.getExpiresIn()).isEqualTo(TOKEN_TTL_SECONDS);
 
+        verify(paymentQrTokenRepository).deleteByUserId(authUser.getUserId());
         verify(paymentQrTokenRepository).save(
                 eq(authUser.getUserId()),
                 tokenCaptor.capture(),
-                eq(Duration.ofSeconds(TOKEN_TTL_SECONDS))
+                eq(Duration.ofSeconds(TOKEN_TTL_SECONDS)),
+                expiresAtCaptor.capture()
         );
         assertThat(tokenCaptor.getValue()).isEqualTo(result.getToken());
+        assertThat(expiresAtCaptor.getValue())
+                .isBetween(beforeIssueExpiresAt, afterIssueExpiresAt);
     }
 
     @Test
@@ -97,23 +108,29 @@ class PaymentServiceTest {
         // given
         AuthUser authUser = authUser(102L);
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Long> expiresAtCaptor = ArgumentCaptor.forClass(Long.class);
 
         when(paymentQrTokenRepository.acquireReissueLock(
                 authUser.getUserId(),
                 Duration.ofSeconds(3)
         )).thenReturn(true);
+        long beforeIssueExpiresAt = System.currentTimeMillis() + Duration.ofSeconds(TOKEN_TTL_SECONDS).toMillis();
 
         // when
         PaymentQrTokenResponseDto result = paymentService.reissuePaymentQrToken(authUser);
+        long afterIssueExpiresAt = System.currentTimeMillis() + Duration.ofSeconds(TOKEN_TTL_SECONDS).toMillis();
 
         // then
         verify(paymentQrTokenRepository).deleteByUserId(authUser.getUserId());
         verify(paymentQrTokenRepository).save(
                 eq(authUser.getUserId()),
                 tokenCaptor.capture(),
-                eq(Duration.ofSeconds(TOKEN_TTL_SECONDS))
+                eq(Duration.ofSeconds(TOKEN_TTL_SECONDS)),
+                expiresAtCaptor.capture()
         );
         assertThat(tokenCaptor.getValue()).isEqualTo(result.getToken());
+        assertThat(expiresAtCaptor.getValue())
+                .isBetween(beforeIssueExpiresAt, afterIssueExpiresAt);
     }
 
     @Test
@@ -194,6 +211,36 @@ class PaymentServiceTest {
         assertThat(result.getWalletHistoryId()).isEqualTo(10L);
         assertThat(result.getStatus()).isEqualTo("SUCCESS");
         assertThat(result.getBalanceAfter()).isEqualTo(36000L);
+    }
+
+    @Test
+    @DisplayName("POS 조회 전 만료 토큰을 정리하고 활성 QR 토큰 목록을 반환한다")
+    void getActivePaymentQrTokens() {
+        // given
+        PaymentQrActiveTokenVo activeToken = PaymentQrActiveTokenVo.builder()
+                .token("active-token")
+                .userId(102L)
+                .expiresIn(180L)
+                .build();
+
+        when(paymentQrTokenRepository.findActiveTokens(anyLong()))
+                .thenReturn(List.of(activeToken));
+
+        ArgumentCaptor<Long> cleanupNowCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Long> findNowCaptor = ArgumentCaptor.forClass(Long.class);
+
+        // when
+        List<PaymentQrActiveTokenResponseDto> result = paymentService.getActivePaymentQrTokens();
+
+        // then
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).getToken()).isEqualTo("active-token");
+        assertThat(result.get(0).getUserId()).isEqualTo(102L);
+        assertThat(result.get(0).getExpiresIn()).isEqualTo(180L);
+
+        verify(paymentQrTokenRepository).cleanupExpiredTokens(cleanupNowCaptor.capture());
+        verify(paymentQrTokenRepository).findActiveTokens(findNowCaptor.capture());
+        assertThat(findNowCaptor.getValue()).isEqualTo(cleanupNowCaptor.getValue());
     }
 
     private AuthUser authUser(Long userId) {
