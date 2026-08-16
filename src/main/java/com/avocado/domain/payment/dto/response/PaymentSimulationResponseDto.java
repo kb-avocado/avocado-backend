@@ -1,6 +1,5 @@
 package com.avocado.domain.payment.dto.response;
 
-import com.avocado.domain.payment.domain.PaymentFailureCode;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -28,7 +27,7 @@ public class PaymentSimulationResponseDto {
     private final String status;
 
     @ApiModelProperty(value = "실패 코드")
-    private final PaymentFailureCode failureCode;
+    private final String failureCode;
 
     @ApiModelProperty(value = "거래 후 선불지갑 잔액")
     private final Long balanceAfter;
@@ -40,7 +39,7 @@ public class PaymentSimulationResponseDto {
                 .merchantName(result.getMerchantName())
                 .amount(result.getAmount())
                 .status(result.getStatus())
-                .failureCode(result.getFailureCode())
+                .failureCode(result.getFailureCode() == null ? null : result.getFailureCode().name())
                 .balanceAfter(result.getBalanceAfter())
                 .build();
     }

@@ -2,8 +2,7 @@ package com.avocado.domain.wallet.service;
 
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.merchant.domain.MerchantVo;
-import com.avocado.domain.merchant.mapper.MerchantMapper;
-import com.avocado.domain.payment.domain.PaymentFailureCode;
+import com.avocado.domain.merchant.service.MerchantService;
 import com.avocado.domain.payment.domain.PaymentRequestedResult;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.transaction.domain.WalletHistoryVo;
@@ -14,6 +13,7 @@ import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.domain.wallet.dto.response.WalletResponseDto;
 import com.avocado.domain.wallet.mapper.WalletMapper;
 import com.avocado.global.exception.BusinessException;
+import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,7 +31,7 @@ public class WalletServiceImpl implements WalletService {
     private final FamilyRelationMapper familyRelationMapper;
     private final WalletMapper walletMapper;
     private final WalletTxMapper walletTxMapper;
-    private final MerchantMapper merchantMapper;
+    private final MerchantService merchantService;
 
     /**
      * childId 기준으로 자녀 선불지갑 단건 정보를 조회한다.
@@ -178,11 +178,11 @@ public class WalletServiceImpl implements WalletService {
                     null,
                     amount,
                     null,
-                    PaymentFailureCode.WALLET_NOT_AVAILABLE
+                    WALLET_NOT_FOUND
             );
         }
 
-        MerchantVo merchant = merchantMapper.findById(merchantId)
+        MerchantVo merchant = merchantService.findById(merchantId)
                 .orElse(null);
 
         if (merchant == null) {
@@ -191,7 +191,7 @@ public class WalletServiceImpl implements WalletService {
                     null,
                     amount,
                     wallet.getBalance(),
-                    PaymentFailureCode.MERCHANT_NOT_AVAILABLE
+                    MERCHANT_NOT_FOUND
             );
         }
 
@@ -200,7 +200,7 @@ public class WalletServiceImpl implements WalletService {
                     wallet,
                     merchant,
                     amount,
-                    PaymentFailureCode.WALLET_NOT_AVAILABLE
+                    WALLET_INACTIVE
             );
         }
 
@@ -209,7 +209,7 @@ public class WalletServiceImpl implements WalletService {
                     wallet,
                     merchant,
                     amount,
-                    PaymentFailureCode.MERCHANT_NOT_AVAILABLE
+                    MERCHANT_INACTIVE
             );
         }
 
@@ -218,7 +218,7 @@ public class WalletServiceImpl implements WalletService {
                     wallet,
                     merchant,
                     amount,
-                    PaymentFailureCode.FORCED_FAILURE
+                    FORCED_FAILURE
             );
         }
 
@@ -227,7 +227,7 @@ public class WalletServiceImpl implements WalletService {
                     wallet,
                     merchant,
                     amount,
-                    PaymentFailureCode.INSUFFICIENT_BALANCE
+                    INSUFFICIENT_BALANCE
             );
         }
 
@@ -236,7 +236,7 @@ public class WalletServiceImpl implements WalletService {
                     wallet,
                     merchant,
                     amount,
-                    PaymentFailureCode.RESTRICTED_MERCHANT
+                    MERCHANT_RESTRICTED
             );
         }
 
@@ -382,7 +382,7 @@ public class WalletServiceImpl implements WalletService {
             Long merchantId,
             String memo,
             String status,
-            PaymentFailureCode failureCode
+            ErrorCode failureCode
     ) {
         WalletHistoryVo walletHistory = WalletHistoryVo.builder()
                 .walletId(walletId)
@@ -454,7 +454,7 @@ public class WalletServiceImpl implements WalletService {
             WalletVo wallet,
             MerchantVo merchant,
             Long amount,
-            PaymentFailureCode failureCode
+            ErrorCode failureCode
     ) {
         Long historyId = createWalletHistory(
                 wallet.getId(),
@@ -462,7 +462,7 @@ public class WalletServiceImpl implements WalletService {
                 "PAYMENT",
                 amount,
                 merchant.getId(),
-                failureCode.getDescription(),
+                failureCode.getMessage(),
                 "FAILED",
                 failureCode
         );
@@ -483,7 +483,7 @@ public class WalletServiceImpl implements WalletService {
             String merchantName,
             Long amount,
             Long balanceAfter,
-            PaymentFailureCode failureCode
+            ErrorCode failureCode
     ) {
         return PaymentSimulationResult.builder()
                 .merchantId(merchantId)

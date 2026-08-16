@@ -1,6 +1,5 @@
 package com.avocado.domain.payment.service;
 
-import com.avocado.domain.payment.domain.PaymentFailureCode;
 import com.avocado.domain.payment.domain.PaymentRequestedResult;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.payment.dto.request.PaymentSimulationRequestDto;
@@ -154,7 +153,7 @@ class PaymentServiceTest {
         assertThat(result.getMerchantId()).isEqualTo(3001L);
         assertThat(result.getAmount()).isEqualTo(12000L);
         assertThat(result.getStatus()).isEqualTo("FAILED");
-        assertThat(result.getFailureCode()).isEqualTo(PaymentFailureCode.INVALID_OR_EXPIRED_QR);
+        assertThat(result.getFailureCode()).isEqualTo("INVALID_OR_EXPIRED_QR");
         assertThat(result.getBalanceAfter()).isNull();
 
         verify(walletService, never()).processPosPayment(

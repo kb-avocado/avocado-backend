@@ -1,11 +1,11 @@
 package com.avocado.domain.payment.controller;
 
-import com.avocado.domain.payment.domain.PaymentFailureCode;
 import com.avocado.domain.payment.domain.PaymentRequestedResult;
 import com.avocado.domain.payment.dto.request.PaymentSimulationRequestDto;
 import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
 import com.avocado.domain.payment.service.PaymentService;
 import com.avocado.global.response.ApiResponse;
+import com.avocado.global.response.code.ErrorCode;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -68,7 +68,7 @@ class AdminPaymentControllerTest {
                 .merchantName("아보카도 편의점")
                 .amount(12000L)
                 .status("FAILED")
-                .failureCode(PaymentFailureCode.INSUFFICIENT_BALANCE)
+                .failureCode(ErrorCode.INSUFFICIENT_BALANCE.name())
                 .balanceAfter(8000L)
                 .build();
 
@@ -83,7 +83,7 @@ class AdminPaymentControllerTest {
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().isSuccess()).isTrue();
         assertThat(result.getBody().getData().getStatus()).isEqualTo("FAILED");
-        assertThat(result.getBody().getData().getFailureCode()).isEqualTo(PaymentFailureCode.INSUFFICIENT_BALANCE);
+        assertThat(result.getBody().getData().getFailureCode()).isEqualTo("INSUFFICIENT_BALANCE");
         assertThat(result.getBody().getData().getBalanceAfter()).isEqualTo(8000L);
     }
 

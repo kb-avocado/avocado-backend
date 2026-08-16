@@ -2,8 +2,7 @@ package com.avocado.domain.wallet.service;
 
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.merchant.domain.MerchantVo;
-import com.avocado.domain.merchant.mapper.MerchantMapper;
-import com.avocado.domain.payment.domain.PaymentFailureCode;
+import com.avocado.domain.merchant.service.MerchantService;
 import com.avocado.domain.payment.domain.PaymentRequestedResult;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.transaction.domain.WalletHistoryVo;
@@ -51,7 +50,7 @@ class WalletServiceTest {
     private WalletTxMapper walletTxMapper;
 
     @Mock
-    private MerchantMapper merchantMapper;
+    private MerchantService merchantService;
 
     @InjectMocks
     private WalletServiceImpl walletService;
@@ -194,7 +193,7 @@ class WalletServiceTest {
         ArgumentCaptor<WalletHistoryVo> historyCaptor = ArgumentCaptor.forClass(WalletHistoryVo.class);
 
         when(walletMapper.findForUpdateByChildId(102L)).thenReturn(Optional.of(wallet));
-        when(merchantMapper.findById(3001L)).thenReturn(Optional.of(merchant));
+        when(merchantService.findById(3001L)).thenReturn(Optional.of(merchant));
         when(walletMapper.decreaseBalance(2001L, 12000L)).thenReturn(1);
         when(walletTxMapper.insertWalletHistory(any(WalletHistoryVo.class))).thenAnswer(invocation -> {
             WalletHistoryVo history = invocation.getArgument(0);
@@ -233,7 +232,7 @@ class WalletServiceTest {
         ArgumentCaptor<WalletHistoryVo> historyCaptor = ArgumentCaptor.forClass(WalletHistoryVo.class);
 
         when(walletMapper.findForUpdateByChildId(102L)).thenReturn(Optional.of(wallet));
-        when(merchantMapper.findById(3001L)).thenReturn(Optional.of(merchant));
+        when(merchantService.findById(3001L)).thenReturn(Optional.of(merchant));
         when(walletTxMapper.insertWalletHistory(any(WalletHistoryVo.class))).thenAnswer(invocation -> {
             WalletHistoryVo history = invocation.getArgument(0);
             ReflectionTestUtils.setField(history, "id", 9002L);
@@ -251,7 +250,7 @@ class WalletServiceTest {
         // then
         assertThat(result.getWalletHistoryId()).isEqualTo(9002L);
         assertThat(result.getStatus()).isEqualTo("FAILED");
-        assertThat(result.getFailureCode()).isEqualTo(PaymentFailureCode.FORCED_FAILURE);
+        assertThat(result.getFailureCode()).isEqualTo(ErrorCode.FORCED_FAILURE);
         assertThat(result.getBalanceAfter()).isEqualTo(48000L);
 
         verify(walletMapper, never()).decreaseBalance(2001L, 12000L);
@@ -268,7 +267,7 @@ class WalletServiceTest {
         MerchantVo merchant = merchantVo(3001L, "아보카도 편의점", false, "ACTIVE");
 
         when(walletMapper.findForUpdateByChildId(102L)).thenReturn(Optional.of(wallet));
-        when(merchantMapper.findById(3001L)).thenReturn(Optional.of(merchant));
+        when(merchantService.findById(3001L)).thenReturn(Optional.of(merchant));
         when(walletTxMapper.insertWalletHistory(any(WalletHistoryVo.class))).thenAnswer(invocation -> {
             WalletHistoryVo history = invocation.getArgument(0);
             ReflectionTestUtils.setField(history, "id", 9003L);
@@ -285,7 +284,7 @@ class WalletServiceTest {
 
         // then
         assertThat(result.getStatus()).isEqualTo("FAILED");
-        assertThat(result.getFailureCode()).isEqualTo(PaymentFailureCode.INSUFFICIENT_BALANCE);
+        assertThat(result.getFailureCode()).isEqualTo(ErrorCode.INSUFFICIENT_BALANCE);
         assertThat(result.getBalanceAfter()).isEqualTo(8000L);
         verify(walletMapper, never()).decreaseBalance(2001L, 12000L);
         verify(walletTxMapper, never()).insertWalletLedger(any(), any(), any(), any(), any(), any());
@@ -299,7 +298,7 @@ class WalletServiceTest {
         MerchantVo merchant = merchantVo(3003L, "성인 주류마켓", true, "ACTIVE");
 
         when(walletMapper.findForUpdateByChildId(102L)).thenReturn(Optional.of(wallet));
-        when(merchantMapper.findById(3003L)).thenReturn(Optional.of(merchant));
+        when(merchantService.findById(3003L)).thenReturn(Optional.of(merchant));
         when(walletTxMapper.insertWalletHistory(any(WalletHistoryVo.class))).thenAnswer(invocation -> {
             WalletHistoryVo history = invocation.getArgument(0);
             ReflectionTestUtils.setField(history, "id", 9004L);
@@ -316,7 +315,7 @@ class WalletServiceTest {
 
         // then
         assertThat(result.getStatus()).isEqualTo("FAILED");
-        assertThat(result.getFailureCode()).isEqualTo(PaymentFailureCode.RESTRICTED_MERCHANT);
+        assertThat(result.getFailureCode()).isEqualTo(ErrorCode.MERCHANT_RESTRICTED);
         assertThat(result.getBalanceAfter()).isEqualTo(48000L);
         verify(walletMapper, never()).decreaseBalance(2001L, 12000L);
         verify(walletTxMapper, never()).insertWalletLedger(any(), any(), any(), any(), any(), any());

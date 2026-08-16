@@ -1,7 +1,12 @@
 package com.avocado.domain.merchant.service;
 
-import org.springframework.stereotype.Service;
+import com.avocado.domain.merchant.domain.MerchantVo;
 
-@Service
-public class MerchantService {
+import java.util.Optional;
+
+public interface MerchantService {
+
+    Optional<MerchantVo> findById(
+            Long merchantId
+    );
 }

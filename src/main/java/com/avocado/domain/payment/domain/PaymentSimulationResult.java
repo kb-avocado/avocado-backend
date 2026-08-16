@@ -1,4 +1,5 @@
 package com.avocado.domain.payment.domain;
+import com.avocado.global.response.code.ErrorCode;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -16,7 +17,7 @@ public class PaymentSimulationResult {
 
     private final String status;
 
-    private final PaymentFailureCode failureCode;
+    private final ErrorCode failureCode;
 
     private final Long balanceAfter;
 
@@ -28,7 +29,7 @@ public class PaymentSimulationResult {
                 .merchantId(merchantId)
                 .amount(amount)
                 .status("FAILED")
-                .failureCode(PaymentFailureCode.INVALID_OR_EXPIRED_QR)
+                .failureCode(ErrorCode.INVALID_OR_EXPIRED_QR)
                 .build();
     }
 }

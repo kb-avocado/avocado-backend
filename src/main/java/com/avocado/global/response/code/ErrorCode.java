@@ -58,6 +58,8 @@ public enum ErrorCode implements ResponseCode {
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAY-001", "결제 정보를 찾을 수 없습니다."),
     DUPLICATE_PAYMENT_REQUEST(HttpStatus.CONFLICT, "PAY-002", "이미 처리된 결제 요청입니다."),
     PAYMENT_QR_REISSUE_TOO_FREQUENT(HttpStatus.TOO_MANY_REQUESTS, "PAY-003", "QR 토큰 재발급 요청이 너무 잦습니다. 잠시 후 다시 시도해주세요."),
+    INVALID_OR_EXPIRED_QR(HttpStatus.BAD_REQUEST, "PAY-101", "만료되었거나 올바르지 않은 QR 토큰입니다."),
+    FORCED_FAILURE(HttpStatus.CONFLICT, "PAY-102", "POS 시뮬레이터 임의 실패입니다."),
 
     // 신문 (NWS)
     NEWS_NOT_FOUND(HttpStatus.NOT_FOUND, "NWS-001", "신문 기사를 찾을 수 없습니다."),
