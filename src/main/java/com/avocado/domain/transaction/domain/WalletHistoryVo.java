@@ -16,7 +16,7 @@ public class WalletHistoryVo {
 
     private String traceId;
 
-    private String transactionType;
+    private WalletTransactionType transactionType;
 
     private Long amount;
 
@@ -32,7 +32,7 @@ public class WalletHistoryVo {
 
     private String memo;
 
-    private String status;
+    private TransactionStatus status;
 
     private String failureCode;
 

@@ -1,20 +1,29 @@
 package com.avocado.domain.wallet.domain;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * 선불지갑 정보를 관리하는 VO.
+ */
 @Getter
-@Setter
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder
 public class WalletVo {
+
     private Long id;
+
     private Long childId;
+
     private String walletNumber;
+
     private Long balance;
-    private String status;
+
+    private WalletStatus status;
+
     private LocalDateTime createdAt;
+
     private LocalDateTime updatedAt;
 }
