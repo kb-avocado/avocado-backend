@@ -19,6 +19,7 @@ public enum SuccessCode implements ResponseCode {
     SIGNUP_SUCCESS(HttpStatus.CREATED, "AUT-003", "회원가입 성공"),
     ACCOUNT_LINK_REQUIRED(HttpStatus.OK, "AUT-004", "로그인에 성공했습니다. 계좌 연결이 필요합니다."),
     FAMILY_LINK_REQUIRED(HttpStatus.OK, "AUT-005", "로그인에 성공했습니다. 가족 연결이 필요합니다."),
+    SESSION_FOUND(HttpStatus.OK, "AUT-006", "로그인 정보를 조회했습니다."),
 
     // 사용자 (USR)
     MY_PAGE_FOUND(HttpStatus.OK, "USR-000", "내 정보를 조회했습니다."),

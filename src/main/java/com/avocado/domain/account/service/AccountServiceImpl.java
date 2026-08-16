@@ -40,7 +40,7 @@ public class AccountServiceImpl implements AccountService {
 
         // 부모 회원이 아니면 계좌 등록을 중단
         if (status == null) {
-            throw new BusinessException(PARENT_NOT_FOUND);
+            throw new BusinessException(NOT_PARENT_USER);
         }
 
         // 계좌 등록은 가입 직후(PENDING)와 이미 계좌를 가진(ACTIVE) 부모에게만 허용한다.

@@ -15,6 +15,7 @@ public enum ErrorCode implements ResponseCode {
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUT-001", "인증이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "AUT-002", "접근 권한이 없습니다."),
     INVALID_CREDENTIALS(HttpStatus.UNAUTHORIZED, "AUT-003", "이메일 또는 비밀번호가 올바르지 않습니다."),
+    REFRESH_TOKEN_REUSED(HttpStatus.UNAUTHORIZED, "AUT-006", "보안을 위해 로그아웃되었습니다. 다시 로그인해주세요."),
 
     // 사용자 (USR)
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USR-001", "사용자를 찾을 수 없습니다."),
