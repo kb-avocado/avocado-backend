@@ -2,6 +2,7 @@ package com.avocado.domain.payment.service;
 
 import com.avocado.domain.payment.dto.request.PaymentSimulationRequestDto;
 import com.avocado.domain.payment.dto.response.PaymentQrActiveTokenResponseDto;
+import com.avocado.domain.payment.dto.response.PaymentQrStatusResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -24,6 +25,14 @@ public interface PaymentService {
      * 짧은 시간 안의 반복 재발급은 결제 도메인 정책에 따라 제한된다.
      */
     PaymentQrTokenResponseDto reissuePaymentQrToken(AuthUser authUser);
+
+    /**
+     * 로그인 사용자가 발급받은 결제 QR 토큰의 현재 상태를 조회한다.
+     */
+    PaymentQrStatusResponseDto getPaymentQrStatus(
+            AuthUser authUser,
+            String qrToken
+    );
 
     /**
      * 관리자 POS 화면에서 전달한 QR 토큰, 가맹점, 금액으로 결제를 시뮬레이션한다.

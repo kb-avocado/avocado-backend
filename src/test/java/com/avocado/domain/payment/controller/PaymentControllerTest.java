@@ -1,8 +1,12 @@
 package com.avocado.domain.payment.controller;
 
 import com.avocado.domain.payment.dto.response.PaymentQrActiveTokenResponseDto;
+import com.avocado.domain.payment.dto.response.PaymentQrStatusResponseDto;
 import com.avocado.domain.payment.service.PaymentService;
 import com.avocado.global.response.ApiResponse;
+import com.avocado.global.security.jwt.dto.AuthUser;
+import com.avocado.domain.user.domain.UserRole;
+import com.avocado.domain.user.domain.UserType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -53,5 +58,34 @@ class PaymentControllerTest {
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getCode()).isEqualTo("PAY-004");
         assertThat(result.getBody().getData()).isEqualTo(activeTokens);
+    }
+
+    @Test
+    @DisplayName("QR 대기 화면이 결제 QR 상태를 조회한다")
+    void getPaymentQrStatus() {
+        // given
+        AuthUser authUser = AuthUser.builder()
+                .userId(102L)
+                .role(UserRole.USER)
+                .userType(UserType.CHILD)
+                .build();
+        PaymentQrStatusResponseDto statusResponse = PaymentQrStatusResponseDto.builder()
+                .status("WAITING")
+                .expiresIn(120L)
+                .build();
+
+        when(paymentService.getPaymentQrStatus(authUser, "qr-token"))
+                .thenReturn(statusResponse);
+
+        // when
+        ResponseEntity<ApiResponse<PaymentQrStatusResponseDto>> result =
+                paymentController.getPaymentQrStatus(authUser, "qr-token");
+
+        // then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getCode()).isEqualTo("PAY-006");
+        assertThat(result.getBody().getData()).isEqualTo(statusResponse);
+        verify(paymentService).getPaymentQrStatus(authUser, "qr-token");
     }
 }
