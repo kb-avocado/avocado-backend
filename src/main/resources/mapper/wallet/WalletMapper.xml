@@ -27,27 +27,6 @@
         WHERE child_id = #{childId}
     </select>
 
-    <!-- childId에 해당하는 회원이 아이 계정인지 확인한다. -->
-    <select id="existsChildById" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM users
-            WHERE id = #{childId}
-                AND user_type = 'CHILD'
-        )
-    </select>
-
-    <!-- 부모와 아이 사이 ACTIVE 가족 관계가 있는지 확인한다. -->
-    <select id="existsActiveFamilyRelation" resultType="boolean">
-        SELECT EXISTS (
-            SELECT 1
-            FROM family_relations
-            WHERE parent_id = #{parentId}
-                AND child_id = #{childId}
-                AND status = 'ACTIVE'
-        )
-    </select>
-
     <!-- 아이 선불지갑 잔액 증가 -->
     <update id="increaseBalance">
         UPDATE wallets

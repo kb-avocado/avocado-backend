@@ -17,17 +17,6 @@ public interface WalletMapper {
             @Param("childId") Long childId
     );
 
-    // childId에 해당하는 회원이 아이 계정인지 확인
-    boolean existsChildById(
-            @Param("childId") Long childId
-    );
-
-    // 부모와 아이 사이 ACTIVE 가족 관계가 있는지 확인
-    boolean existsActiveFamilyRelation(
-            @Param("parentId") Long parentId,
-            @Param("childId") Long childId
-    );
-
     // 선불지갑 잔액을 증가
     int increaseBalance(
             @Param("walletId") Long walletId,
