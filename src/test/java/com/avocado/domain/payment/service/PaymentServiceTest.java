@@ -55,7 +55,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("기존 사용자 토큰을 제거한 뒤 결제 QR 토큰을 발급한다")
+    @DisplayName("로그인 사용자 기준 결제 QR 토큰을 발급하고 Redis에 TTL과 함께 저장한다")
     void issuePaymentQrToken_success() {
         // given
         AuthUser authUser = authUser(102L);
@@ -150,7 +150,7 @@ class PaymentServiceTest {
         // given
         PaymentQrActiveTokenVo activeToken = PaymentQrActiveTokenVo.builder()
                 .token("active-token")
-                .expiresAt(1797220180000L)
+                .userId(102L)
                 .expiresIn(180L)
                 .build();
 
@@ -166,7 +166,7 @@ class PaymentServiceTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getToken()).isEqualTo("active-token");
-        assertThat(result.get(0).getExpiresAt()).isEqualTo(1797220180000L);
+        assertThat(result.get(0).getUserId()).isEqualTo(102L);
         assertThat(result.get(0).getExpiresIn()).isEqualTo(180L);
 
         verify(paymentQrTokenRepository).cleanupExpiredTokens(cleanupNowCaptor.capture());

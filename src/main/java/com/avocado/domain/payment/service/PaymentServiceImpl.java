@@ -54,6 +54,7 @@ public class PaymentServiceImpl implements PaymentService {
     public List<PaymentQrActiveTokenResponseDto> getActivePaymentQrTokens() {
         long nowMillis = System.currentTimeMillis();
 
+        // POS 목록은 항상 조회 시점 기준으로 만료 토큰을 먼저 걷어낸 뒤 만든다.
         paymentQrTokenRepository.cleanupExpiredTokens(nowMillis);
 
         return paymentQrTokenRepository.findActiveTokens(nowMillis).stream()
@@ -64,6 +65,7 @@ public class PaymentServiceImpl implements PaymentService {
     private PaymentQrTokenVo issuePaymentQrToken(Long userId) {
         String token = generateToken();
 
+        // 사용자별 QR은 하나만 활성화한다. 재발급과 신규 발급 모두 기존 토큰을 먼저 무효화한다.
         paymentQrTokenRepository.deleteByUserId(userId);
         paymentQrTokenRepository.save(
                 userId,

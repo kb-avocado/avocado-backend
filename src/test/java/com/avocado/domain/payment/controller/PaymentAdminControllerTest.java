@@ -11,27 +11,31 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PaymentControllerTest {
+class PaymentAdminControllerTest {
 
     @Mock
     private PaymentService paymentService;
 
-    private PaymentController paymentController;
+    private PaymentAdminController paymentAdminController;
 
     @BeforeEach
     void setUp() {
-        paymentController = new PaymentController(paymentService);
+        paymentAdminController = new PaymentAdminController(paymentService);
     }
 
     @Test
-    @DisplayName("POS 시뮬레이터가 결제 대기 QR 토큰 목록을 조회한다")
+    @DisplayName("POS 시뮬레이터가 관리자 API로 결제 대기 QR 토큰 목록을 조회한다")
     void getActivePaymentQrTokens() {
         // given
         List<PaymentQrActiveTokenResponseDto> activeTokens = List.of(
@@ -46,12 +50,26 @@ class PaymentControllerTest {
 
         // when
         ResponseEntity<ApiResponse<List<PaymentQrActiveTokenResponseDto>>> result =
-                paymentController.getActivePaymentQrTokens();
+                paymentAdminController.getActivePaymentQrTokens();
 
         // then
         assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getCode()).isEqualTo("PAY-004");
         assertThat(result.getBody().getData()).isEqualTo(activeTokens);
+        verify(paymentService).getActivePaymentQrTokens();
+    }
+
+    @Test
+    @DisplayName("관리자 QR 토큰 목록 API 경로를 제공한다")
+    void getActivePaymentQrTokens_mapping() throws Exception {
+        // when
+        RequestMapping classMapping = PaymentAdminController.class.getAnnotation(RequestMapping.class);
+        Method method = PaymentAdminController.class.getDeclaredMethod("getActivePaymentQrTokens");
+        GetMapping methodMapping = method.getAnnotation(GetMapping.class);
+
+        // then
+        assertThat(classMapping.value()).containsExactly("/api/admin/payments");
+        assertThat(methodMapping.value()).containsExactly("/qr-tokens");
     }
 }

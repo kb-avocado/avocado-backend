@@ -8,6 +8,6 @@ import lombok.Getter;
 public class PaymentQrActiveTokenVo {
 
     private final String token;
-    private final long expiresAt;
+    private final Long userId;
     private final long expiresIn;
 }

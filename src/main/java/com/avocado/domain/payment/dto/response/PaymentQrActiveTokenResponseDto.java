@@ -18,11 +18,11 @@ public class PaymentQrActiveTokenResponseDto {
     private final String token;
 
     @ApiModelProperty(
-            value = "토큰 만료 시각(epoch millis)",
-            example = "1797220000000",
+            value = "토큰을 발급한 사용자 ID",
+            example = "102",
             required = true
     )
-    private final long expiresAt;
+    private final Long userId;
 
     @ApiModelProperty(
             value = "토큰 만료까지 남은 시간(초)",
@@ -34,7 +34,7 @@ public class PaymentQrActiveTokenResponseDto {
     public static PaymentQrActiveTokenResponseDto from(PaymentQrActiveTokenVo activeToken) {
         return PaymentQrActiveTokenResponseDto.builder()
                 .token(activeToken.getToken())
-                .expiresAt(activeToken.getExpiresAt())
+                .userId(activeToken.getUserId())
                 .expiresIn(activeToken.getExpiresIn())
                 .build();
     }

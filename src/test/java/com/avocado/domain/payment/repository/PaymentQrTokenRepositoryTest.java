@@ -155,18 +155,20 @@ class PaymentQrTokenRepositoryTest {
     }
 
     @Test
-    @DisplayName("활성 토큰 목록을 만료 시각과 남은 시간과 함께 조회한다")
+    @DisplayName("활성 토큰 목록을 사용자 ID와 남은 시간과 함께 조회한다")
     void findActiveTokens() {
         // given
         long nowMillis = 1797220000000L;
         long expiresAtMillis = nowMillis + Duration.ofSeconds(180).toMillis();
 
         when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
         when(zSetOperations.rangeByScoreWithScores(
                 "payment:qr:active-tokens",
                 nowMillis + 1,
                 Double.POSITIVE_INFINITY
         )).thenReturn(Set.of(new DefaultTypedTuple<>("active-token", (double) expiresAtMillis)));
+        when(valueOperations.get("payment:qr:token:active-token")).thenReturn("102");
 
         // when
         List<PaymentQrActiveTokenVo> result = paymentQrTokenRepository.findActiveTokens(nowMillis);
@@ -174,8 +176,38 @@ class PaymentQrTokenRepositoryTest {
         // then
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getToken()).isEqualTo("active-token");
-        assertThat(result.get(0).getExpiresAt()).isEqualTo(expiresAtMillis);
+        assertThat(result.get(0).getUserId()).isEqualTo(102L);
         assertThat(result.get(0).getExpiresIn()).isEqualTo(180L);
+    }
+
+    @Test
+    @DisplayName("활성 목록에 있지만 사용자 역인덱스가 없는 토큰은 제외하고 정리한다")
+    void findActiveTokens_excludeOrphanToken() {
+        // given
+        long nowMillis = 1797220000000L;
+        long expiresAtMillis = nowMillis + Duration.ofSeconds(180).toMillis();
+
+        when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
+        when(stringRedisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(zSetOperations.rangeByScoreWithScores(
+                "payment:qr:active-tokens",
+                nowMillis + 1,
+                Double.POSITIVE_INFINITY
+        )).thenReturn(Set.of(
+                new DefaultTypedTuple<>("active-token", (double) expiresAtMillis),
+                new DefaultTypedTuple<>("orphan-token", (double) expiresAtMillis)
+        ));
+        when(valueOperations.get("payment:qr:token:active-token")).thenReturn("102");
+        when(valueOperations.get("payment:qr:token:orphan-token")).thenReturn(null);
+
+        // when
+        List<PaymentQrActiveTokenVo> result = paymentQrTokenRepository.findActiveTokens(nowMillis);
+
+        // then
+        assertThat(result)
+                .extracting(PaymentQrActiveTokenVo::getToken)
+                .containsExactly("active-token");
+        verify(zSetOperations).remove("payment:qr:active-tokens", "orphan-token");
     }
 
     @Test
