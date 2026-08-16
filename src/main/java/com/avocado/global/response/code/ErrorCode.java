@@ -48,6 +48,8 @@ public enum ErrorCode implements ResponseCode {
     WALLET_UPDATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WAL-005", "선불지갑 잔액 변경에 실패했습니다."),
     WALLET_HISTORY_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WAL-006", "선불지갑 거래 이력 저장에 실패했습니다."),
     WALLET_LEDGER_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WAL-007", "선불지갑 원장 저장에 실패했습니다."),
+    WALLET_CREATE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WAL-008", "선불지갑 생성에 실패했습니다."),
+    WALLET_NUMBER_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "WAL-009", "선불지갑 계좌번호 생성에 실패했습니다."),
 
     // 계좌 (ACC)
     ACTIVE_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "ACC-001", "활성 상태인 부모 회원을 찾을 수 없습니다."),

@@ -38,6 +38,26 @@ public interface WalletMapper {
     );
 
     /**
+     * 아이 회원이 선불지갑을 보유하고 있는지 확인한다.
+     *
+     * @param childId 확인할 아이 회원 ID
+     * @return 선불지갑이 존재하면 true
+     */
+    boolean existsByChildId(
+            @Param("childId") Long childId
+    );
+
+    /**
+     * 동일한 지갑 계좌번호가 존재하는지 확인한다.
+     *
+     * @param walletNumber 확인할 지갑 계좌번호
+     * @return 동일한 지갑 계좌번호가 존재하면 true
+     */
+    boolean existsByWalletNumber(
+            @Param("walletNumber") String walletNumber
+    );
+
+    /**
      * 해당 선불지갑이 자녀 소유이며 ACTIVE 상태인지 확인한다.
      *
      * 지갑 ID와 자녀 ID가 일치하고,
@@ -50,6 +70,16 @@ public interface WalletMapper {
     boolean existsActiveByIdAndChildId(
             @Param("childId") Long childId,
             @Param("walletId") Long walletId
+    );
+
+    /**
+     * 아이 회원의 선불지갑을 생성한다.
+     *
+     * @param wallet 생성할 선불지갑 정보
+     * @return 생성된 행 수
+     */
+    int insert(
+            WalletVo wallet
     );
 
     /**

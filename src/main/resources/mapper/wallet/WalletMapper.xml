@@ -33,7 +33,8 @@
         해당 선불지갑이 실제 자녀 소유이며 ACTIVE 상태인지 확인한다.
         지갑 ID, 자녀 ID, 지갑 상태가 모두 일치하는 경우에만 true를 반환한다.
     -->
-    <select id="existsActiveByIdAndChildId" resultType="boolean">
+    <select id="existsActiveByIdAndChildId"
+            resultType="boolean">
         SELECT EXISTS (
             SELECT 1
             FROM wallets
@@ -42,6 +43,44 @@
                 AND status = 'ACTIVE'
         )
     </select>
+
+    <!-- 아이 회원이 이미 선불지갑을 보유하고 있는지 확인한다. -->
+    <select id="existsByChildId"
+            resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM wallets
+            WHERE child_id = #{childId}
+        )
+    </select>
+
+    <!-- 동일한 지갑 계좌번호가 존재하는지 확인한다. -->
+    <select id="existsByWalletNumber"
+            resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM wallets
+            WHERE wallet_number = #{walletNumber}
+        )
+    </select>
+
+    <!-- 아이 회원의 선불지갑을 생성한다. -->
+    <insert id="insert"
+            parameterType="com.avocado.domain.wallet.domain.WalletVo"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO wallets (
+            child_id,
+            wallet_number,
+            balance,
+            status
+        ) VALUES (
+            #{childId},
+            #{walletNumber},
+            #{balance},
+            #{status}
+        )
+    </insert>
 
     <!-- 자녀 회원 ID로 ACTIVE 상태의 선불지갑을 조회한다. -->
     <select id="findActiveByChildId"

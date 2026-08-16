@@ -1,19 +1,24 @@
 package com.avocado.domain.wallet.service;
 
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
+import com.avocado.domain.transaction.domain.LedgerType;
+import com.avocado.domain.transaction.domain.TransactionStatus;
 import com.avocado.domain.transaction.domain.WalletHistoryVo;
+import com.avocado.domain.transaction.domain.WalletTransactionType;
 import com.avocado.domain.transaction.mapper.WalletTxMapper;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.domain.wallet.domain.WalletStatus;
 import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.domain.wallet.dto.response.WalletResponseDto;
 import com.avocado.domain.wallet.mapper.WalletMapper;
 import com.avocado.global.exception.BusinessException;
-import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.security.SecureRandom;
 
 import static com.avocado.global.response.code.ErrorCode.*;
 
@@ -21,6 +26,12 @@ import static com.avocado.global.response.code.ErrorCode.*;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class WalletServiceImpl implements WalletService {
+    // 선불지갑 번호 길이
+    private static final int WALLET_NUMBER_LENGTH = 12;
+    // 선불지갑 고유 번호 생성 시도 횟수
+    private static final int MAX_WALLET_NUMBER_GENERATION_ATTEMPTS = 10;
+    // 선불지갑 번호 생성에 사용하는 난수 생성기
+    private static final SecureRandom RANDOM = new SecureRandom();
 
     private final UserMapper userMapper;
     private final FamilyRelationMapper familyRelationMapper;
@@ -67,9 +78,9 @@ public class WalletServiceImpl implements WalletService {
     /**
      * 부모 계좌에서 전달된 금액을 자녀 선불지갑에 입금한다.
      *
-     * @param childId  입금 대상 자녀 회원 ID
-     * @param amount   입금 금액
-     * @param traceId  연관 거래 추적 ID
+     * @param childId 입금 대상 자녀 회원 ID
+     * @param amount  입금 금액
+     * @param traceId 연관 거래 추적 ID
      * @throws BusinessException 지갑 또는 거래 처리가 유효하지 않은 경우
      */
     @Override
@@ -84,7 +95,7 @@ public class WalletServiceImpl implements WalletService {
                 childId,
                 amount,
                 traceId,
-                "CHARGE",
+                WalletTransactionType.CHARGE,
                 "부모 계좌 충전"
         );
     }
@@ -130,10 +141,41 @@ public class WalletServiceImpl implements WalletService {
     }
 
     /**
+     * 정상 상태가 된 아이 회원에게 고유 계좌번호를 가진 아보카도 선불지갑을 발급한다.
+     *
+     * @param childId 선불지갑을 발급할 아이 회원 ID
+     */
+    @Override
+    @Transactional
+    public void issueWallet(
+            Long childId
+    ) {
+        // 이미 선불지갑을 보유하고 있는 아이일 경우
+        if (walletMapper.existsByChildId(childId)) {
+            throw new BusinessException(WALLET_ALREADY_EXISTS);
+        }
+
+        // 고유 선불지갑 번호를 생성
+        String walletNumber = generateUniqueWalletNumber();
+
+        // 초기 상태의 선불지갑을 구성
+        WalletVo wallet = WalletVo.builder()
+                .childId(childId)
+                .walletNumber(walletNumber)
+                .balance(0L)
+                .status(WalletStatus.ACTIVE)
+                .build();
+
+        // 아이에게 생성한 선불지갑을 부여
+        if (walletMapper.insert(wallet) != 1) {
+            throw new BusinessException(WALLET_CREATE_FAILED);
+        }
+    }
+
+    /**
      * 저금통 저축을 위해 자녀 선불지갑에서 금액을 출금하고 거래 이력과 원장을 기록한다.
      *
      * @param childId  선불지갑 소유 자녀 ID
-     * @param walletId 출금 대상 선불지갑 ID
      * @param amount   출금 금액
      * @param traceId  저금통 거래와 연결하기 위한 추적 ID
      * @throws BusinessException 지갑이 유효하지 않거나 잔액이 부족하거나 거래 저장에 실패한 경우
@@ -171,15 +213,16 @@ public class WalletServiceImpl implements WalletService {
         Long historyId = createWalletHistory(
                 walletId,
                 traceId,
-                "PIGGY_BANK_DEPOSIT",
+                WalletTransactionType.PIGGY_BANK_DEPOSIT,
                 amount,
                 "저금통 저축"
         );
 
         // 지갑에서 금액이 빠져나갔으므로 OUT 원장을 생성한다.
-        createOutgoingLedger(
+        createLedger(
                 historyId,
                 walletId,
+                LedgerType.OUT,
                 amount,
                 balanceBefore,
                 balanceAfter
@@ -189,9 +232,9 @@ public class WalletServiceImpl implements WalletService {
     /**
      * 저금통에서 반환된 금액을 자녀 선불지갑에 입금한다.
      *
-     * @param childId  입금 대상 자녀 회원 ID
-     * @param amount   저금통에서 반환된 금액
-     * @param traceId  저금통 거래와 연결하기 위한 추적 ID
+     * @param childId 입금 대상 자녀 회원 ID
+     * @param amount  저금통에서 반환된 금액
+     * @param traceId 저금통 거래와 연결하기 위한 추적 ID
      * @throws BusinessException 지갑 또는 거래 처리가 유효하지 않은 경우
      */
     @Override
@@ -206,7 +249,7 @@ public class WalletServiceImpl implements WalletService {
                 childId,
                 amount,
                 traceId,
-                "PIGGY_BANK_WITHDRAWAL",
+                WalletTransactionType.PIGGY_BANK_WITHDRAWAL,
                 "저금통 해지 반환"
         );
     }
@@ -215,7 +258,6 @@ public class WalletServiceImpl implements WalletService {
      * 선불지갑 입금과 거래 이력 및 IN 원장 생성을 공통 처리한다.
      *
      * @param childId         선불지갑 소유 자녀 ID
-     * @param walletId        입금 대상 선불지갑 ID
      * @param amount          입금 금액
      * @param traceId         연관 거래 추적 ID
      * @param transactionType 지갑 거래 유형
@@ -226,14 +268,12 @@ public class WalletServiceImpl implements WalletService {
             Long childId,
             Long amount,
             String traceId,
-            String transactionType,
+            WalletTransactionType transactionType,
             String memo
     ) {
 
         // 아이 소유의 ACTIVE 선불지갑을 잠금 조회한다.
-        WalletVo wallet = getActiveWalletForUpdate(
-                childId
-        );
+        WalletVo wallet = getActiveWalletForUpdate(childId);
 
         Long walletId = wallet.getId();
 
@@ -257,9 +297,10 @@ public class WalletServiceImpl implements WalletService {
         );
 
         // 지갑으로 금액이 들어왔으므로 IN 원장을 생성한다.
-        createIncomingLedger(
+        createLedger(
                 historyId,
                 walletId,
+                LedgerType.IN,
                 amount,
                 balanceBefore,
                 balanceAfter
@@ -269,7 +310,7 @@ public class WalletServiceImpl implements WalletService {
     /**
      * 자녀 소유의 선불지갑을 잠금 조회하고 ACTIVE 상태인지 검증한다.
      *
-     * @param childId  선불지갑 소유 자녀 ID
+     * @param childId 선불지갑 소유 자녀 ID
      * @return 잠금 조회된 ACTIVE 선불지갑 정보
      * @throws BusinessException 지갑이 없거나 ACTIVE 상태가 아닌 경우
      */
@@ -284,7 +325,7 @@ public class WalletServiceImpl implements WalletService {
                 .orElseThrow(() -> new BusinessException(WALLET_NOT_FOUND));
 
         // ACTIVE 상태가 아닌 지갑은 사용할 수 없다.
-        if (!"ACTIVE".equals(wallet.getStatus())) {
+        if (wallet.getStatus() != WalletStatus.ACTIVE) {
             throw new BusinessException(WALLET_INACTIVE);
         }
 
@@ -351,7 +392,7 @@ public class WalletServiceImpl implements WalletService {
     private Long createWalletHistory(
             Long walletId,
             String traceId,
-            String transactionType,
+            WalletTransactionType transactionType,
             Long amount,
             String memo
     ) {
@@ -362,13 +403,11 @@ public class WalletServiceImpl implements WalletService {
                 .transactionType(transactionType)
                 .amount(amount)
                 .memo(memo)
-                .status("SUCCESS")
+                .status(TransactionStatus.SUCCESS)
                 .build();
 
         // 선불지갑 거래 이력을 저장한다.
-        int insertedRows = walletTxMapper.insertWalletHistory(
-                walletHistory
-        );
+        int insertedRows = walletTxMapper.insertWalletHistory(walletHistory);
 
         // 저장 실패 또는 generated key 누락 시 예외를 발생시킨다.
         if (insertedRows != 1 || walletHistory.getId() == null) {
@@ -379,60 +418,29 @@ public class WalletServiceImpl implements WalletService {
     }
 
     /**
-     * 선불지갑으로 들어온 금액을 IN 원장으로 기록한다.
+     * 선불지갑 거래의 잔액 증감 내역을 원장으로 기록한다.
      *
      * @param historyId     연결할 선불지갑 거래 이력 ID
      * @param walletId      선불지갑 ID
-     * @param amount        입금 금액
+     * @param ledgerType    원장의 금액 증감 방향
+     * @param amount        거래 금액
      * @param balanceBefore 거래 전 잔액
      * @param balanceAfter  거래 후 잔액
      * @throws BusinessException 원장 저장에 실패한 경우
      */
-    private void createIncomingLedger(
+    private void createLedger(
             Long historyId,
             Long walletId,
+            LedgerType ledgerType,
             Long amount,
             Long balanceBefore,
             Long balanceAfter
     ) {
-        // 입금 거래를 IN 원장으로 저장한다.
+        // 선불지갑 거래의 잔액 증감 내용을 원장으로 저장한다.
         int insertedRows = walletTxMapper.insertWalletLedger(
                 historyId,
                 walletId,
-                "IN",
-                amount,
-                balanceBefore,
-                balanceAfter
-        );
-
-        // 정확히 한 건이 저장되지 않았다면 실패로 처리한다.
-        if (insertedRows != 1) {
-            throw new BusinessException(WALLET_LEDGER_CREATE_FAILED);
-        }
-    }
-
-    /**
-     * 선불지갑에서 빠져나간 금액을 OUT 원장으로 기록한다.
-     *
-     * @param historyId     연결할 선불지갑 거래 이력 ID
-     * @param walletId      선불지갑 ID
-     * @param amount        출금 금액
-     * @param balanceBefore 거래 전 잔액
-     * @param balanceAfter  거래 후 잔액
-     * @throws BusinessException 원장 저장에 실패한 경우
-     */
-    private void createOutgoingLedger(
-            Long historyId,
-            Long walletId,
-            Long amount,
-            Long balanceBefore,
-            Long balanceAfter
-    ) {
-        // 출금 거래를 OUT 원장으로 저장한다.
-        int insertedRows = walletTxMapper.insertWalletLedger(
-                historyId,
-                walletId,
-                "OUT",
+                ledgerType.name(),
                 amount,
                 balanceBefore,
                 balanceAfter
@@ -504,5 +512,46 @@ public class WalletServiceImpl implements WalletService {
                 authUser.getUserId(),
                 childId
         );
+    }
+
+    /**
+     * 서비스에서 사용하지 않는 고유 지갑 계좌번호를 생성한다.
+     *
+     * @return 생성된 고유 지갑 계좌번호
+     */
+    private String generateUniqueWalletNumber() {
+        // 선불지갑 고유 번호 충돌 시 최대 10회까지 새로운 번호를 생성
+        for (int attempt = 0; attempt < MAX_WALLET_NUMBER_GENERATION_ATTEMPTS; attempt++) {
+            String walletNumber = generateWalletNumber();
+
+            // 사용 중이지 않은 번호이면 계좌번호로 확정
+            if (!walletMapper.existsByWalletNumber(walletNumber)) {
+                return walletNumber;
+            }
+        }
+
+        // 선불지갑 고유 번호 생성 실패
+        throw new BusinessException(WALLET_NUMBER_GENERATION_FAILED);
+    }
+
+
+    /**
+     * 아보카도 선불지갑에서 사용할 12자리 숫자 계좌번호를 생성한다.
+     *
+     * @return 생성된 12자리 계좌번호
+     */
+    private String generateWalletNumber() {
+        StringBuilder walletNumber = new StringBuilder(WALLET_NUMBER_LENGTH);
+
+        // 첫 번째 자리는 1부터 9 사이의 숫자로 생성
+        walletNumber.append(RANDOM.nextInt(9) + 1);
+
+        // 나머지 11자리는 0부터 9 사이의 숫자로 생성
+        for (int i = 1; i < WALLET_NUMBER_LENGTH; i++) {
+            walletNumber.append(RANDOM.nextInt(10));
+        }
+
+        // 생성된 12자리의 번호를 반환
+        return walletNumber.toString();
     }
 }
