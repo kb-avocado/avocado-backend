@@ -1,6 +1,7 @@
 package com.avocado.domain.user.service;
 
 import com.avocado.domain.user.domain.UserStatus;
+import com.avocado.domain.user.domain.UserVo;
 
 /**
  * 다른 도메인이 회원 정보를 조회하거나 회원 상태를 바꿀 때 거치는 창구.
@@ -35,4 +36,50 @@ public interface UserService {
      * @return 회원 이름. 회원이 없으면 USER_NOT_FOUND 예외를 던진다.
      */
     String getUserName(Long userId);
+
+    /**
+     * 회원 ID로 회원 기본 정보를 조회한다.
+     *
+     * 회원 상태와 관계없이 조회한다.
+     *
+     * @param userId 조회할 회원 ID
+     * @return 회원 기본 정보
+     * @throws com.avocado.global.exception.BusinessException 회원이 없으면 USER_NOT_FOUND
+     */
+    UserVo getUser(
+            Long userId
+    );
+
+    /**
+     * 회원 ID로 ACTIVE 상태의 회원 기본 정보를 조회한다.
+     *
+     * 회원이 존재하더라도 상태가 ACTIVE가 아니면 조회하지 않는다.
+     *
+     * @param userId 조회할 회원 ID
+     * @return ACTIVE 상태의 회원 기본 정보
+     * @throws com.avocado.global.exception.BusinessException 회원이 없거나 ACTIVE 상태가 아니면 USER_NOT_ACTIVE
+     */
+    UserVo getActiveUser(
+            Long userId
+    );
+
+    /**
+     * 회원이 ACTIVE 상태의 부모 회원인지 검증한다.
+     *
+     * @param parentId 검증할 부모 회원 ID
+     * @throws com.avocado.global.exception.BusinessException ACTIVE 부모 회원이 아닌 경우
+     */
+    void validateActiveParent(
+            Long parentId
+    );
+
+    /**
+     * 회원이 ACTIVE 상태의 자녀 회원인지 검증한다.
+     *
+     * @param childId 검증할 자녀 회원 ID
+     * @throws com.avocado.global.exception.BusinessException ACTIVE 자녀 회원이 아닌 경우
+     */
+    void validateActiveChild(
+            Long childId
+    );
 }

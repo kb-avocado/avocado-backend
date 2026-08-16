@@ -142,4 +142,19 @@
         updated_at = NOW()
         WHERE id = #{id}
     </update>
+
+
+    <!-- 상태와 무관하게 이 지갑에 저금통이 하나라도 있는지 확인 -->
+    <select id="existsByWalletId" resultType="boolean">
+        SELECT EXISTS(
+        SELECT 1 FROM piggy_banks WHERE wallet_id = #{walletId}
+        )
+    </select>
+    <!-- 환급: 저금통 잔액 0 -->
+    <update id="zeroBalance">
+        UPDATE piggy_banks
+        SET balance = 0,
+        updated_at = NOW()
+        WHERE id = #{id}
+    </update>
 </mapper>

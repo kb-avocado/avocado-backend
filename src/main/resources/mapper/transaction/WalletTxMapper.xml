@@ -6,6 +6,39 @@
 
 <mapper namespace="com.avocado.domain.transaction.mapper.WalletTxMapper">
 
+    <resultMap id="walletTxItemResponseMap"
+               type="com.avocado.domain.transaction.dto.response.WalletTxItemResponseDto">
+        <constructor>
+            <arg column="transactionId" javaType="java.lang.Long"/>
+            <arg column="transactionType" javaType="java.lang.String"/>
+            <arg column="amount" javaType="java.lang.Long"/>
+            <arg column="counterpartyName" javaType="java.lang.String"/>
+            <arg column="status" javaType="java.lang.String"/>
+            <arg column="createdAt" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="walletTxDetailResponseMap"
+               type="com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto">
+        <constructor>
+            <arg column="transactionId" javaType="java.lang.Long"/>
+            <arg column="traceId" javaType="java.lang.String"/>
+            <arg column="transactionType" javaType="java.lang.String"/>
+            <arg column="amount" javaType="java.lang.Long"/>
+            <arg column="counterpartyName" javaType="java.lang.String"/>
+            <arg column="targetBankCode" javaType="java.lang.String"/>
+            <arg column="targetAccountNumber" javaType="java.lang.String"/>
+            <arg column="memo" javaType="java.lang.String"/>
+            <arg column="status" javaType="java.lang.String"/>
+            <arg column="failureCode" javaType="java.lang.String"/>
+            <arg column="createdAt" javaType="java.time.LocalDateTime"/>
+            <arg column="ledgerType" javaType="java.lang.String"/>
+            <arg column="balanceBefore" javaType="java.lang.Long"/>
+            <arg column="balanceAfter" javaType="java.lang.Long"/>
+            <arg column="merchantCategory" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
     <!--  지갑의 전체 거래 수를 조회한다.  -->
     <select id="countByWalletId" resultType="long">
         SELECT COUNT(*)
@@ -14,10 +47,9 @@
     </select>
 
     <!--  지갑 거래내역을 최신순으로 조회한다.  -->
-    <select id="findAllByWalletId" resultType="com.avocado.domain.transaction.dto.response.WalletTxItemResponseDto">
+    <select id="findAllByWalletId" resultMap="walletTxItemResponseMap">
         SELECT
             wh.id AS transactionId,
-            wh.trace_id AS traceId,
             wh.transaction_type AS transactionType,
             wh.amount AS amount,
             CASE
@@ -38,7 +70,7 @@
     </select>
 
     <!--  지갑 상세 거래내역을 조회한다.  -->
-    <select id="findDetailByWalletIdAndTransactionId" resultType="com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto">
+    <select id="findDetailByWalletIdAndTransactionId" resultMap="walletTxDetailResponseMap">
         SELECT
             wh.id               AS transactionId,
             wh.trace_id         AS traceId,
