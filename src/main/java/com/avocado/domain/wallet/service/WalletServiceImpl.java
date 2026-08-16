@@ -1,6 +1,11 @@
 package com.avocado.domain.wallet.service;
 
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
+import com.avocado.domain.merchant.domain.MerchantVo;
+import com.avocado.domain.merchant.mapper.MerchantMapper;
+import com.avocado.domain.payment.domain.PaymentFailureCode;
+import com.avocado.domain.payment.domain.PaymentRequestedResult;
+import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.transaction.domain.WalletHistoryVo;
 import com.avocado.domain.transaction.mapper.WalletTxMapper;
 import com.avocado.domain.user.domain.UserType;
@@ -14,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 import static com.avocado.global.response.code.ErrorCode.*;
 
 @Service
@@ -24,6 +31,7 @@ public class WalletServiceImpl implements WalletService {
     private final FamilyRelationMapper familyRelationMapper;
     private final WalletMapper walletMapper;
     private final WalletTxMapper walletTxMapper;
+    private final MerchantMapper merchantMapper;
 
     /**
      * childId 기준으로 자녀 선불지갑 단건 정보를 조회한다.
@@ -118,6 +126,7 @@ public class WalletServiceImpl implements WalletService {
                 traceId,
                 "PIGGY_BANK_DEPOSIT",
                 amount,
+                null,
                 "저금통 저축"
         );
 
@@ -149,6 +158,92 @@ public class WalletServiceImpl implements WalletService {
                 traceId,
                 "PIGGY_BANK_WITHDRAWAL",
                 "저금통 해지 반환"
+        );
+    }
+
+    @Override
+    @Transactional
+    public PaymentSimulationResult processPosPayment(
+            Long childId,
+            Long merchantId,
+            Long amount,
+            PaymentRequestedResult requestedResult
+    ) {
+        WalletVo wallet = walletMapper.findForUpdateByChildId(childId)
+                .orElse(null);
+
+        if (wallet == null) {
+            return failedPaymentWithoutHistory(
+                    merchantId,
+                    null,
+                    amount,
+                    null,
+                    PaymentFailureCode.WALLET_NOT_AVAILABLE
+            );
+        }
+
+        MerchantVo merchant = merchantMapper.findById(merchantId)
+                .orElse(null);
+
+        if (merchant == null) {
+            return failedPaymentWithoutHistory(
+                    merchantId,
+                    null,
+                    amount,
+                    wallet.getBalance(),
+                    PaymentFailureCode.MERCHANT_NOT_AVAILABLE
+            );
+        }
+
+        if (!"ACTIVE".equals(wallet.getStatus())) {
+            return createFailedPaymentResult(
+                    wallet,
+                    merchant,
+                    amount,
+                    PaymentFailureCode.WALLET_NOT_AVAILABLE
+            );
+        }
+
+        if (!merchant.isActive()) {
+            return createFailedPaymentResult(
+                    wallet,
+                    merchant,
+                    amount,
+                    PaymentFailureCode.MERCHANT_NOT_AVAILABLE
+            );
+        }
+
+        if (PaymentRequestedResult.FORCE_FAIL.equals(requestedResult)) {
+            return createFailedPaymentResult(
+                    wallet,
+                    merchant,
+                    amount,
+                    PaymentFailureCode.FORCED_FAILURE
+            );
+        }
+
+        if (wallet.getBalance() < amount) {
+            return createFailedPaymentResult(
+                    wallet,
+                    merchant,
+                    amount,
+                    PaymentFailureCode.INSUFFICIENT_BALANCE
+            );
+        }
+
+        if (merchant.isRestrictedForChild()) {
+            return createFailedPaymentResult(
+                    wallet,
+                    merchant,
+                    amount,
+                    PaymentFailureCode.RESTRICTED_MERCHANT
+            );
+        }
+
+        return createSuccessfulPaymentResult(
+                wallet,
+                merchant,
+                amount
         );
     }
 
@@ -185,6 +280,7 @@ public class WalletServiceImpl implements WalletService {
                 traceId,
                 transactionType,
                 amount,
+                null,
                 memo
         );
 
@@ -263,15 +359,40 @@ public class WalletServiceImpl implements WalletService {
             String traceId,
             String transactionType,
             Long amount,
+            Long merchantId,
             String memo
+    ) {
+        return createWalletHistory(
+                walletId,
+                traceId,
+                transactionType,
+                amount,
+                merchantId,
+                memo,
+                "SUCCESS",
+                null
+        );
+    }
+
+    private Long createWalletHistory(
+            Long walletId,
+            String traceId,
+            String transactionType,
+            Long amount,
+            Long merchantId,
+            String memo,
+            String status,
+            PaymentFailureCode failureCode
     ) {
         WalletHistoryVo walletHistory = WalletHistoryVo.builder()
                 .walletId(walletId)
                 .traceId(traceId)
                 .transactionType(transactionType)
                 .amount(amount)
+                .merchantId(merchantId)
                 .memo(memo)
-                .status("SUCCESS")
+                .status(status)
+                .failureCode(failureCode == null ? null : failureCode.name())
                 .build();
 
         int insertedRows = walletTxMapper.insertWalletHistory(
@@ -285,6 +406,97 @@ public class WalletServiceImpl implements WalletService {
         }
 
         return walletHistory.getId();
+    }
+
+    private PaymentSimulationResult createSuccessfulPaymentResult(
+            WalletVo wallet,
+            MerchantVo merchant,
+            Long amount
+    ) {
+        long balanceBefore = wallet.getBalance();
+        long balanceAfter = balanceBefore - amount;
+
+        decreaseBalance(
+                wallet.getId(),
+                amount
+        );
+
+        Long historyId = createWalletHistory(
+                wallet.getId(),
+                newPaymentTraceId(),
+                "PAYMENT",
+                amount,
+                merchant.getId(),
+                "POS 결제",
+                "SUCCESS",
+                null
+        );
+
+        createOutgoingLedger(
+                historyId,
+                wallet.getId(),
+                amount,
+                balanceBefore,
+                balanceAfter
+        );
+
+        return PaymentSimulationResult.builder()
+                .walletHistoryId(historyId)
+                .merchantId(merchant.getId())
+                .merchantName(merchant.getName())
+                .amount(amount)
+                .status("SUCCESS")
+                .balanceAfter(balanceAfter)
+                .build();
+    }
+
+    private PaymentSimulationResult createFailedPaymentResult(
+            WalletVo wallet,
+            MerchantVo merchant,
+            Long amount,
+            PaymentFailureCode failureCode
+    ) {
+        Long historyId = createWalletHistory(
+                wallet.getId(),
+                newPaymentTraceId(),
+                "PAYMENT",
+                amount,
+                merchant.getId(),
+                failureCode.getDescription(),
+                "FAILED",
+                failureCode
+        );
+
+        return PaymentSimulationResult.builder()
+                .walletHistoryId(historyId)
+                .merchantId(merchant.getId())
+                .merchantName(merchant.getName())
+                .amount(amount)
+                .status("FAILED")
+                .failureCode(failureCode)
+                .balanceAfter(wallet.getBalance())
+                .build();
+    }
+
+    private PaymentSimulationResult failedPaymentWithoutHistory(
+            Long merchantId,
+            String merchantName,
+            Long amount,
+            Long balanceAfter,
+            PaymentFailureCode failureCode
+    ) {
+        return PaymentSimulationResult.builder()
+                .merchantId(merchantId)
+                .merchantName(merchantName)
+                .amount(amount)
+                .status("FAILED")
+                .failureCode(failureCode)
+                .balanceAfter(balanceAfter)
+                .build();
+    }
+
+    private String newPaymentTraceId() {
+        return "PAY-" + UUID.randomUUID();
     }
 
     /**

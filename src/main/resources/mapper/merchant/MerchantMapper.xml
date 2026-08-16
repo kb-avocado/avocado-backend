@@ -6,6 +6,19 @@
 
 <mapper namespace="com.avocado.domain.merchant.mapper.MerchantMapper">
 
-
+    <select id="findById" resultType="com.avocado.domain.merchant.domain.MerchantVo">
+        SELECT
+            id,
+            name,
+            business_no             AS businessNo,
+            address,
+            category,
+            is_restricted_for_child AS restrictedForChild,
+            status,
+            created_at              AS createdAt,
+            updated_at              AS updatedAt
+        FROM merchants
+        WHERE id = #{merchantId}
+    </select>
 
 </mapper>

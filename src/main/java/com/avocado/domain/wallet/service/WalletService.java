@@ -1,5 +1,7 @@
 package com.avocado.domain.wallet.service;
 
+import com.avocado.domain.payment.domain.PaymentRequestedResult;
+import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.wallet.dto.response.WalletResponseDto;
 import com.avocado.global.security.jwt.dto.AuthUser;
 
@@ -62,5 +64,12 @@ public interface WalletService {
             Long walletId,
             Long amount,
             String traceId
+    );
+
+    PaymentSimulationResult processPosPayment(
+            Long childId,
+            Long merchantId,
+            Long amount,
+            PaymentRequestedResult requestedResult
     );
 }

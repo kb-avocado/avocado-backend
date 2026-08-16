@@ -46,4 +46,9 @@ public interface WalletMapper {
             @Param("walletId") Long walletId,
             @Param("childId") Long childId
     );
+
+    // 아이 소유 지갑을 childId 기준으로 잠금 조회
+    Optional<WalletVo> findForUpdateByChildId(
+            @Param("childId") Long childId
+    );
 }

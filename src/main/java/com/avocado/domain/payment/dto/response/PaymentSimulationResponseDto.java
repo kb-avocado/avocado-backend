@@ -1,6 +1,7 @@
 package com.avocado.domain.payment.dto.response;
 
 import com.avocado.domain.payment.domain.PaymentFailureCode;
+import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
@@ -31,4 +32,16 @@ public class PaymentSimulationResponseDto {
 
     @ApiModelProperty(value = "거래 후 선불지갑 잔액")
     private final Long balanceAfter;
+
+    public static PaymentSimulationResponseDto from(PaymentSimulationResult result) {
+        return PaymentSimulationResponseDto.builder()
+                .walletHistoryId(result.getWalletHistoryId())
+                .merchantId(result.getMerchantId())
+                .merchantName(result.getMerchantName())
+                .amount(result.getAmount())
+                .status(result.getStatus())
+                .failureCode(result.getFailureCode())
+                .balanceAfter(result.getBalanceAfter())
+                .build();
+    }
 }

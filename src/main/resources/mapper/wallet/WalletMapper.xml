@@ -79,4 +79,17 @@
         FOR UPDATE
     </select>
 
+    <!-- 아이 회원 ID로 선불지갑을 잠금 조회한다. -->
+    <select id="findForUpdateByChildId" resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id      AS childId,
+            wallet_number AS walletNumber,
+            balance,
+            status
+        FROM wallets
+        WHERE child_id = #{childId}
+        FOR UPDATE
+    </select>
+
 </mapper>

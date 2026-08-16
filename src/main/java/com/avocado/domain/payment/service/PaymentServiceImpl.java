@@ -1,8 +1,12 @@
 package com.avocado.domain.payment.service;
 
 import com.avocado.domain.payment.domain.PaymentQrTokenVo;
+import com.avocado.domain.payment.domain.PaymentSimulationResult;
+import com.avocado.domain.payment.dto.request.PaymentSimulationRequestDto;
+import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
 import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
+import com.avocado.domain.wallet.service.WalletService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -21,6 +25,7 @@ public class PaymentServiceImpl implements PaymentService {
     private static final int TOKEN_BYTE_LENGTH = 32;
 
     private final PaymentQrTokenRepository paymentQrTokenRepository;
+    private final WalletService walletService;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Value("${payment.qr-token.ttl-seconds:180}")
@@ -48,6 +53,26 @@ public class PaymentServiceImpl implements PaymentService {
         return PaymentQrTokenResponseDto.from(
                 issuePaymentQrToken(authUser.getUserId())
         );
+    }
+
+    @Override
+    public PaymentSimulationResponseDto simulatePayment(
+            PaymentSimulationRequestDto request
+    ) {
+        return paymentQrTokenRepository.consumeUserIdByToken(request.getQrToken())
+                .map(userId -> walletService.processPosPayment(
+                        userId,
+                        request.getMerchantId(),
+                        request.getAmount(),
+                        request.getRequestedResult()
+                ))
+                .map(PaymentSimulationResponseDto::from)
+                .orElseGet(() -> PaymentSimulationResponseDto.from(
+                        PaymentSimulationResult.invalidOrExpiredQr(
+                                request.getMerchantId(),
+                                request.getAmount()
+                        )
+                ));
     }
 
     private PaymentQrTokenVo issuePaymentQrToken(Long userId) {

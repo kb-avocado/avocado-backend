@@ -1,9 +1,15 @@
 package com.avocado.domain.payment.service;
 
+import com.avocado.domain.payment.domain.PaymentFailureCode;
+import com.avocado.domain.payment.domain.PaymentRequestedResult;
+import com.avocado.domain.payment.domain.PaymentSimulationResult;
+import com.avocado.domain.payment.dto.request.PaymentSimulationRequestDto;
+import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
 import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
 import com.avocado.domain.user.domain.UserRole;
 import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.wallet.service.WalletService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -17,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -33,11 +40,14 @@ class PaymentServiceTest {
     @Mock
     private PaymentQrTokenRepository paymentQrTokenRepository;
 
+    @Mock
+    private WalletService walletService;
+
     private PaymentServiceImpl paymentService;
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentServiceImpl(paymentQrTokenRepository);
+        paymentService = new PaymentServiceImpl(paymentQrTokenRepository, walletService);
         ReflectionTestUtils.setField(
                 paymentService,
                 "paymentQrTokenTtlSeconds",
@@ -127,11 +137,80 @@ class PaymentServiceTest {
         verify(paymentQrTokenRepository, never()).deleteByUserId(authUser.getUserId());
     }
 
+    @Test
+    @DisplayName("QR 토큰이 없거나 만료되면 지갑 결제를 호출하지 않고 실패 결과를 반환한다")
+    void simulatePayment_invalidQr_failResult() {
+        // given
+        PaymentSimulationRequestDto request = paymentSimulationRequest();
+
+        when(paymentQrTokenRepository.consumeUserIdByToken("qr-token"))
+                .thenReturn(Optional.empty());
+
+        // when
+        PaymentSimulationResponseDto result = paymentService.simulatePayment(request);
+
+        // then
+        assertThat(result.getWalletHistoryId()).isNull();
+        assertThat(result.getMerchantId()).isEqualTo(3001L);
+        assertThat(result.getAmount()).isEqualTo(12000L);
+        assertThat(result.getStatus()).isEqualTo("FAILED");
+        assertThat(result.getFailureCode()).isEqualTo(PaymentFailureCode.INVALID_OR_EXPIRED_QR);
+        assertThat(result.getBalanceAfter()).isNull();
+
+        verify(walletService, never()).processPosPayment(
+                eq(102L),
+                eq(3001L),
+                eq(12000L),
+                eq(PaymentRequestedResult.SUCCESS)
+        );
+    }
+
+    @Test
+    @DisplayName("QR 토큰을 소비하면 사용자 ID로 지갑 결제를 위임한다")
+    void simulatePayment_delegateWalletPayment() {
+        // given
+        PaymentSimulationRequestDto request = paymentSimulationRequest();
+        PaymentSimulationResult walletResult = PaymentSimulationResult.builder()
+                .walletHistoryId(10L)
+                .merchantId(3001L)
+                .merchantName("아보카도 편의점")
+                .amount(12000L)
+                .status("SUCCESS")
+                .balanceAfter(36000L)
+                .build();
+
+        when(paymentQrTokenRepository.consumeUserIdByToken("qr-token"))
+                .thenReturn(Optional.of(102L));
+        when(walletService.processPosPayment(
+                102L,
+                3001L,
+                12000L,
+                PaymentRequestedResult.SUCCESS
+        )).thenReturn(walletResult);
+
+        // when
+        PaymentSimulationResponseDto result = paymentService.simulatePayment(request);
+
+        // then
+        assertThat(result.getWalletHistoryId()).isEqualTo(10L);
+        assertThat(result.getStatus()).isEqualTo("SUCCESS");
+        assertThat(result.getBalanceAfter()).isEqualTo(36000L);
+    }
+
     private AuthUser authUser(Long userId) {
         return AuthUser.builder()
                 .userId(userId)
                 .role(UserRole.USER)
                 .userType(UserType.CHILD)
                 .build();
+    }
+
+    private PaymentSimulationRequestDto paymentSimulationRequest() {
+        PaymentSimulationRequestDto request = new PaymentSimulationRequestDto();
+        request.setQrToken("qr-token");
+        request.setMerchantId(3001L);
+        request.setAmount(12000L);
+        request.setRequestedResult(PaymentRequestedResult.SUCCESS);
+        return request;
     }
 }
