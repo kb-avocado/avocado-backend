@@ -4,11 +4,15 @@ import com.avocado.domain.transaction.dto.request.WalletTxListRequestDto;
 import com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto;
 import com.avocado.domain.transaction.dto.response.WalletTxItemResponseDto;
 import com.avocado.domain.transaction.service.WalletTxService;
+import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.response.PageResponse;
+import com.avocado.global.response.code.ErrorCode;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -34,10 +38,10 @@ public class WalletTxController {
      */
     @GetMapping("/transactions")
     public ResponseEntity<ApiResponse<PageResponse<WalletTxItemResponseDto>>> getWalletTxList(
+            @AuthenticationPrincipal AuthUser authUser,
             @Valid @ModelAttribute WalletTxListRequestDto requestDto
     ) {
-        // TODO: 임시 회원 아이디
-        Long userId = 102L;
+        Long userId = getAuthenticatedUserId(authUser);
 
         // 회원의 선불지갑 전체 거래 목록을 조회
         PageResponse<WalletTxItemResponseDto> response = walletTxService.getWalletTxList(
@@ -52,10 +56,10 @@ public class WalletTxController {
 
     @GetMapping("/transactions/{transactionId}")
     public ResponseEntity<ApiResponse<WalletTxDetailResponseDto>> getWalletTxDetail(
+            @AuthenticationPrincipal AuthUser authUser,
             @PathVariable Long transactionId
     ) {
-        // TODO: 임시 회원 아이디
-        Long userId = 102L;
+        Long userId = getAuthenticatedUserId(authUser);
 
         WalletTxDetailResponseDto response = walletTxService.getWalletTxDetail(
                 userId,
@@ -65,6 +69,14 @@ public class WalletTxController {
         return ResponseEntity
                 .status(WALLET_TX_DETAIL_FETCHED.getHttpStatus())
                 .body(ApiResponse.success(WALLET_TX_DETAIL_FETCHED, response));
+    }
+
+    private Long getAuthenticatedUserId(AuthUser authUser) {
+        if (authUser == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return authUser.getUserId();
     }
 
 }
