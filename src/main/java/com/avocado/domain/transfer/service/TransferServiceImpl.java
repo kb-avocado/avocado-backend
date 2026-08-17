@@ -52,7 +52,7 @@ public class TransferServiceImpl implements TransferService {
         // 부모에게 연결된 ACTIVE 외부 계좌를 조회한다.
         AccountVo account = accountService.getActiveAccount(parentId);
 
-        // 계좌 아이디
+        // 계좌 ID
         Long accountId = account.getId();
 
         // 송금 결과에 표시할 아이 이름을 조회한다.
@@ -113,7 +113,7 @@ public class TransferServiceImpl implements TransferService {
         // 부모 활성화 계좌 조회
         AccountVo account = accountService.getActiveAccount(parentId);
 
-        // 계좌 아이디 
+        // 계좌 ID
         Long accountId = account.getId();
 
         // 부모 아이 관계 체크

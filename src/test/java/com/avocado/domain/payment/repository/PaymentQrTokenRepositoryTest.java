@@ -1,6 +1,10 @@
 package com.avocado.domain.payment.repository;
 
 import com.avocado.domain.payment.domain.PaymentQrActiveTokenVo;
+import com.avocado.domain.payment.domain.PaymentQrStatus;
+import com.avocado.domain.payment.domain.PaymentQrStatusVo;
+import com.avocado.domain.payment.domain.PaymentSimulationResult;
+import com.avocado.global.response.code.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -8,17 +12,21 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.redis.core.DefaultTypedTuple;
+import org.springframework.data.redis.core.HashOperations;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.RedisScript;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -33,6 +41,9 @@ class PaymentQrTokenRepositoryTest {
 
     @Mock
     private ZSetOperations<String, String> zSetOperations;
+
+    @Mock
+    private HashOperations<String, Object, Object> hashOperations;
 
     private PaymentQrTokenRepository paymentQrTokenRepository;
 
@@ -63,6 +74,106 @@ class PaymentQrTokenRepositoryTest {
     }
 
     @Test
+    @DisplayName("QR 대기 상태를 TTL과 함께 저장한다")
+    void saveWaitingStatus() {
+        // given
+        Duration ttl = Duration.ofSeconds(240);
+        long expiresAtMillis = 1797220000000L;
+
+        when(stringRedisTemplate.opsForHash()).thenReturn(hashOperations);
+
+        // when
+        paymentQrTokenRepository.saveWaitingStatus(
+                102L,
+                "qr-token",
+                ttl,
+                expiresAtMillis
+        );
+
+        // then
+        verify(stringRedisTemplate).delete("payment:qr:status:qr-token");
+        verify(hashOperations).putAll(
+                "payment:qr:status:qr-token",
+                Map.of(
+                        "status", "WAITING",
+                        "userId", "102",
+                        "expiresAtMillis", "1797220000000"
+                )
+        );
+        verify(stringRedisTemplate).expire("payment:qr:status:qr-token", ttl);
+    }
+
+    @Test
+    @DisplayName("QR 만료 상태를 TTL과 함께 저장한다")
+    void saveExpiredStatus() {
+        // given
+        Duration ttl = Duration.ofSeconds(60);
+
+        when(stringRedisTemplate.opsForHash()).thenReturn(hashOperations);
+
+        // when
+        paymentQrTokenRepository.saveExpiredStatus(
+                "qr-token",
+                102L,
+                ttl
+        );
+
+        // then
+        verify(stringRedisTemplate).delete("payment:qr:status:qr-token");
+        verify(hashOperations).putAll(
+                "payment:qr:status:qr-token",
+                Map.of(
+                        "status", "EXPIRED",
+                        "userId", "102"
+                )
+        );
+        verify(stringRedisTemplate).expire("payment:qr:status:qr-token", ttl);
+    }
+
+    @Test
+    @DisplayName("QR 결제 완료 상태를 결제 결과와 함께 저장한다")
+    void saveCompletedStatus() {
+        // given
+        Duration ttl = Duration.ofSeconds(60);
+        PaymentSimulationResult paymentResult = PaymentSimulationResult.builder()
+                .walletHistoryId(9001L)
+                .merchantId(3001L)
+                .merchantName("아보카도 편의점")
+                .amount(12000L)
+                .status("FAILED")
+                .failureCode(ErrorCode.INSUFFICIENT_BALANCE)
+                .balanceAfter(8000L)
+                .build();
+
+        when(stringRedisTemplate.opsForHash()).thenReturn(hashOperations);
+
+        // when
+        paymentQrTokenRepository.saveCompletedStatus(
+                "qr-token",
+                102L,
+                paymentResult,
+                ttl
+        );
+
+        // then
+        verify(stringRedisTemplate).delete("payment:qr:status:qr-token");
+        verify(hashOperations).putAll(
+                "payment:qr:status:qr-token",
+                Map.of(
+                        "status", "FAILED",
+                        "userId", "102",
+                        "walletHistoryId", "9001",
+                        "merchantId", "3001",
+                        "merchantName", "아보카도 편의점",
+                        "amount", "12000",
+                        "failureCode", "INSUFFICIENT_BALANCE",
+                        "balanceAfter", "8000"
+                )
+        );
+        verify(stringRedisTemplate).expire("payment:qr:status:qr-token", ttl);
+    }
+
+    @Test
     @DisplayName("사용자 ID로 저장된 QR 토큰을 조회한다")
     void findTokenByUserId() {
         // given
@@ -88,6 +199,87 @@ class PaymentQrTokenRepositoryTest {
 
         // then
         assertThat(result).contains(102L);
+    }
+
+    @Test
+    @DisplayName("토큰으로 저장된 QR 상태를 조회한다")
+    void findStatusByToken() {
+        // given
+        when(stringRedisTemplate.opsForHash()).thenReturn(hashOperations);
+        when(hashOperations.entries("payment:qr:status:qr-token"))
+                .thenReturn(Map.of(
+                        "status", "SUCCESS",
+                        "userId", "102",
+                        "walletHistoryId", "9001",
+                        "merchantId", "3001",
+                        "merchantName", "아보카도 편의점",
+                        "amount", "12000",
+                        "balanceAfter", "36000"
+                ));
+
+        // when
+        Optional<PaymentQrStatusVo> result = paymentQrTokenRepository.findStatusByToken("qr-token");
+
+        // then
+        assertThat(result).isPresent();
+        assertThat(result.get().getStatus()).isEqualTo(PaymentQrStatus.SUCCESS);
+        assertThat(result.get().getUserId()).isEqualTo(102L);
+        assertThat(result.get().getWalletHistoryId()).isEqualTo(9001L);
+        assertThat(result.get().getMerchantName()).isEqualTo("아보카도 편의점");
+        assertThat(result.get().getBalanceAfter()).isEqualTo(36000L);
+    }
+
+    @Test
+    @DisplayName("저장된 QR 상태가 없으면 빈 결과를 반환한다")
+    void findStatusByToken_notFound() {
+        // given
+        when(stringRedisTemplate.opsForHash()).thenReturn(hashOperations);
+        when(hashOperations.entries("payment:qr:status:missing-token"))
+                .thenReturn(Map.of());
+
+        // when
+        Optional<PaymentQrStatusVo> result = paymentQrTokenRepository.findStatusByToken("missing-token");
+
+        // then
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    @DisplayName("토큰 사용자 역인덱스를 원자적으로 소비하고 사용자 ID를 반환한다")
+    void consumeUserIdByToken_success() {
+        // given
+        when(stringRedisTemplate.execute(
+                org.mockito.ArgumentMatchers.<RedisScript<String>>any(),
+                eq(List.of("payment:qr:token:qr-token")),
+                eq("payment:qr:user:"),
+                eq("qr-token")
+        )).thenReturn("102");
+        when(stringRedisTemplate.opsForZSet()).thenReturn(zSetOperations);
+
+        // when
+        Optional<Long> result = paymentQrTokenRepository.consumeUserIdByToken("qr-token");
+
+        // then
+        assertThat(result).contains(102L);
+        verify(zSetOperations).remove("payment:qr:active-tokens", "qr-token");
+    }
+
+    @Test
+    @DisplayName("소비할 QR 토큰이 없으면 빈 결과를 반환한다")
+    void consumeUserIdByToken_notFound() {
+        // given
+        when(stringRedisTemplate.execute(
+                org.mockito.ArgumentMatchers.<RedisScript<String>>any(),
+                eq(List.of("payment:qr:token:missing-token")),
+                eq("payment:qr:user:"),
+                eq("missing-token")
+        )).thenReturn(null);
+
+        // when
+        Optional<Long> result = paymentQrTokenRepository.consumeUserIdByToken("missing-token");
+
+        // then
+        assertThat(result).isEmpty();
     }
 
     @Test

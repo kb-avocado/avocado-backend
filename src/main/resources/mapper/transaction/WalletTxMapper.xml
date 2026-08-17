@@ -112,16 +112,20 @@
             trace_id,
             transaction_type,
             amount,
+            merchant_id,
             memo,
-            status
+            status,
+            failure_code
         )
         VALUES (
             #{walletId},
             #{traceId},
             #{transactionType},
             #{amount},
+            #{merchantId},
             #{memo},
-            #{status}
+            #{status},
+            #{failureCode}
         )
     </insert>
 

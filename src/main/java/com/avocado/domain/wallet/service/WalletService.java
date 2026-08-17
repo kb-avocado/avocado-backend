@@ -1,5 +1,7 @@
 package com.avocado.domain.wallet.service;
 
+import com.avocado.domain.payment.domain.PaymentRequestedResult;
+import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.domain.wallet.dto.response.WalletResponseDto;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -89,5 +91,15 @@ public interface WalletService {
             Long childId,
             Long amount,
             String traceId
+    );
+
+    /**
+     * POS 결제 요청을 검증하고 선불지갑 잔액과 거래 이력을 반영한다.
+     */
+    PaymentSimulationResult processPosPayment(
+            Long childId,
+            Long merchantId,
+            Long amount,
+            PaymentRequestedResult requestedResult
     );
 }
