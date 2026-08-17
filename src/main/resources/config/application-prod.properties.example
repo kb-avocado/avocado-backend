@@ -1,0 +1,36 @@
+# ==============================
+# MySQL - AWS RDS
+# ==============================
+db.driver=com.mysql.cj.jdbc.Driver
+db.url=jdbc:mysql://RDS_ENDPOINT:3306/avocado?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true
+db.username=
+db.password=
+
+
+# ==============================
+# Redis
+# ==============================
+redis.host=127.0.0.1
+redis.port=6379
+
+
+# ==============================
+# JWT
+# ==============================
+jwt.secret=
+jwt.issuer=avocado
+jwt.access-token-validity=86400000
+jwt.cookie.secure=true
+jwt.cookie.same-site=None
+
+
+# ==============================
+# CORS
+# ==============================
+cors.allowed-origins=https://avocado-kb.vercel.app
+
+
+# ==============================
+# QR
+# ==============================
+payment.qr-token.ttl-seconds=180
