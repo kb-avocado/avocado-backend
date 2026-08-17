@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.avocado.domain.report.mapper.ReportMapper">
+
+    <select id="findWalletIdByChildId" resultType="long">
+        SELECT id
+        FROM wallets
+        WHERE child_id = #{childId}
+    </select>
+
+    <select id="sumSpentAmount" resultType="long">
+        SELECT IFNULL(SUM(amount), 0)
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+          AND transaction_type = 'PAYMENT'
+          AND status = 'SUCCESS'
+          AND DATE_FORMAT(created_at, '%Y-%m') = #{yearMonth}
+    </select>
+
+    <select id="countTransactions" resultType="int">
+        SELECT COUNT(*)
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+          AND transaction_type = 'PAYMENT'
+          AND status = 'SUCCESS'
+          AND DATE_FORMAT(created_at, '%Y-%m') = #{yearMonth}
+    </select>
+
+    <resultMap id="topSpotRowMap" type="com.avocado.domain.report.domain.TopSpotRow">
+        <result property="category" column="category"/>
+        <result property="amount" column="amount"/>
+    </resultMap>
+
+    <select id="findTopSpots" resultMap="topSpotRowMap">
+        SELECT
+            IFNULL(m.name, '기타') AS category,
+            SUM(wh.amount) AS amount
+        FROM wallet_histories wh
+                 LEFT JOIN merchants m ON m.id = wh.merchant_id
+        WHERE wh.wallet_id = #{walletId}
+          AND wh.transaction_type = 'PAYMENT'
+          AND wh.status = 'SUCCESS'
+          AND DATE_FORMAT(wh.created_at, '%Y-%m') = #{yearMonth}
+        GROUP BY IFNULL(m.name, '기타')
+        ORDER BY amount DESC
+        LIMIT #{limit}
+    </select>
+
+    <resultMap id="monthlySpentRowMap" type="com.avocado.domain.report.domain.MonthlySpentRow">
+        <result property="yearMonth" column="ym"/>
+        <result property="amount" column="amount"/>
+    </resultMap>
+
+    <select id="findMonthlySpentList" resultMap="monthlySpentRowMap">
+        SELECT
+        DATE_FORMAT(created_at, '%Y-%m') AS ym,
+        SUM(amount) AS amount
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+        AND transaction_type = 'PAYMENT'
+        AND status = 'SUCCESS'
+        AND DATE_FORMAT(created_at, '%Y-%m') IN
+        <foreach item="ym" collection="months" open="(" separator="," close=")">
+            #{ym}
+        </foreach>
+        GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+    </select>
+
+    <select id="sumSavedAmount" resultType="long">
+        SELECT IFNULL(SUM(pbh.amount), 0)
+        FROM piggy_bank_histories pbh
+                 JOIN piggy_banks pb ON pb.id = pbh.piggy_bank_id
+        WHERE pb.wallet_id = #{walletId}
+          AND pbh.history_type = 'DEPOSIT'
+          AND DATE_FORMAT(pbh.created_at, '%Y-%m') = #{yearMonth}
+    </select>
+
+    <select id="findEarliestTransactionMonth" resultType="string">
+        SELECT DATE_FORMAT(MIN(created_at), '%Y-%m')
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+    </select>
+
+    <!-- 용돈 취소분을 제외한 실수형액, 저축률 분모로 사용-->
+    <select id="sumAllowanceReceived" resultType="long">
+        SELECT IFNULL(SUM(
+            CASE
+                WHEN transaction_type = 'CHARGE' THEN amount
+                WHEN transaction_type = 'CHARGE_CANCLE' THEN -amount
+                ELSE 0
+            END
+        ), 0)
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+            AND transaction_type IN ('CHARGE', 'CHARGE_CANCEL')
+            AND status = 'SUCCESS'
+            AND DATE_FORMAT(created_at, '%Y-%m')
+    </select>
+
+    <!-- 홈 화면 "오늘 사용" 금액. 하루 단위로 집계한다. -->
+    <select id="sumSpentAmountByDate" resultType="long">
+        SELECT IFNULL(SUM(amount), 0)
+        FROM wallet_histories
+        WHERE wallet_id = #{walletId}
+          AND transaction_type = 'PAYMENT'
+          AND status = 'SUCCESS'
+          AND DATE(created_at) = #{date}
+    </select>
+</mapper>

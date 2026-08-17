@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 응원 메세지 (조회, 생성, 삭제) -->
+<mapper namespace="com.avocado.domain.piggybank.mapper.PiggyBankCheerMessageMapper">
+
+    <insert id="insert">
+        INSERT INTO piggy_bank_cheer_messages (piggy_bank_id, parent_id, content)
+        VALUES (#{piggyBankId}, #{parentId}, #{content})
+    </insert>
+
+    <select id="selectLastInsertId" resultType="Long">
+        SELECT LAST_INSERT_ID()
+    </select>
+
+    <select id="selectByPiggyBankId" resultType="com.avocado.domain.piggybank.dto.response.PiggyBankCheerMessageResponseDto">
+        SELECT
+        m.id AS cheerMessageId,
+        u.name AS senderName,
+        m.content AS message,
+        m.created_at AS createdAt
+        FROM piggy_bank_cheer_messages m
+        JOIN users u ON m.parent_id = u.id
+        WHERE m.piggy_bank_id = #{piggyBankId}
+        ORDER BY m.created_at DESC
+    </select>
+
+    <delete id="deleteById">
+        DELETE FROM piggy_bank_cheer_messages
+        WHERE id = #{messageId}
+        AND parent_id = #{parentId}
+    </delete>
+
+</mapper>

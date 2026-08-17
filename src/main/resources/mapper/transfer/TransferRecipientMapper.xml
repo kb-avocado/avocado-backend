@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.avocado.domain.transfer.mapper.TransferRecipientMapper">
+
+    <select id="findByUserCode"
+            resultType="com.avocado.domain.transfer.dto.response.RecipientResponseDto">
+        SELECT
+            'WALLET' AS recipient_type,
+            w.wallet_id AS recipient_id,
+            u.name AS recipient_name,
+            w.wallet_number AS account_number,
+            u.invite_code AS user_code
+        FROM users u
+        JOIN wallets w
+            ON w.child_id = u.user_id
+        WHERE u.invite_code = #{keyword}
+          AND u.status = 'ACTIVE'
+          AND w.status = 'ACTIVE'
+    </select>
+
+    <select id="findByAccountNumber"
+            resultType="com.avocado.domain.transfer.dto.response.RecipientResponseDto">
+        SELECT
+            'WALLET' AS recipient_type,
+            w.wallet_id AS recipient_id,
+            u.name AS recipient_name,
+            w.wallet_number AS account_number,
+            u.invite_code AS user_code
+        FROM wallets w
+        JOIN users u
+            ON u.user_id = w.child_id
+        WHERE w.wallet_number = #{keyword}
+          AND u.status = 'ACTIVE'
+          AND w.status = 'ACTIVE'
+    </select>
+
+    <!-- 아이가 최근 송금한 수취처의 전체 개수를 조회한다. -->
+    <select id="countRecentByChildId"
+            resultType="long">
+
+        SELECT COUNT(*)
+        FROM (
+            SELECT
+                CASE
+                    WHEN wh.counterparty_wallet_id IS NOT NULL
+                        THEN CONCAT('999:', counterparty_wallet.wallet_number)
+                    ELSE CONCAT(wh.target_bank_code, ':', wh.target_account_number)
+                END AS recipient_key
+            FROM wallet_histories wh
+                INNER JOIN wallets sender_wallet
+                    ON sender_wallet.id = wh.wallet_id
+                LEFT JOIN wallets counterparty_wallet
+                    ON counterparty_wallet.id = wh.counterparty_wallet_id
+            WHERE sender_wallet.child_id = #{childId}
+                AND wh.transaction_type = 'TRANSFER_OUT'
+                AND wh.status = 'SUCCESS'
+            GROUP BY recipient_key
+        ) recent
+
+    </select>
+
+    <!-- 아이가 최근 송금한 수취처를 중복 없이 페이지 단위로 조회한다. -->
+    <select id="findRecentByChildId"
+            resultType="com.avocado.domain.transfer.domain.TransferRecipientVo">
+
+        SELECT
+            recent.recipient_name AS recipientName,
+            recent.bank_code AS bankCode,
+            recent.recipient_number AS recipientNumber,
+            recent.created_at AS transferredAt
+        FROM (
+            SELECT
+                wh.id,
+                wh.counterparty_name AS recipient_name,
+                CASE
+                    WHEN wh.counterparty_wallet_id IS NOT NULL
+                        THEN '999'
+                    ELSE wh.target_bank_code
+                END AS bank_code,
+                CASE
+                    WHEN wh.counterparty_wallet_id IS NOT NULL
+                        THEN counterparty_wallet.wallet_number
+                    ELSE wh.target_account_number
+                END AS recipient_number,
+                wh.created_at,
+                ROW_NUMBER() OVER (
+                    PARTITION BY
+                        CASE
+                            WHEN wh.counterparty_wallet_id IS NOT NULL
+                                THEN CONCAT('999:', counterparty_wallet.wallet_number)
+                            ELSE CONCAT(wh.target_bank_code, ':', wh.target_account_number)
+                        END
+                    ORDER BY wh.created_at DESC, wh.id DESC
+                ) AS row_num
+            FROM wallet_histories wh
+                INNER JOIN wallets sender_wallet
+                    ON sender_wallet.id = wh.wallet_id
+                LEFT JOIN wallets counterparty_wallet
+                    ON counterparty_wallet.id = wh.counterparty_wallet_id
+            WHERE sender_wallet.child_id = #{childId}
+                AND wh.transaction_type = 'TRANSFER_OUT'
+                AND wh.status = 'SUCCESS'
+        ) recent
+        WHERE recent.row_num = 1
+        ORDER BY
+            recent.created_at DESC,
+            recent.id DESC
+        LIMIT #{size} OFFSET #{offset}
+
+    </select>
+
+</mapper>

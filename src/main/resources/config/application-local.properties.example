@@ -1,0 +1,37 @@
+# ==============================
+# MySQL
+# ==============================
+db.driver=com.mysql.cj.jdbc.Driver
+db.url=jdbc:mysql://127.0.0.1:3307/avocado?serverTimezone=Asia/Seoul&characterEncoding=UTF-8&useUnicode=true
+db.username=
+db.password=
+
+
+# ==============================
+# Redis
+# ==============================
+redis.host=127.0.0.1
+redis.port=6379
+
+
+# ==============================
+# JWT
+# ==============================
+jwt.secret=
+jwt.issuer=avocado
+jwt.access-token-validity=86400000
+
+jwt.cookie.secure=false
+jwt.cookie.same-site=Lax
+
+
+# ==============================
+# CORS
+# ==============================
+cors.allowed-origins=http://localhost:5173
+
+
+# ==============================
+# QR
+# ==============================
+payment.qr-token.ttl-seconds=180

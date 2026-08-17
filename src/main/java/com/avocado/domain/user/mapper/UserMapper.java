@@ -1,0 +1,164 @@
+package com.avocado.domain.user.mapper;
+
+import com.avocado.domain.user.domain.User;
+import com.avocado.domain.user.domain.UserStatus;
+import com.avocado.domain.user.domain.UserVo;
+import com.avocado.domain.user.dto.response.LoginChildDto;
+import com.avocado.domain.user.dto.response.LoginFamilyDto;
+import com.avocado.domain.user.dto.response.MyPageResponseDto;
+import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * 로그인 응답을 한 번에 구성하기 위해 accounts, wallets, family_relations 조회도 이곳에 둔다.
+ * 각 도메인 매퍼는 다른 담당자의 작업 범위라 수정하지 않는다.
+ */
+public interface UserMapper {
+
+    // 로그인 시 이메일로 회원 조회 (email은 UNIQUE)
+    User selectByEmail(
+            @Param("email") String email
+    );
+
+    // [PARENT] 연동 계좌 ID. 계좌가 여러 개면 먼저 연동한 ACTIVE 계좌를 사용한다.
+    Long selectAccountIdByParentId(
+            @Param("parentId") Long parentId
+    );
+
+    // [PARENT] 가족 관계가 ACTIVE인 아이 목록
+    List<LoginChildDto> selectChildrenByParentId(
+            @Param("parentId") Long parentId
+    );
+
+    // [CHILD] 선불지갑 ID (지갑 상태와 무관하게 조회)
+    Long selectWalletIdByChildId(
+            @Param("childId") Long childId
+    );
+
+    // [CHILD] 연결된 부모 회원 ID
+    Long selectParentIdByChildId(
+            @Param("childId") Long childId
+    );
+
+    // [CHILD] 가족 연결 요청 정보 (PENDING 응답용)
+    LoginFamilyDto selectFamilyByChildId(
+            @Param("childId") Long childId
+    );
+
+    // 회원가입 시 이메일 중복 검사 (email은 UNIQUE)
+    boolean existsByEmail(
+            @Param("email") String email
+    );
+
+    // 회원가입 시 전화번호 중복 검사 (phone은 UNIQUE)
+    boolean existsByPhone(
+            @Param("phone") String phone
+    );
+
+    // [PARENT] 초대 코드 중복 검사 (invite_code는 UNIQUE)
+    boolean existsByInviteCode(
+            @Param("inviteCode") String inviteCode
+    );
+
+    // 조회 대상 자녀 회원이 존재하는지 확인
+    boolean existsChildById(
+            @Param("childId") Long childId
+    );
+
+    // [PARENT] 부모 회원의 계정 상태를 조회한다.
+    UserStatus selectParentStatusById(
+            @Param("userId") Long userId
+    );
+
+    // 회원가입
+    void insertUser(
+            User user
+    );
+
+    // 가족 연결 요청 시 초대 코드로 보호자를 찾는다. (invite_code는 UNIQUE)
+    User selectByInviteCode(
+            @Param("inviteCode") String inviteCode
+    );
+
+    /**
+     * 지금 상태가 fromStatus일 때만 toStatus로 바꾼다.
+     * 가입 직후에는 PENDING이고, 아이는 가족 연결을, 부모는 계좌 등록을 마치면 ACTIVE가 된다.
+     *
+     * @return 바뀐 행 수. 0이면 이미 다른 상태인 계정이다.
+     */
+    int updateStatus(
+            @Param("id") Long id,
+            @Param("fromStatus") UserStatus fromStatus,
+            @Param("toStatus") UserStatus toStatus
+    );
+
+    // 회원 ID로 회원 이름을 조회한다.
+    Optional<String> findNameById(
+            @Param("userId") Long userId
+    );
+
+    /**
+     * [PARENT] 마이페이지에 보여줄 부모 회원 정보. 초대 코드를 함께 내려준다.
+     *
+     * @return 부모 회원의 마이페이지 정보. 회원이 없거나 부모 계정이 아니면 null
+     */
+    MyPageResponseDto selectParentMyPageById(
+            @Param("parentId") Long parentId
+    );
+
+    /**
+     * [CHILD] 마이페이지에 보여줄 아이 회원 정보. 연결된 보호자 정보를 함께 내려준다.
+     * 아직 가족 연결 전이면 보호자 정보만 비어 있다.
+     *
+     * @return 아이 회원의 마이페이지 정보. 회원이 없거나 아이 계정이 아니면 null
+     */
+    MyPageResponseDto selectChildMyPageById(
+            @Param("childId") Long childId
+    );
+
+    /**
+     * 회원 ID로 회원 기본 정보를 조회한다.
+     *
+     * @param userId 조회할 회원 ID
+     * @return 회원 정보. 회원이 없으면 Optional.empty()
+     */
+    Optional<UserVo> findById(
+            @Param("userId") Long userId
+    );
+
+    /**
+     * 회원 ID로 ACTIVE 상태의 회원 정보를 조회한다.
+     *
+     * 회원이 존재하더라도 상태가 PENDING, SUSPENDED, DELETED이면
+     * 조회 결과에 포함하지 않는다.
+     *
+     * @param userId 조회할 회원 ID
+     * @return ACTIVE 상태의 회원 정보.
+     *         회원이 없거나 ACTIVE 상태가 아니면 Optional.empty()
+     */
+    Optional<UserVo> findActiveById(
+            @Param("userId") Long userId
+    );
+
+    /**
+     * 회원이 ACTIVE 상태의 부모 회원인지 확인한다.
+     *
+     * @param parentId 확인할 부모 회원 ID
+     * @return ACTIVE 부모 회원이면 true
+     */
+    boolean existsActiveParentById(
+            @Param("parentId") Long parentId
+    );
+
+    /**
+     * 회원이 ACTIVE 상태의 자녀 회원인지 확인한다.
+     *
+     * @param childId 확인할 자녀 회원 ID
+     * @return ACTIVE 자녀 회원이면 true
+     */
+    boolean existsActiveChildById(
+            @Param("childId") Long childId
+    );
+}

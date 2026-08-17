@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.avocado.domain.news.mapper.NewsArticleMapper">
+
+    <resultMap id="newsArticleResultMap" type="com.avocado.domain.news.domain.NewsArticle">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="subtitle" column="subtitle"/>
+        <result property="link" column="link"/>
+        <result property="todayChallenge" column="today_challenge"/>
+        <result property="publishedAt" column="published_at"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <!--
+        completed 필터링을 위해 news_activities를 LEFT JOIN한다.
+        - completed = null  → 전체 (조건 없음)
+        - completed = true  → na.completed_at IS NOT NULL (활동완료)
+        - completed = false → na.completed_at IS NULL (진행중/미완료)
+        LEFT JOIN 조건에 child_id를 함께 걸어야, 해당 아이의 활동 기록이 없는 기사(activity 자체가 없는 경우)도
+        "진행중"으로 정상 집계된다.
+    -->
+    <select id="findList" resultMap="newsArticleResultMap">
+        SELECT a.id, a.title, a.subtitle, a.link, a.today_challenge, a.published_at, a.created_at
+        FROM news_articles a
+        LEFT JOIN news_activities na
+        ON na.article_id = a.id AND na.child_id = #{childId}
+        <where>
+            <if test="completed != null and completed">
+                AND na.completed_at IS NOT NULL
+            </if>
+            <if test="completed != null and !completed">
+                AND na.completed_at IS NULL
+            </if>
+        </where>
+        ORDER BY a.published_at DESC, a.id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countAll" resultType="long">
+        SELECT COUNT(*)
+        FROM news_articles a
+        LEFT JOIN news_activities na
+        ON na.article_id = a.id AND na.child_id = #{childId}
+        <where>
+            <if test="completed != null and completed">
+                AND na.completed_at IS NOT NULL
+            </if>
+            <if test="completed != null and !completed">
+                AND na.completed_at IS NULL
+            </if>
+        </where>
+    </select>
+
+    <select id="findById" resultMap="newsArticleResultMap">
+        SELECT id, title, subtitle, link, today_challenge, published_at, created_at
+        FROM news_articles
+        WHERE id = #{id}
+    </select>
+
+    <select id="existsByLink" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM news_articles WHERE link = #{link}
+        )
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO news_articles (title, subtitle, link, today_challenge, published_at, created_at)
+        VALUES (#{title}, #{subtitle}, #{link}, #{todayChallenge}, #{publishedAt}, #{createdAt})
+    </insert>
+
+    <!-- childId에 해당하는 회원이 자녀(CHILD) 유형으로 존재하는지 확인한다. -->
+    <select id="existsChildById" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM users
+            WHERE id = #{childId}
+              AND user_type = 'CHILD'
+        )
+    </select>
+
+    <!-- 로그인한 보호자와 조회 대상 자녀 사이에 활성 가족 관계가 있는지 확인한다. -->
+    <select id="existsActiveFamilyRelation" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM family_relations
+            WHERE parent_id = #{parentId}
+              AND child_id = #{childId}
+              AND status = 'ACTIVE'
+        )
+    </select>
+
+</mapper>

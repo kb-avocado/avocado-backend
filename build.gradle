@@ -46,6 +46,13 @@ ext {
     junitVersion = '5.10.3'
     assertjVersion = '3.26.3'
     mockitoVersion = '5.12.0'
+
+    // JWT
+    jjwtVersion = '0.12.6'
+
+    // Redis
+    springDataRedisVersion = '2.7.18'
+    lettuceVersion = '6.2.7.RELEASE'
 }
 
 java {
@@ -77,6 +84,7 @@ dependencies {
 
     // Servlet API
     compileOnly 'javax.servlet:javax.servlet-api:4.0.1'
+    testImplementation 'javax.servlet:javax.servlet-api:4.0.1'
 
     // Java standard annotations
     implementation 'javax.inject:javax.inject:1'
@@ -127,8 +135,26 @@ dependencies {
     testRuntimeOnly "org.junit.platform:junit-platform-launcher"
     testImplementation "org.assertj:assertj-core:${assertjVersion}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockitoVersion}"
+
+    // JWT
+    implementation "io.jsonwebtoken:jjwt-api:${jjwtVersion}"
+    implementation "io.jsonwebtoken:jjwt-impl:${jjwtVersion}"
+    implementation "io.jsonwebtoken:jjwt-jackson:${jjwtVersion}"
+
+    // Redis
+    implementation "org.springframework.data:spring-data-redis:${springDataRedisVersion}"
+    implementation "io.lettuce:lettuce-core:${lettuceVersion}"
+
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('processResources') {
+    // 운영 배포용 빌드에서만 로컬 설정 파일을 제외한다.
+    if (project.hasProperty('prod')) {
+        exclude 'config/application-local.properties'
+        exclude 'config/*.example'
+    }
 }

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.avocado.domain.wallet.mapper.WalletMapper">
+
+    <!-- 사용자 ID로 해당 자녀가 보유한 선불지갑 ID를 조회한다. -->
+    <select id="findWalletIdByUserId" resultType="long">
+        SELECT
+            id
+        FROM wallets
+        WHERE child_id = #{userId}
+    </select>
+
+    <!-- childId 기준으로 자녀의 선불지갑 단건 정보를 조회한다. -->
+    <select id="findByChildId"
+            resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id      AS childId,
+            wallet_number AS walletNumber,
+            balance,
+            status,
+            created_at    AS createdAt,
+            updated_at    AS updatedAt
+        FROM wallets
+        WHERE child_id = #{childId}
+    </select>
+
+    <!--
+        해당 선불지갑이 실제 자녀 소유이며 ACTIVE 상태인지 확인한다.
+        지갑 ID, 자녀 ID, 지갑 상태가 모두 일치하는 경우에만 true를 반환한다.
+    -->
+    <select id="existsActiveByIdAndChildId"
+            resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM wallets
+            WHERE id = #{walletId}
+                AND child_id = #{childId}
+                AND status = 'ACTIVE'
+        )
+    </select>
+
+    <!-- 아이 회원이 이미 선불지갑을 보유하고 있는지 확인한다. -->
+    <select id="existsByChildId"
+            resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM wallets
+            WHERE child_id = #{childId}
+        )
+    </select>
+
+    <!-- 동일한 지갑 계좌번호가 존재하는지 확인한다. -->
+    <select id="existsByWalletNumber"
+            resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM wallets
+            WHERE wallet_number = #{walletNumber}
+        )
+    </select>
+
+    <!-- 아이 회원의 선불지갑을 생성한다. -->
+    <insert id="insert"
+            parameterType="com.avocado.domain.wallet.domain.WalletVo"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO wallets (
+            child_id,
+            wallet_number,
+            balance,
+            status
+        ) VALUES (
+            #{childId},
+            #{walletNumber},
+            #{balance},
+            #{status}
+        )
+    </insert>
+
+    <!-- 자녀 회원 ID로 ACTIVE 상태의 선불지갑을 조회한다. -->
+    <select id="findActiveByChildId"
+            resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id      AS childId,
+            wallet_number AS walletNumber,
+            balance,
+            status,
+            created_at    AS createdAt,
+            updated_at    AS updatedAt
+        FROM wallets
+        WHERE child_id = #{childId}
+            AND status = 'ACTIVE'
+    </select>
+
+    <!--
+        ACTIVE 상태의 아이 선불지갑 잔액을 증가시킨다.
+        조건에 맞는 지갑이 없으면 변경된 행 수는 0이다.
+    -->
+    <update id="increaseBalance">
+        UPDATE wallets
+        SET balance = balance + #{amount}
+        WHERE id = #{walletId}
+            AND status = 'ACTIVE'
+    </update>
+
+    <!--
+        ACTIVE 상태의 아이 선불지갑 잔액을 감소시킨다.
+        현재 잔액이 출금 금액 이상인 경우에만 잔액을 변경한다.
+    -->
+    <update id="decreaseBalance">
+        UPDATE wallets
+        SET balance = balance - #{amount}
+        WHERE id = #{walletId}
+            AND status = 'ACTIVE'
+            AND balance >= #{amount}
+    </update>
+
+    <!--
+        해당 자녀가 실제 소유한 선불지갑을 잠금 조회한다.
+        SELECT ... FOR UPDATE를 사용해 같은 지갑의 동시 잔액 변경을 방지한다.
+    -->
+    <select id="findForUpdateByChildId"
+            resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id      AS childId,
+            wallet_number AS walletNumber,
+            balance,
+            status
+        FROM wallets
+        WHERE child_id = #{childId}
+        FOR UPDATE
+    </select>
+
+</mapper>

@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.avocado.domain.user.mapper.UserMapper">
+
+    <sql id="userColumns">
+        id,
+        email,
+        password,
+        name,
+        phone,
+        birth,
+        user_type,
+        role,
+        status,
+        invite_code,
+        created_at,
+        updated_at
+    </sql>
+
+    <select id="selectByEmail" resultType="com.avocado.domain.user.domain.User">
+        SELECT <include refid="userColumns"/>
+          FROM users
+         WHERE email = #{email}
+    </select>
+
+    <!-- 가족 연결 요청에서 초대 코드로 보호자를 찾는다. invite_code도 UNIQUE -->
+    <select id="selectByInviteCode" resultType="com.avocado.domain.user.domain.User">
+        SELECT <include refid="userColumns"/>
+          FROM users
+         WHERE invite_code = #{inviteCode}
+    </select>
+
+    <!-- 계좌가 여러 개일 수 있어 먼저 연동한 ACTIVE 계좌 하나를 대표로 사용한다. -->
+    <select id="selectAccountIdByParentId" resultType="java.lang.Long">
+        SELECT id
+          FROM accounts
+         WHERE user_id = #{parentId}
+           AND status = 'ACTIVE'
+         ORDER BY id
+         LIMIT 1
+    </select>
+
+    <!--
+        연결이 확정된(ACTIVE) 아이만 내려준다. 연결 대기 중인 아이는 목록에 포함하지 않는다.
+        status는 가족 관계 상태가 아니라 아이 계정 자체의 상태(users.status)다.
+        지갑이 아직 없을 수 있어 LEFT JOIN 한다.
+    -->
+    <select id="selectChildrenByParentId" resultType="com.avocado.domain.user.dto.response.LoginChildDto">
+        SELECT u.id     AS id,
+               u.name   AS name,
+               u.status AS status,
+               w.id     AS walletId
+          FROM family_relations fr
+          JOIN users u
+            ON u.id = fr.child_id
+          LEFT JOIN wallets w
+            ON w.child_id = u.id
+         WHERE fr.parent_id = #{parentId}
+           AND fr.status = 'ACTIVE'
+         ORDER BY u.id
+    </select>
+
+    <!-- 지갑 상태(SUSPENDED, CLOSED)와 무관하게 내려준다. 정지 안내는 프론트에서 처리한다. -->
+    <select id="selectWalletIdByChildId" resultType="java.lang.Long">
+        SELECT id
+          FROM wallets
+         WHERE child_id = #{childId}
+    </select>
+
+    <select id="selectParentIdByChildId" resultType="java.lang.Long">
+        SELECT parent_id
+          FROM family_relations
+         WHERE child_id = #{childId}
+           AND status = 'ACTIVE'
+         ORDER BY id
+         LIMIT 1
+    </select>
+
+    <!-- 요청이 여러 번 있었다면 가장 최근 요청을 기준으로 한다. -->
+    <select id="selectFamilyByChildId" resultType="com.avocado.domain.user.dto.response.LoginFamilyDto">
+        SELECT status AS status,
+               id     AS requestId
+          FROM family_relations
+         WHERE child_id = #{childId}
+         ORDER BY id DESC
+         LIMIT 1
+    </select>
+
+    <select id="existsByEmail" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+              FROM users
+             WHERE email = #{email}
+        )
+    </select>
+
+    <select id="existsByPhone" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+              FROM users
+             WHERE phone = #{phone}
+        )
+    </select>
+
+    <select id="existsByInviteCode" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+              FROM users
+             WHERE invite_code = #{inviteCode}
+        )
+    </select>
+
+    <!-- childId에 해당하는 회원이 자녀(CHILD) 유형으로 존재하는지 확인한다. -->
+    <select id="existsChildById" resultType="boolean">
+        SELECT EXISTS(
+        SELECT 1
+        FROM users
+        WHERE id = #{childId}
+        AND user_type = 'CHILD'
+        )
+    </select>
+
+    <!--
+        지금 상태가 fromStatus일 때만 바꾼다.
+        아이는 가족 연결을, 부모는 계좌 등록을 마치면 PENDING에서 ACTIVE가 된다.
+    -->
+    <update id="updateStatus">
+        UPDATE users
+           SET status = #{toStatus}
+         WHERE id = #{id}
+           AND status = #{fromStatus}
+    </update>
+
+    <!--
+        role, status, invite_code는 DB 기본값이 있지만 가입 정책을 코드에서 드러내기 위해 명시한다. (수정하기)
+        created_at, updated_at은 DB 기본값을 그대로 사용한다.
+    -->
+    <insert id="insertUser" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO users (
+            email,
+            password,
+            name,
+            phone,
+            birth,
+            user_type,
+            role,
+            status,
+            invite_code
+        ) VALUES (
+            #{email},
+            #{password},
+            #{name},
+            #{phone},
+            #{birth},
+            #{userType},
+            #{role},
+            #{status},
+            #{inviteCode}
+        )
+    </insert>
+
+    <!--
+        부모 계정의 상태를 반환한다. 부모 계정이 아니면 결과가 없어 null이 된다.
+    -->
+    <select id="selectParentStatusById" resultType="com.avocado.domain.user.domain.UserStatus">
+        SELECT status
+          FROM users
+         WHERE id = #{userId}
+           AND role = 'USER'
+           AND user_type = 'PARENT'
+    </select>
+
+    <!--  회원 ID로 회원 이름을 조회한다.  -->
+    <select id="findNameById" resultType="string">
+        SELECT name
+        FROM users
+        WHERE id = #{userId}
+    </select>
+
+    <!--
+        마이페이지(부모). 초대 코드는 가입 때 부모에게만 발급되므로 같은 행에서 함께 읽는다.
+        타입까지 조건에 넣어, 토큰의 타입이 실제 계정과 다르면 결과가 없도록 한다.
+    -->
+    <select id="selectParentMyPageById" resultType="com.avocado.domain.user.dto.response.MyPageResponseDto">
+        SELECT id          AS userId,
+               name        AS name,
+               email       AS email,
+               user_type   AS type,
+               invite_code AS inviteCode
+          FROM users
+         WHERE id = #{parentId}
+           AND user_type = 'PARENT'
+    </select>
+
+    <!--
+        마이페이지(아이). 연결이 확정된(ACTIVE) 보호자만 함께 내려준다.
+    -->
+    <select id="selectChildMyPageById" resultType="com.avocado.domain.user.dto.response.MyPageResponseDto">
+        SELECT c.id        AS userId,
+               c.name      AS name,
+               c.email     AS email,
+               c.user_type AS type,
+               p.name      AS parentName,
+               p.email     AS parentEmail
+          FROM users c
+          LEFT JOIN family_relations fr
+            ON fr.child_id = c.id
+           AND fr.status = 'ACTIVE'
+          LEFT JOIN users p
+            ON p.id = fr.parent_id
+         WHERE c.id = #{childId}
+           AND c.user_type = 'CHILD'
+         ORDER BY fr.id
+         LIMIT 1
+    </select>
+
+    <!--
+        회원 ID로 회원 기본 정보를 조회한다.
+        회원 상태와 관계없이 조회하며,
+        회원이 존재하지 않으면 조회 결과가 없다.
+    -->
+    <select id="findById" resultType="com.avocado.domain.user.domain.UserVo">
+        SELECT
+            id,
+            name,
+            user_type,
+            role,
+            status
+        FROM users
+        WHERE id = #{userId}
+    </select>
+
+    <!--
+        회원 ID로 ACTIVE 상태의 회원 기본 정보를 조회한다.
+        회원이 존재하더라도 상태가 ACTIVE가 아니면 조회 결과가 없다.
+    -->
+    <select id="findActiveById" resultType="com.avocado.domain.user.domain.UserVo">
+        SELECT
+            id,
+            name,
+            user_type,
+            role,
+            status
+        FROM users
+        WHERE id = #{userId}
+            AND status = 'ACTIVE'
+    </select>
+
+    <!-- 회원이 ACTIVE 상태의 부모 회원인지 확인한다. -->
+    <select id="existsActiveParentById" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM users
+            WHERE id = #{parentId}
+                AND role = 'USER'
+                AND user_type = 'PARENT'
+                AND status = 'ACTIVE'
+        )
+    </select>
+
+    <!-- 회원이 ACTIVE 상태의 자녀 회원인지 확인한다. -->
+    <select id="existsActiveChildById" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM users
+            WHERE id = #{childId}
+                AND role = 'USER'
+                AND user_type = 'CHILD'
+                AND status = 'ACTIVE'
+        )
+    </select>
+
+</mapper>
