@@ -1,11 +1,14 @@
 -- ============================================================
--- MySQL 8.0.16 이상
+-- V1__init_schema.sql
+--
+-- Avocado 서비스 초기 스키마
+-- 대상 DBMS: MySQL 8.4 이상
 -- 금액 단위: 원(KRW)
 --
 -- 프로젝트 정책
--- 1. 부분 환불 없이 전체 취소만 지원
--- 2. 원거래와 취소 거래는 동일한 trace_id 사용
--- 3. QR 결제 토큰과 리프레시 토큰은 Redis에서 관리
+-- 1. 부분 환불 없이 전체 취소만 지원한다.
+-- 2. 원거래와 취소 거래는 동일한 trace_id를 사용한다.
+-- 3. QR 결제 토큰과 리프레시 토큰은 Redis에서 관리한다.
 -- ============================================================
 
 
@@ -24,17 +27,19 @@ CREATE TABLE users
 
     name        VARCHAR(50)  NOT NULL COMMENT '회원 이름',
 
-    phone       VARCHAR(20)  NOT NULL UNIQUE COMMENT '휴대전화 번호',
+    phone       VARCHAR(20)  NOT NULL UNIQUE COMMENT '010으로 시작하는 11자리 휴대전화 번호',
 
     birth       DATE         NOT NULL COMMENT '생년월일',
 
     role        VARCHAR(10)  NOT NULL DEFAULT 'USER' COMMENT '계정 권한: USER, ADMIN',
 
-    user_type   VARCHAR(10) COMMENT '일반 회원 유형: PARENT, CHILD. 관리자는 NULL',
+    user_type   VARCHAR(10) NULL
+        COMMENT '일반 회원 유형: PARENT, CHILD. 관리자는 NULL',
 
-    status      VARCHAR(20)  NOT NULL DEFAULT 'ACTIVE' COMMENT '회원 상태: PENDING, ACTIVE, SUSPENDED, DELETED',
+    status      VARCHAR(20)  NOT NULL DEFAULT 'PENDING' COMMENT '회원 상태: PENDING, ACTIVE, SUSPENDED, DELETED',
 
-    invite_code VARCHAR(20) UNIQUE COMMENT '부모 회원의 가족 초대 코드. 아이와 관리자는 NULL',
+    invite_code VARCHAR(20) NULL UNIQUE
+        COMMENT '부모 회원의 가족 초대 코드. 아이와 관리자는 NULL',
 
     created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -93,8 +98,13 @@ CREATE TABLE users
                 role = 'ADMIN'
                     AND invite_code IS NULL
                 )
-            )
-) ENGINE=InnoDB
+            ),
+
+    CONSTRAINT chk_user_phone
+        CHECK (
+            phone REGEXP '^010[0-9]{8}$'
+)
+    ) ENGINE=InnoDB
 DEFAULT CHARSET=utf8mb4
 COMMENT='서비스 사용자 및 관리자 계정 마스터';
 
@@ -110,7 +120,7 @@ CREATE TABLE family_relations
     relation_type VARCHAR(20) NULL
         COMMENT '가족 관계 유형',
 
-    status        VARCHAR(20) NOT NULL DEFAULT 'ACTIVE' COMMENT 'PENDING, ACTIVE, REJECTED, TERMINATED',
+    status        VARCHAR(20) NOT NULL DEFAULT 'PENDING' COMMENT '가족 관계 상태: PENDING, APPROVED, REJECTED, CANCELED, ACTIVE',
 
     created_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
@@ -142,9 +152,10 @@ CREATE TABLE family_relations
         CHECK (
             status IN (
                        'PENDING',
-                       'ACTIVE',
+                       'APPROVED',
                        'REJECTED',
-                       'TERMINATED'
+                       'CANCELED',
+                       'ACTIVE'
                 )
             )
 ) ENGINE=InnoDB
@@ -437,10 +448,6 @@ DEFAULT CHARSET=utf8mb4
 COMMENT='아이 선불 전자지갑';
 
 
--- ==========================================
--- 4-1. 지갑별 정책
--- ==========================================
-
 CREATE TABLE wallet_policies
 (
     id                        BIGINT AUTO_INCREMENT PRIMARY KEY
@@ -487,10 +494,6 @@ DEFAULT CHARSET=utf8mb4
 COMMENT='아이 선불지갑 개별 정책';
 
 
--- ==========================================
--- 4-2. 지갑 거래 이벤트 이력
--- ==========================================
-
 CREATE TABLE wallet_histories
 (
     id                     BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -499,17 +502,7 @@ CREATE TABLE wallet_histories
 
     trace_id               VARCHAR(50) NOT NULL COMMENT '동일 업무 흐름을 연결하는 추적 ID',
 
-    transaction_type       VARCHAR(30) NOT NULL COMMENT '
-        CHARGE,
-        CHARGE_CANCEL,
-        PAYMENT,
-        PAYMENT_CANCEL,
-        TRANSFER_OUT,
-        TRANSFER_IN,
-        TRANSFER_CANCEL_OUT,
-        TRANSFER_CANCEL_IN,
-        PIGGY_BANK_DEPOSIT,
-        PIGGY_BANK_WITHDRAWAL',
+    transaction_type       VARCHAR(30) NOT NULL COMMENT '지갑 거래 유형',
 
     amount                 BIGINT      NOT NULL COMMENT '거래 금액',
 
@@ -699,10 +692,6 @@ DEFAULT CHARSET=utf8mb4
 COMMENT='아이 지갑 거래 이벤트 이력';
 
 
--- ==========================================
--- 4-3. 지갑 잔액 변동 원장
--- ==========================================
-
 CREATE TABLE wallet_ledgers
 (
     id             BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -783,6 +772,9 @@ CREATE TABLE piggy_banks
 
     name               VARCHAR(50) NOT NULL COMMENT '저금통 이름',
 
+    icon               VARCHAR(20) NULL
+        COMMENT '저금통 대표 아이콘(이모지)',
+
     target_amount      BIGINT      NOT NULL COMMENT '저금통 목표 금액',
 
     balance            BIGINT      NOT NULL DEFAULT 0 COMMENT '현재 저금통 잔액',
@@ -793,16 +785,19 @@ CREATE TABLE piggy_banks
 
     is_favorite        BOOLEAN     NOT NULL DEFAULT FALSE COMMENT '즐겨찾기 여부',
 
-    status             VARCHAR(30) NOT NULL DEFAULT 'ACTIVE' COMMENT '상태: ACTIVE(진행중), PENDING_ACHIEVE(목표달성 7일 대기중), ACHIEVE(최종달성), CANCEL(해지/취소)',
+    status             VARCHAR(30) NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE, PENDING_ACHIEVE, ACHIEVE, CANCEL',
 
     first_deposited_at DATETIME NULL
         COMMENT '최초 입금 일시',
 
     target_reached_at  DATETIME NULL
-        COMMENT '목표 금액 도달 일시 (필수 유지 기간 7일 시작점)',
+        COMMENT '목표 금액 도달 일시',
 
     achieved_at        DATETIME NULL
-        COMMENT '필수 유지 기간 7일을 모두 만족하여 최종 목표 달성된 일시',
+        COMMENT '최종 목표 달성 일시',
+
+    bonus_paid_at      DATETIME NULL
+        COMMENT '목표 달성 보너스가 실제 지급된 일시',
 
     canceled_at        DATETIME NULL
         COMMENT '저금통 해지/취소 일시',
@@ -860,7 +855,6 @@ CREATE TABLE piggy_banks
                 )
             ),
 
-    -- PENDING_ACHIEVE 상태일 때 목표 도달 시간 필수 검증
     CONSTRAINT chk_piggy_pending_achieve_at
         CHECK (
             (
@@ -871,7 +865,6 @@ CREATE TABLE piggy_banks
             status <> 'PENDING_ACHIEVE'
             ),
 
-    -- ACHIEVE 상태일 때 목표 도달 시간과 최종 달성 시간 필수 검증
     CONSTRAINT chk_piggy_achieved_at
         CHECK (
             (
@@ -886,7 +879,6 @@ CREATE TABLE piggy_banks
                 )
             ),
 
-    -- CANCEL 상태일 때 해지 시간 필수 검증
     CONSTRAINT chk_piggy_canceled_at
         CHECK (
             (
@@ -897,6 +889,17 @@ CREATE TABLE piggy_banks
             (
                 status <> 'CANCEL'
                     AND canceled_at IS NULL
+                )
+            ),
+
+    CONSTRAINT chk_piggy_bonus_paid_at
+        CHECK (
+            bonus_paid_at IS NULL
+                OR (
+                status = 'ACHIEVE'
+                    AND bonus_type <> 'NONE'
+                    AND achieved_at IS NOT NULL
+                    AND bonus_paid_at >= achieved_at
                 )
             )
 ) ENGINE=InnoDB
@@ -1072,37 +1075,24 @@ COMMENT='아이 경제 신문 활동 이력';
 
 CREATE TABLE notifications
 (
-    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
 
-    user_id      BIGINT       NOT NULL COMMENT '알림을 받을 회원 ID',
+    receiver_id BIGINT       NOT NULL COMMENT '알림 수신 사용자 ID',
 
-    notify_type  VARCHAR(30)  NOT NULL COMMENT '알림 유형: WALLET, PIGGY_BANK, NEWS, SYSTEM',
+    type        VARCHAR(50)  NOT NULL COMMENT '알림 유형',
 
-    title        VARCHAR(100) NOT NULL COMMENT '알림 제목',
+    title       VARCHAR(100) NOT NULL COMMENT '알림 제목',
 
-    content      VARCHAR(255) NOT NULL COMMENT '알림 상세 내용',
+    message     VARCHAR(500) NOT NULL COMMENT '알림 내용',
 
-    is_read      BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '알림 열람 여부',
+    is_read     BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '알림 열람 여부',
 
-    reference_id BIGINT NULL
-        COMMENT '이동 대상 도메인의 ID',
+    created_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_notification_user
-        FOREIGN KEY (user_id)
+    CONSTRAINT fk_notifications_receiver
+        FOREIGN KEY (receiver_id)
             REFERENCES users (id)
             ON DELETE CASCADE,
-
-    CONSTRAINT chk_notification_type
-        CHECK (
-            notify_type IN (
-                            'WALLET',
-                            'PIGGY_BANK',
-                            'NEWS',
-                            'SYSTEM'
-                )
-            ),
 
     CONSTRAINT chk_notification_read
         CHECK (
@@ -1114,16 +1104,120 @@ COMMENT='사용자 앱 내 알림 이력';
 
 
 -- ==========================================
--- 8. 성능 최적화 및 조회 인덱스
+-- 8. 소비 리포트 도메인
 -- ==========================================
 
--- 계좌 거래 추적
+CREATE TABLE spending_report_types
+(
+    id          BIGINT AUTO_INCREMENT PRIMARY KEY,
+
+    code        VARCHAR(50) NOT NULL UNIQUE COMMENT '소비 리포트 유형 코드',
+
+    name        VARCHAR(50) NOT NULL COMMENT '소비 리포트 유형 이름',
+
+    description VARCHAR(255) NULL
+        COMMENT '소비 리포트 유형 설명',
+
+    created_at  DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '생성 일시'
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COMMENT='소비 리포트 유형 마스터';
+
+
+CREATE TABLE child_spending_reports
+(
+    id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
+
+    child_id           BIGINT        NOT NULL COMMENT '아이 회원 ID',
+
+    report_type_id     BIGINT        NOT NULL COMMENT '판정된 소비 리포트 유형 ID',
+
+    report_year        INT           NOT NULL COMMENT '리포트 대상 연도',
+
+    report_month       INT           NOT NULL COMMENT '리포트 대상 월',
+
+    total_spent        BIGINT        NOT NULL DEFAULT 0 COMMENT '해당 월 소비 총금액',
+
+    transaction_count  INT           NOT NULL DEFAULT 0 COMMENT '해당 월 결제 건수',
+
+    top_spots          JSON NULL
+        COMMENT '해당 월 가맹점 소비 TOP 5 JSON 배열',
+
+    total_saved        BIGINT        NOT NULL DEFAULT 0 COMMENT '해당 월 저금통 저축 합계',
+
+    allowance_received BIGINT        NOT NULL DEFAULT 0 COMMENT '해당 월 순수령 용돈',
+
+    saving_rate        DECIMAL(5, 2) NOT NULL DEFAULT 0.00 COMMENT '해당 월 저축률(%)',
+
+    advice             VARCHAR(500) NULL
+        COMMENT '아이의 월간 소비 패턴에 따른 조언',
+
+    created_at         DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '리포트 생성 일시',
+
+    updated_at         DATETIME      NOT NULL
+                                              DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        COMMENT '리포트 마지막 갱신 일시',
+
+    CONSTRAINT fk_spending_report_child
+        FOREIGN KEY (child_id)
+            REFERENCES users (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT fk_spending_report_type
+        FOREIGN KEY (report_type_id)
+            REFERENCES spending_report_types (id)
+            ON DELETE RESTRICT,
+
+    CONSTRAINT uk_child_report_month
+        UNIQUE (
+                child_id,
+                report_year,
+                report_month
+            ),
+
+    CONSTRAINT chk_report_month
+        CHECK (
+            report_month BETWEEN 1 AND 12
+            ),
+
+    CONSTRAINT chk_spending_report_total_spent
+        CHECK (
+            total_spent >= 0
+            ),
+
+    CONSTRAINT chk_spending_report_transaction_count
+        CHECK (
+            transaction_count >= 0
+            ),
+
+    CONSTRAINT chk_spending_report_total_saved
+        CHECK (
+            total_saved >= 0
+            ),
+
+    CONSTRAINT chk_spending_report_allowance_received
+        CHECK (
+            allowance_received >= 0
+            ),
+
+    CONSTRAINT chk_spending_report_saving_rate
+        CHECK (
+            saving_rate BETWEEN 0 AND 100
+            )
+) ENGINE=InnoDB
+DEFAULT CHARSET=utf8mb4
+COMMENT='아이별 월간 소비 리포트';
+
+
+-- ==========================================
+-- 9. 성능 최적화 및 조회 인덱스
+-- ==========================================
+
 CREATE INDEX idx_account_history_trace
     ON account_histories (
                           trace_id
         );
 
--- 계좌 최근 거래 조회
 CREATE INDEX idx_account_history_time
     ON account_histories (
                           account_id,
@@ -1131,7 +1225,6 @@ CREATE INDEX idx_account_history_time
                           id DESC
         );
 
--- 계좌 원장 조회
 CREATE INDEX idx_account_ledger_time
     ON account_ledgers (
                         account_id,
@@ -1140,13 +1233,11 @@ CREATE INDEX idx_account_ledger_time
         );
 
 
--- 지갑 거래 추적
 CREATE INDEX idx_wallet_history_trace
     ON wallet_histories (
                          trace_id
         );
 
--- 지갑 최근 거래 조회
 CREATE INDEX idx_wallet_history_time
     ON wallet_histories (
                          wallet_id,
@@ -1154,7 +1245,6 @@ CREATE INDEX idx_wallet_history_time
                          id DESC
         );
 
--- 지갑 원장 조회
 CREATE INDEX idx_wallet_ledger_time
     ON wallet_ledgers (
                        wallet_id,
@@ -1162,7 +1252,6 @@ CREATE INDEX idx_wallet_ledger_time
                        id DESC
         );
 
--- 결제 및 송금 일·월 누적 한도 조회
 CREATE INDEX idx_wallet_history_limit
     ON wallet_histories (
                          wallet_id,
@@ -1171,14 +1260,12 @@ CREATE INDEX idx_wallet_history_limit
                          created_at
         );
 
--- 내부 송금 상대방 조회
 CREATE INDEX idx_wallet_history_counterparty
     ON wallet_histories (
                          counterparty_wallet_id,
                          created_at DESC
         );
 
--- 타행 송금 내역 조회
 CREATE INDEX idx_wallet_history_external
     ON wallet_histories (
                          target_bank_code,
@@ -1187,14 +1274,12 @@ CREATE INDEX idx_wallet_history_external
         );
 
 
--- 지갑별 저금통 상태 조회
 CREATE INDEX idx_piggy_bank_status
     ON piggy_banks (
                     wallet_id,
                     status
         );
 
--- 즐겨찾기 저금통 조회
 CREATE INDEX idx_piggy_bank_favorite
     ON piggy_banks (
                     wallet_id,
@@ -1202,13 +1287,11 @@ CREATE INDEX idx_piggy_bank_favorite
                     updated_at DESC
         );
 
--- 저금통 거래 추적
 CREATE INDEX idx_piggy_history_trace
     ON piggy_bank_histories (
                              trace_id
         );
 
--- 저금통 최근 거래 조회
 CREATE INDEX idx_piggy_history_time
     ON piggy_bank_histories (
                              piggy_bank_id,
@@ -1217,14 +1300,12 @@ CREATE INDEX idx_piggy_history_time
         );
 
 
--- 아이 경제 활동 조회
 CREATE INDEX idx_activity_child_time
     ON news_activities (
                         child_id,
                         viewed_at DESC
         );
 
--- 완료한 경제 활동 조회
 CREATE INDEX idx_activity_child_completed
     ON news_activities (
                         child_id,
@@ -1232,18 +1313,16 @@ CREATE INDEX idx_activity_child_completed
         );
 
 
--- 사용자 최근 알림 조회
-CREATE INDEX idx_notification_user_time
+CREATE INDEX idx_notification_receiver_time
     ON notifications (
-                      user_id,
+                      receiver_id,
                       created_at DESC,
                       id DESC
         );
 
--- 사용자 미열람 알림 조회
-CREATE INDEX idx_notification_user_read
+CREATE INDEX idx_notification_receiver_read
     ON notifications (
-                      user_id,
+                      receiver_id,
                       is_read,
                       created_at DESC
         );
