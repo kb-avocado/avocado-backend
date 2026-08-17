@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Builder
 @AllArgsConstructor
@@ -17,7 +19,8 @@ public class PiggyBankResponseDto {
     private final Boolean favorite;   // 즐겨찾기 여부
     private final Long savedAmount;   // 현재 모은 금액 (DB balance)
     private final Long targetAmount;  // 목표 금액
-    private final Integer progressRate; // 달성률(%) - 서비스에서 계산
+    private final Integer progressRate;
+    private final LocalDateTime firstDepositedAt;// 달성률(%) - 서비스에서 계산
     private final BonusDto bonus;
 
     @Getter

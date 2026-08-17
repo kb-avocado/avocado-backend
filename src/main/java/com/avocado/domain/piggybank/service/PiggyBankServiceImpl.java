@@ -84,6 +84,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .savedAmount(saved)
                 .targetAmount(target)
                 .progressRate(rate)
+                .firstDepositedAt(p.getFirstDepositedAt())
                 .bonus(toBonusDto(p)) // 추가
                 .build();
     }
