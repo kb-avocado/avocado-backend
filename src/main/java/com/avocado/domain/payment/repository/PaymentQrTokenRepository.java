@@ -56,6 +56,20 @@ public class PaymentQrTokenRepository {
             """,
             String.class
     );
+    private static final RedisScript<Long> DELETE_CURRENT_TOKEN_SCRIPT = new DefaultRedisScript<>(
+            """
+            local currentToken = redis.call('GET', KEYS[1])
+            if currentToken ~= ARGV[1] then
+                return 0
+            end
+
+            redis.call('DEL', KEYS[1])
+            redis.call('DEL', KEYS[2])
+            redis.call('ZREM', KEYS[3], ARGV[1])
+            return 1
+            """,
+            Long.class
+    );
 
     private final StringRedisTemplate stringRedisTemplate;
 
@@ -192,6 +206,23 @@ public class PaymentQrTokenRepository {
                 .ifPresent(userId -> deleteUserTokenIfCurrent(userId, token));
         stringRedisTemplate.delete(tokenUserKey(token));
         removeActiveToken(token);
+    }
+
+    public boolean deleteCurrentToken(
+            Long userId,
+            String token
+    ) {
+        Long deleted = stringRedisTemplate.execute(
+                DELETE_CURRENT_TOKEN_SCRIPT,
+                List.of(
+                        userTokenKey(userId),
+                        tokenUserKey(token),
+                        ACTIVE_TOKENS_KEY
+                ),
+                token
+        );
+
+        return Long.valueOf(1L).equals(deleted);
     }
 
     public int cleanupExpiredTokens(long nowMillis) {

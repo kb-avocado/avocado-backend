@@ -25,6 +25,7 @@ import javax.sql.DataSource;
         "com.avocado.domain.wallet.mapper",
         "com.avocado.domain.transaction.mapper",
         "com.avocado.domain.news.mapper",
+        "com.avocado.domain.payment.mapper",
         "com.avocado.domain.piggybank.mapper",
         "com.avocado.domain.report.mapper",
         "com.avocado.domain.transfer.mapper",

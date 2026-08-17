@@ -27,6 +27,11 @@ public interface PaymentService {
     PaymentQrTokenResponseDto reissuePaymentQrToken(AuthUser authUser);
 
     /**
+     * 로그인 사용자의 활성 결제 QR 토큰을 무효화한다.
+     */
+    void invalidatePaymentQrToken(AuthUser authUser, String qrToken);
+
+    /**
      * 로그인 사용자가 발급받은 결제 QR 토큰의 현재 상태를 조회한다.
      */
     PaymentQrStatusResponseDto getPaymentQrStatus(

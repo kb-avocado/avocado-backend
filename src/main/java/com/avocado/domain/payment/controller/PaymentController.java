@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -25,6 +26,7 @@ import java.util.List;
 
 import static com.avocado.global.response.code.SuccessCode.PAYMENT_QR_ACTIVE_TOKENS_FOUND;
 import static com.avocado.global.response.code.SuccessCode.PAYMENT_QR_STATUS_FOUND;
+import static com.avocado.global.response.code.SuccessCode.PAYMENT_QR_TOKEN_INVALIDATED;
 import static com.avocado.global.response.code.SuccessCode.PAYMENT_QR_TOKEN_ISSUED;
 import static com.avocado.global.response.code.SuccessCode.PAYMENT_QR_TOKEN_REISSUED;
 
@@ -65,6 +67,31 @@ public class PaymentController {
         return ResponseEntity
                 .status(PAYMENT_QR_TOKEN_ISSUED.getHttpStatus())
                 .body(ApiResponse.success(PAYMENT_QR_TOKEN_ISSUED, response));
+    }
+
+    @ApiOperation(
+            value = "결제 QR 토큰 무효화",
+            notes = "QR 화면을 닫거나 다른 화면으로 이동할 때 요청 토큰이 로그인 사용자의 현재 활성 QR이면 무효화합니다."
+    )
+    @ApiImplicitParams({
+            @ApiImplicitParam(
+                    name = "token",
+                    value = "무효화할 결제 QR 토큰",
+                    required = true,
+                    dataType = "string",
+                    paramType = "query"
+            )
+    })
+    @DeleteMapping("/qr")
+    public ResponseEntity<ApiResponse<Void>> invalidatePaymentQrToken(
+            @AuthenticationPrincipal AuthUser authUser,
+            @RequestParam("token") String qrToken
+    ) {
+        paymentService.invalidatePaymentQrToken(authUser, qrToken);
+
+        return ResponseEntity
+                .status(PAYMENT_QR_TOKEN_INVALIDATED.getHttpStatus())
+                .body(ApiResponse.success(PAYMENT_QR_TOKEN_INVALIDATED));
     }
 
     @ApiOperation(

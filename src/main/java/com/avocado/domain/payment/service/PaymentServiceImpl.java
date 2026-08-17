@@ -1,5 +1,6 @@
 package com.avocado.domain.payment.service;
 
+import com.avocado.domain.payment.domain.PaymentQrActiveTokenVo;
 import com.avocado.domain.payment.domain.PaymentQrTokenVo;
 import com.avocado.domain.payment.domain.PaymentQrStatus;
 import com.avocado.domain.payment.domain.PaymentQrStatusVo;
@@ -9,7 +10,9 @@ import com.avocado.domain.payment.dto.response.PaymentQrActiveTokenResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrStatusResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentQrTokenResponseDto;
 import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
+import com.avocado.domain.payment.mapper.PaymentQrUserMapper;
 import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
+import com.avocado.domain.user.domain.UserVo;
 import com.avocado.domain.wallet.service.WalletService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
@@ -22,7 +25,10 @@ import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -32,6 +38,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private final PaymentQrTokenRepository paymentQrTokenRepository;
     private final WalletService walletService;
+    private final PaymentQrUserMapper paymentQrUserMapper;
     private final SecureRandom secureRandom = new SecureRandom();
 
     @Value("${payment.qr-token.ttl-seconds:180}")
@@ -60,6 +67,28 @@ public class PaymentServiceImpl implements PaymentService {
         return PaymentQrTokenResponseDto.from(
                 issuePaymentQrToken(authUser.getUserId())
         );
+    }
+
+    @Override
+    public void invalidatePaymentQrToken(
+            AuthUser authUser,
+            String qrToken
+    ) {
+        requireAuthenticated(authUser);
+        validateQrToken(qrToken);
+
+        boolean invalidated = paymentQrTokenRepository.deleteCurrentToken(
+                authUser.getUserId(),
+                qrToken
+        );
+
+        if (invalidated) {
+            paymentQrTokenRepository.saveExpiredStatus(
+                    qrToken,
+                    authUser.getUserId(),
+                    paymentQrStatusRetentionTtl()
+            );
+        }
     }
 
     @Override
@@ -122,9 +151,35 @@ public class PaymentServiceImpl implements PaymentService {
         // POS 목록은 항상 조회 시점 기준으로 만료 토큰을 먼저 걷어낸 뒤 만든다.
         paymentQrTokenRepository.cleanupExpiredTokens(nowMillis);
 
-        return paymentQrTokenRepository.findActiveTokens(nowMillis).stream()
-                .map(PaymentQrActiveTokenResponseDto::from)
+        List<PaymentQrActiveTokenVo> activeTokens = paymentQrTokenRepository.findActiveTokens(nowMillis);
+        Map<Long, String> userNamesById = findUserNamesById(activeTokens);
+
+        return activeTokens.stream()
+                .map(activeToken -> PaymentQrActiveTokenResponseDto.from(
+                        activeToken,
+                        userNamesById.get(activeToken.getUserId())
+                ))
                 .toList();
+    }
+
+    private Map<Long, String> findUserNamesById(List<PaymentQrActiveTokenVo> activeTokens) {
+        List<Long> userIds = activeTokens.stream()
+                .map(PaymentQrActiveTokenVo::getUserId)
+                .filter(Objects::nonNull)
+                .distinct()
+                .toList();
+
+        if (userIds.isEmpty()) {
+            return Map.of();
+        }
+
+        return paymentQrUserMapper.findNamesByIds(userIds).stream()
+                .filter(user -> user.getId() != null)
+                .collect(Collectors.toMap(
+                        UserVo::getId,
+                        UserVo::getName,
+                        (first, second) -> first
+                ));
     }
 
     private PaymentQrTokenVo issuePaymentQrToken(Long userId) {
