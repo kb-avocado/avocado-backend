@@ -68,9 +68,9 @@ class PiggyBankServiceImplTest {
         assertThat(result.isCanCreate()).isTrue();
     }
     @Test
-    @DisplayName("완료 탭 - ACHIEVE/CANCEL 상태로 조회")
+    @DisplayName("완료 탭 - ACHIEVE 상태로 조회")
     void getList_closed() {
-        when(piggyBankMapper.selectByWalletIdAndStatuses(1L, List.of("ACHIEVE", "CANCEL")))
+        when(piggyBankMapper.selectByWalletIdAndStatuses(1L, List.of("ACHIEVE")))
                 .thenReturn(List.of());
         when(piggyBankMapper.countByWalletIdAndStatuses(1L, List.of("ACTIVE", "PENDING_ACHIEVE")))
                 .thenReturn(0);
