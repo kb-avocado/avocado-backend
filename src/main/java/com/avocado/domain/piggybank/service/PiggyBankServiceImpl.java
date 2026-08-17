@@ -59,12 +59,12 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
     /**
      * 화면 탭을 실제 저장 상태값으로 매핑.
-     * - CLOSED      : ACHIEVE(달성), CANCEL(취소)
+     * - CLOSED      : ACHIEVE(달성)
      * - IN_PROGRESS : ACTIVE(진행중), PENDING_ACHIEVE(7일 대기중)
      */
     private List<String> toStatuses(String group) {
         if ("CLOSED".equalsIgnoreCase(group)) {
-            return List.of("ACHIEVE", "CANCEL");        // 목록 조회 완료 탭
+            return List.of("ACHIEVE");        // 목록 조회 완료 탭
         }
         return List.of("ACTIVE", "PENDING_ACHIEVE");     // 목록 조회 진행중인 탭
     }
