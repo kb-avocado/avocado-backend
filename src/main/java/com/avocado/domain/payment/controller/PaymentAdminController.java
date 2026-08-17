@@ -30,7 +30,23 @@ public class PaymentAdminController {
             notes = "GET /api/admin/payments/qr-tokens\n"
                     + "\n"
                     + "POS 시뮬레이터가 QR을 직접 스캔하지 않고도 현재 결제 대기 중인 활성 QR 토큰 목록을 조회합니다.\n"
-                    + "조회 전 Redis의 만료 토큰을 정리하고, 유효한 토큰만 token, userId, expiresIn으로 반환합니다.",
+                    + "조회 전 Redis의 만료 토큰을 정리하고, 유효한 토큰만 token, userId, userName, expiresIn으로 반환합니다.\n"
+                    + "사용자 정보가 존재하지 않으면 userName은 null입니다.\n"
+                    + "\n"
+                    + "Response Example\n"
+                    + "{\n"
+                    + "  \"success\": true,\n"
+                    + "  \"code\": \"PAY-004\",\n"
+                    + "  \"message\": \"결제 대기 중인 QR 토큰 목록을 조회했습니다.\",\n"
+                    + "  \"data\": [\n"
+                    + "    {\n"
+                    + "      \"token\": \"example-qr-token\",\n"
+                    + "      \"userId\": 102,\n"
+                    + "      \"userName\": \"김아보\",\n"
+                    + "      \"expiresIn\": 120\n"
+                    + "    }\n"
+                    + "  ]\n"
+                    + "}",
             response = PaymentQrActiveTokenResponseDto.class,
             responseContainer = "List"
     )

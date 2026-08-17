@@ -13,6 +13,8 @@ import com.avocado.domain.payment.dto.response.PaymentSimulationResponseDto;
 import com.avocado.domain.payment.repository.PaymentQrTokenRepository;
 import com.avocado.domain.user.domain.UserRole;
 import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.user.domain.UserVo;
+import com.avocado.domain.payment.mapper.PaymentQrUserMapper;
 import com.avocado.domain.wallet.service.WalletService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
@@ -32,7 +34,9 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -49,11 +53,18 @@ class PaymentServiceTest {
     @Mock
     private WalletService walletService;
 
+    @Mock
+    private PaymentQrUserMapper paymentQrUserMapper;
+
     private PaymentServiceImpl paymentService;
 
     @BeforeEach
     void setUp() {
-        paymentService = new PaymentServiceImpl(paymentQrTokenRepository, walletService);
+        paymentService = new PaymentServiceImpl(
+                paymentQrTokenRepository,
+                walletService,
+                paymentQrUserMapper
+        );
         ReflectionTestUtils.setField(
                 paymentService,
                 "paymentQrTokenTtlSeconds",
@@ -176,6 +187,56 @@ class PaymentServiceTest {
                 .isEqualTo(ErrorCode.PAYMENT_QR_REISSUE_TOO_FREQUENT);
 
         verify(paymentQrTokenRepository, never()).deleteByUserId(authUser.getUserId());
+    }
+
+    @Test
+    @DisplayName("QR 화면을 닫으면 요청 토큰이 현재 활성 토큰일 때 무효화하고 만료 상태를 저장한다")
+    void invalidatePaymentQrToken_success() {
+        // given
+        AuthUser authUser = authUser(102L);
+        when(paymentQrTokenRepository.deleteCurrentToken(authUser.getUserId(), "qr-token"))
+                .thenReturn(true);
+
+        // when
+        paymentService.invalidatePaymentQrToken(authUser, "qr-token");
+
+        // then
+        verify(paymentQrTokenRepository).deleteCurrentToken(authUser.getUserId(), "qr-token");
+        verify(paymentQrTokenRepository).saveExpiredStatus(
+                "qr-token",
+                authUser.getUserId(),
+                Duration.ofSeconds(60)
+        );
+    }
+
+    @Test
+    @DisplayName("요청 토큰이 현재 활성 토큰이 아니면 무효화 요청을 성공 처리하고 상태를 덮어쓰지 않는다")
+    void invalidatePaymentQrToken_staleToken_noop() {
+        // given
+        AuthUser authUser = authUser(102L);
+        when(paymentQrTokenRepository.deleteCurrentToken(authUser.getUserId(), "stale-token"))
+                .thenReturn(false);
+
+        // when
+        paymentService.invalidatePaymentQrToken(authUser, "stale-token");
+
+        // then
+        verify(paymentQrTokenRepository).deleteCurrentToken(authUser.getUserId(), "stale-token");
+        verify(paymentQrTokenRepository, never()).saveExpiredStatus(
+                anyString(),
+                anyLong(),
+                any(Duration.class)
+        );
+    }
+
+    @Test
+    @DisplayName("QR 무효화 시 빈 토큰이면 실패한다")
+    void invalidatePaymentQrToken_blankToken_fail() {
+        // when & then
+        assertThatThrownBy(() -> paymentService.invalidatePaymentQrToken(authUser(102L), " "))
+                .isInstanceOf(BusinessException.class)
+                .extracting("errorCode")
+                .isEqualTo(ErrorCode.INVALID_REQUEST);
     }
 
     @Test
@@ -398,17 +459,32 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("POS 조회 전 만료 토큰을 정리하고 활성 QR 토큰 목록을 반환한다")
+    @DisplayName("POS 조회 전 만료 토큰을 정리하고 사용자 이름을 배치 조회해 활성 QR 토큰 목록을 반환한다")
     void getActivePaymentQrTokens() {
         // given
-        PaymentQrActiveTokenVo activeToken = PaymentQrActiveTokenVo.builder()
-                .token("active-token")
+        PaymentQrActiveTokenVo firstToken = PaymentQrActiveTokenVo.builder()
+                .token("first-token")
                 .userId(102L)
                 .expiresIn(180L)
                 .build();
+        PaymentQrActiveTokenVo secondToken = PaymentQrActiveTokenVo.builder()
+                .token("second-token")
+                .userId(102L)
+                .expiresIn(120L)
+                .build();
+        PaymentQrActiveTokenVo missingUserToken = PaymentQrActiveTokenVo.builder()
+                .token("missing-user-token")
+                .userId(999L)
+                .expiresIn(60L)
+                .build();
 
         when(paymentQrTokenRepository.findActiveTokens(anyLong()))
-                .thenReturn(List.of(activeToken));
+                .thenReturn(List.of(firstToken, secondToken, missingUserToken));
+        when(paymentQrUserMapper.findNamesByIds(List.of(102L, 999L)))
+                .thenReturn(List.of(UserVo.builder()
+                        .id(102L)
+                        .name("김지원")
+                        .build()));
 
         ArgumentCaptor<Long> cleanupNowCaptor = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<Long> findNowCaptor = ArgumentCaptor.forClass(Long.class);
@@ -417,14 +493,36 @@ class PaymentServiceTest {
         List<PaymentQrActiveTokenResponseDto> result = paymentService.getActivePaymentQrTokens();
 
         // then
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getToken()).isEqualTo("active-token");
+        assertThat(result).hasSize(3);
+        assertThat(result)
+                .extracting(PaymentQrActiveTokenResponseDto::getToken)
+                .containsExactly("first-token", "second-token", "missing-user-token");
         assertThat(result.get(0).getUserId()).isEqualTo(102L);
+        assertThat(result.get(0).getUserName()).isEqualTo("김지원");
         assertThat(result.get(0).getExpiresIn()).isEqualTo(180L);
+        assertThat(result.get(1).getUserName()).isEqualTo("김지원");
+        assertThat(result.get(2).getUserId()).isEqualTo(999L);
+        assertThat(result.get(2).getUserName()).isNull();
 
         verify(paymentQrTokenRepository).cleanupExpiredTokens(cleanupNowCaptor.capture());
         verify(paymentQrTokenRepository).findActiveTokens(findNowCaptor.capture());
+        verify(paymentQrUserMapper).findNamesByIds(List.of(102L, 999L));
         assertThat(findNowCaptor.getValue()).isEqualTo(cleanupNowCaptor.getValue());
+    }
+
+    @Test
+    @DisplayName("활성 QR 토큰이 없으면 사용자 이름을 조회하지 않는다")
+    void getActivePaymentQrTokens_empty() {
+        // given
+        when(paymentQrTokenRepository.findActiveTokens(anyLong()))
+                .thenReturn(List.of());
+
+        // when
+        List<PaymentQrActiveTokenResponseDto> result = paymentService.getActivePaymentQrTokens();
+
+        // then
+        assertThat(result).isEmpty();
+        verify(paymentQrUserMapper, never()).findNamesByIds(any());
     }
 
     private AuthUser authUser(Long userId) {

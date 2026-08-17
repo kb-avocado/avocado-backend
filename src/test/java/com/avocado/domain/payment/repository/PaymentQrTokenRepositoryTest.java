@@ -318,6 +318,48 @@ class PaymentQrTokenRepositoryTest {
     }
 
     @Test
+    @DisplayName("사용자의 현재 토큰이 요청 토큰과 일치하면 원자적으로 삭제한다")
+    void deleteCurrentToken_success() {
+        // given
+        when(stringRedisTemplate.execute(
+                org.mockito.ArgumentMatchers.<RedisScript<Long>>any(),
+                eq(List.of(
+                        "payment:qr:user:102",
+                        "payment:qr:token:qr-token",
+                        "payment:qr:active-tokens"
+                )),
+                eq("qr-token")
+        )).thenReturn(1L);
+
+        // when
+        boolean result = paymentQrTokenRepository.deleteCurrentToken(102L, "qr-token");
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @DisplayName("사용자의 현재 토큰이 요청 토큰과 다르면 삭제하지 않는다")
+    void deleteCurrentToken_staleToken() {
+        // given
+        when(stringRedisTemplate.execute(
+                org.mockito.ArgumentMatchers.<RedisScript<Long>>any(),
+                eq(List.of(
+                        "payment:qr:user:102",
+                        "payment:qr:token:stale-token",
+                        "payment:qr:active-tokens"
+                )),
+                eq("stale-token")
+        )).thenReturn(0L);
+
+        // when
+        boolean result = paymentQrTokenRepository.deleteCurrentToken(102L, "stale-token");
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
     @DisplayName("만료된 토큰을 조회해 관련 Redis 데이터를 함께 삭제한다")
     void cleanupExpiredTokens() {
         // given

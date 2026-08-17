@@ -13,6 +13,7 @@ public class PaymentQrActiveTokenResponseDto {
 
     @ApiModelProperty(
             value = "결제용 QR 토큰",
+            example = "example-qr-token",
             required = true
     )
     private final String token;
@@ -25,8 +26,14 @@ public class PaymentQrActiveTokenResponseDto {
     private final Long userId;
 
     @ApiModelProperty(
+            value = "토큰을 발급한 사용자 이름. 사용자 정보가 없으면 null입니다.",
+            example = "김아보"
+    )
+    private final String userName;
+
+    @ApiModelProperty(
             value = "토큰 만료까지 남은 시간(초)",
-            example = "180",
+            example = "120",
             required = true
     )
     private final long expiresIn;
@@ -35,6 +42,18 @@ public class PaymentQrActiveTokenResponseDto {
         return PaymentQrActiveTokenResponseDto.builder()
                 .token(activeToken.getToken())
                 .userId(activeToken.getUserId())
+                .expiresIn(activeToken.getExpiresIn())
+                .build();
+    }
+
+    public static PaymentQrActiveTokenResponseDto from(
+            PaymentQrActiveTokenVo activeToken,
+            String userName
+    ) {
+        return PaymentQrActiveTokenResponseDto.builder()
+                .token(activeToken.getToken())
+                .userId(activeToken.getUserId())
+                .userName(userName)
                 .expiresIn(activeToken.getExpiresIn())
                 .build();
     }

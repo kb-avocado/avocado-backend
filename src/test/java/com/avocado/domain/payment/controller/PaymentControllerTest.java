@@ -43,6 +43,7 @@ class PaymentControllerTest {
                 PaymentQrActiveTokenResponseDto.builder()
                         .token("active-token")
                         .userId(102L)
+                        .userName("김지원")
                         .expiresIn(180L)
                         .build()
         );
@@ -58,6 +59,7 @@ class PaymentControllerTest {
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getCode()).isEqualTo("PAY-004");
         assertThat(result.getBody().getData()).isEqualTo(activeTokens);
+        assertThat(result.getBody().getData().get(0).getUserName()).isEqualTo("김지원");
     }
 
     @Test
@@ -87,5 +89,28 @@ class PaymentControllerTest {
         assertThat(result.getBody().getCode()).isEqualTo("PAY-006");
         assertThat(result.getBody().getData()).isEqualTo(statusResponse);
         verify(paymentService).getPaymentQrStatus(authUser, "qr-token");
+    }
+
+    @Test
+    @DisplayName("QR 화면을 닫으면 로그인 사용자의 활성 QR 토큰을 무효화한다")
+    void invalidatePaymentQrToken() {
+        // given
+        AuthUser authUser = AuthUser.builder()
+                .userId(102L)
+                .role(UserRole.USER)
+                .userType(UserType.CHILD)
+                .build();
+
+        // when
+        ResponseEntity<ApiResponse<Void>> result = paymentController.invalidatePaymentQrToken(
+                authUser,
+                "qr-token"
+        );
+
+        // then
+        assertThat(result.getStatusCode()).isEqualTo(HttpStatus.OK);
+        assertThat(result.getBody()).isNotNull();
+        assertThat(result.getBody().getCode()).isEqualTo("PAY-007");
+        verify(paymentService).invalidatePaymentQrToken(authUser, "qr-token");
     }
 }

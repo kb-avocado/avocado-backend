@@ -42,6 +42,7 @@ class PaymentAdminControllerTest {
                 PaymentQrActiveTokenResponseDto.builder()
                         .token("active-token")
                         .userId(102L)
+                        .userName("김지원")
                         .expiresIn(180L)
                         .build()
         );
@@ -57,6 +58,7 @@ class PaymentAdminControllerTest {
         assertThat(result.getBody()).isNotNull();
         assertThat(result.getBody().getCode()).isEqualTo("PAY-004");
         assertThat(result.getBody().getData()).isEqualTo(activeTokens);
+        assertThat(result.getBody().getData().get(0).getUserName()).isEqualTo("김지원");
         verify(paymentService).getActivePaymentQrTokens();
     }
 
