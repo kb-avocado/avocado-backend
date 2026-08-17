@@ -11,6 +11,7 @@ import com.avocado.domain.user.dto.response.UserSignUpResponseDto;
 import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
+import com.avocado.global.util.EmailNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -51,7 +52,8 @@ public class UserSignUpServiceImpl implements UserSignUpService {
     @Override
     @Transactional
     public UserSignUpResponseDto signUp(UserSignUpRequestDto request) {
-        String email = normalizeEmail(request.getEmail());
+        // TODO: 이메일이 아이디로 대체되면 지우기 (정규화 없이 request 값을 그대로 저장)
+        String email = EmailNormalizer.normalize(request.getEmail());
         String phone = normalizePhone(request.getPhone());
 
         // 이메일과 전화번호는 UNIQUE라 탈퇴한 회원이 쓰던 값도 다시 쓸 수 없다.
@@ -97,22 +99,15 @@ public class UserSignUpServiceImpl implements UserSignUpService {
      */
     @Override
     public EmailCheckResponseDto checkEmail(EmailCheckRequestDto request) {
-        String email = normalizeEmail(request.getEmail());
+        // TODO: 이메일이 아이디로 대체되면 지우기 (정규화 없이 request 값을 그대로 조회)
+        String email = EmailNormalizer.normalize(request.getEmail());
 
         return EmailCheckResponseDto.builder()
                 // 어떤 값으로 확인했는지 그대로 돌려줘야 화면이 입력값과 대조할 수 있다.
+                // TODO: 이메일이 아이디로 대체되면 응답에서 email 필드를 빼도 된다.
                 .email(email)
                 .available(!userMapper.existsByEmail(email))
                 .build();
-    }
-
-    // 대소문자만 다른 주소로 같은 계정이 두 번 만들어지지 않도록 소문자로 저장한다.
-    // 언어 설정에 따라 I가 다른 문자로 바뀌는 것을 막기 위해 Locale.ROOT를 지정한다.
-    //
-    // 저장할 때와 조회할 때가 어긋나면 중복 검사 자체가 무의미해지므로,
-    // signUp과 checkEmail은 반드시 이 메서드 하나만 거쳐야 한다.
-    private String normalizeEmail(String email) {
-        return email.trim().toLowerCase(Locale.ROOT);
     }
 
     // 하이픈은 화면에서 보기 좋으라고 넣는 표시용이라 숫자만 남겨서 저장한다.
