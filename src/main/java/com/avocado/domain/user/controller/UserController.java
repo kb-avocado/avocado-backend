@@ -6,8 +6,10 @@ import com.avocado.global.response.ApiResponse;
 import com.avocado.global.security.jwt.component.JwtTokenProvider;
 import com.avocado.global.security.jwt.component.JwtUtil;
 import com.avocado.global.security.jwt.dto.AuthUser;
+import com.avocado.domain.user.dto.request.EmailCheckRequestDto;
 import com.avocado.domain.user.dto.request.UserLoginRequestDto;
 import com.avocado.domain.user.dto.request.UserSignUpRequestDto;
+import com.avocado.domain.user.dto.response.EmailCheckResponseDto;
 import com.avocado.domain.user.dto.response.LoginUserDto;
 import com.avocado.domain.user.dto.response.UserSignUpResponseDto;
 import com.avocado.domain.user.service.UserLoginService;
@@ -65,6 +67,27 @@ public class UserController {
         return ResponseEntity
                 .status(SIGNUP_SUCCESS.getHttpStatus())
                 .body(ApiResponse.success(SIGNUP_SUCCESS, responseDto));
+    }
+
+    @ApiOperation(
+            value = "이메일 중복 확인",
+            notes = "가입 전에 이메일이 이미 쓰이고 있는지 미리 확인합니다. "
+                    + "가입할 때와 똑같이 앞뒤 공백을 없애고 소문자로 바꾼 값으로 조회하므로, "
+                    + "여기서 사용 가능하다고 나온 이메일은 표기가 달라도 그대로 가입할 수 있습니다. "
+                    + "다만 확인과 가입 사이에 다른 사람이 같은 이메일로 가입할 수 있어, "
+                    + "최종 판단은 회원가입 API의 응답으로 해야 합니다."
+    )
+    @GetMapping("/check-email")
+    public ResponseEntity<ApiResponse<EmailCheckResponseDto>> checkEmail(
+            @Valid
+            @ModelAttribute
+            EmailCheckRequestDto request
+    ) {
+        EmailCheckResponseDto responseDto = userSignUpService.checkEmail(request);
+
+        return ResponseEntity
+                .status(EMAIL_CHECKED.getHttpStatus())
+                .body(ApiResponse.success(EMAIL_CHECKED, responseDto));
     }
 
     @ApiOperation(

@@ -1,6 +1,8 @@
 package com.avocado.domain.user.service;
 
+import com.avocado.domain.user.dto.request.EmailCheckRequestDto;
 import com.avocado.domain.user.dto.request.UserSignUpRequestDto;
+import com.avocado.domain.user.dto.response.EmailCheckResponseDto;
 import com.avocado.domain.user.dto.response.UserSignUpResponseDto;
 import com.avocado.global.exception.BusinessException;
 
@@ -14,4 +16,12 @@ public interface UserSignUpService {
      * @throws BusinessException 이메일 또는 전화번호가 이미 사용 중인 경우
      */
     UserSignUpResponseDto signUp(UserSignUpRequestDto request);
+
+    /**
+     * 가입 전에 이메일이 이미 쓰이고 있는지 미리 알려준다.
+     *
+     * @param request 확인할 이메일
+     * @return 확인한 이메일과 사용 가능 여부
+     */
+    EmailCheckResponseDto checkEmail(EmailCheckRequestDto request);
 }

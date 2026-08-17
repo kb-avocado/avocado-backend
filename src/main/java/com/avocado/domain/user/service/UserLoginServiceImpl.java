@@ -12,6 +12,7 @@ import com.avocado.domain.user.repository.RefreshTokenRepository;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
+import com.avocado.global.util.EmailNormalizer;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -35,7 +36,10 @@ public class UserLoginServiceImpl implements UserLoginService {
      */
     @Override
     public LoginUserDto login(UserLoginRequestDto request) {
-        User user = userMapper.selectByEmail(request.getEmail());
+        // TODO: 이메일이 아이디로 대체되면 지우기 (정규화 없이 request 값을 그대로 조회)
+        String email = EmailNormalizer.normalize(request.getEmail());
+
+        User user = userMapper.selectByEmail(email);
 
         // 가입되지 않은 이메일과 비밀번호 불일치를 구분해서 응답하지 않는다.
         // 구분하면 어떤 이메일이 가입되어 있는지 알아낼 수 있다.
