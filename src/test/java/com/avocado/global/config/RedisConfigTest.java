@@ -1,6 +1,5 @@
 package com.avocado.global.config;
 
-import com.avocado.global.config.RedisConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +10,12 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-
-@SpringJUnitConfig(classes = RedisConfig.class)
+@SpringJUnitConfig(classes = {
+        LocalPropertyConfig.class,
+        RedisConfig.class
+})
 class RedisConfigTest {
 
     @Autowired
@@ -23,18 +24,27 @@ class RedisConfigTest {
     @Autowired
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * RedisConnectionFactory Bean이 정상적으로 생성되는지 확인한다.
+     */
     @Test
     @DisplayName("RedisConnectionFactory Bean이 정상적으로 생성된다")
     void redisConnectionFactory() {
         assertThat(redisConnectionFactory).isNotNull();
     }
 
+    /**
+     * StringRedisTemplate Bean이 정상적으로 생성되는지 확인한다.
+     */
     @Test
     @DisplayName("StringRedisTemplate Bean이 정상적으로 생성된다")
     void stringRedisTemplate() {
         assertThat(stringRedisTemplate).isNotNull();
     }
 
+    /**
+     * Redis 서버와 실제로 연결할 수 있는지 확인한다.
+     */
     @Test
     @DisplayName("Redis 서버와 정상적으로 연결된다")
     void redisConnection() {
@@ -47,6 +57,9 @@ class RedisConfigTest {
         }
     }
 
+    /**
+     * 문자열 데이터를 Redis에 저장하고 다시 조회할 수 있는지 확인한다.
+     */
     @Test
     @DisplayName("문자열 데이터를 저장하고 조회할 수 있다")
     void setAndGet() {
@@ -56,11 +69,15 @@ class RedisConfigTest {
         stringRedisTemplate.opsForValue()
                 .set(key, value);
 
-        assertThat(stringRedisTemplate.opsForValue().get(key)).isEqualTo(value);
+        assertThat(stringRedisTemplate.opsForValue().get(key))
+                .isEqualTo(value);
 
         stringRedisTemplate.delete(key);
     }
 
+    /**
+     * 저장된 Redis 데이터를 삭제할 수 있는지 확인한다.
+     */
     @Test
     @DisplayName("저장된 데이터를 삭제할 수 있다")
     void delete() {
@@ -74,9 +91,13 @@ class RedisConfigTest {
 
         assertThat(deleted).isTrue();
 
-        assertThat(stringRedisTemplate.opsForValue().get(key)).isNull();
+        assertThat(stringRedisTemplate.opsForValue().get(key))
+                .isNull();
     }
 
+    /**
+     * Redis 데이터에 만료 시간을 설정할 수 있는지 확인한다.
+     */
     @Test
     @DisplayName("데이터에 만료 시간을 설정할 수 있다")
     void expiration() {
@@ -89,7 +110,10 @@ class RedisConfigTest {
                 TimeUnit.MINUTES
         );
 
-        Long ttl = stringRedisTemplate.getExpire(key, TimeUnit.SECONDS);
+        Long ttl = stringRedisTemplate.getExpire(
+                key,
+                TimeUnit.SECONDS
+        );
 
         assertThat(ttl)
                 .isNotNull()

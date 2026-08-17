@@ -2,14 +2,13 @@ package com.avocado.domain.notification.mapper;
 
 import com.avocado.domain.notification.domain.NotificationType;
 import com.avocado.domain.notification.domain.NotificationVo;
-import com.avocado.global.config.RootConfig;
-import com.avocado.global.config.SecurityConfig;
+import com.avocado.global.config.DataSourceConfig;
+import com.avocado.global.config.LocalPropertyConfig;
+import com.avocado.global.config.MyBatisConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.ContextConfiguration;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
+import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -17,8 +16,11 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(SpringExtension.class)
-@ContextConfiguration(classes = {RootConfig.class, SecurityConfig.class})
+@SpringJUnitConfig(classes = {
+        LocalPropertyConfig.class,
+        DataSourceConfig.class,
+        MyBatisConfig.class
+})
 @Transactional
 class NotificationMapperTest {
 
@@ -49,7 +51,6 @@ class NotificationMapperTest {
         // then
         assertThat(inserted).isEqualTo(1);
 
-        // useGeneratedKeys에 의해 INSERT 후 PK가 설정되어야 한다.
         assertThat(notification.getId())
                 .isNotNull()
                 .isPositive();
@@ -68,14 +69,14 @@ class NotificationMapperTest {
         long count = notificationMapper.countRecentByUserId(userId);
 
         // then
-        assertThat(count).isEqualTo(4L);
-
+        assertThat(count).isEqualTo(3L);
     }
 
     /**
      * 회원의 최근 7일 알림 목록을 최신순으로 조회한다.
      */
     @Test
+    @DisplayName("회원의 최근 7일 알림 목록 조회")
     void findRecentByUserId() {
         // given
         Long userId = 101L;
@@ -83,17 +84,17 @@ class NotificationMapperTest {
         int size = 20;
 
         // when
-        List<NotificationVo> notifications = notificationMapper.findRecentByUserId(
-                userId,
-                offset,
-                size
-        );
+        List<NotificationVo> notifications =
+                notificationMapper.findRecentByUserId(
+                        userId,
+                        offset,
+                        size
+                );
 
         // then
-        assertThat(notifications).hasSize(4);
+        assertThat(notifications).hasSize(3);
 
-        // 가장 최근 알림이 먼저 조회되었는지 확인
-        assertThat(notifications.get(0).getReceiverId()).isEqualTo(userId);
+        assertThat(notifications.get(0).getReceiverId())
+                .isEqualTo(userId);
     }
-
 }

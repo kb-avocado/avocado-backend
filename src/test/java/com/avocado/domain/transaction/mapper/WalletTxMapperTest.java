@@ -2,7 +2,9 @@ package com.avocado.domain.transaction.mapper;
 
 import com.avocado.domain.transaction.dto.response.WalletTxDetailResponseDto;
 import com.avocado.domain.transaction.dto.response.WalletTxItemResponseDto;
-import com.avocado.global.config.RootConfig;
+import com.avocado.global.config.DataSourceConfig;
+import com.avocado.global.config.LocalPropertyConfig;
+import com.avocado.global.config.MyBatisConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,9 +13,13 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 import java.util.List;
 import java.util.Optional;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringJUnitConfig(classes = RootConfig.class)
+@SpringJUnitConfig(classes = {
+        LocalPropertyConfig.class,
+        DataSourceConfig.class,
+        MyBatisConfig.class
+})
 class WalletTxMapperTest {
 
     @Autowired
@@ -41,11 +47,12 @@ class WalletTxMapperTest {
         int size = 20;
 
         // when
-        List<WalletTxItemResponseDto> result = walletTxMapper.findAllByWalletId(
-                walletId,
-                offset,
-                size
-        );
+        List<WalletTxItemResponseDto> result =
+                walletTxMapper.findAllByWalletId(
+                        walletId,
+                        offset,
+                        size
+                );
 
         // then
         assertThat(result)
@@ -65,21 +72,31 @@ class WalletTxMapperTest {
         Long transactionId = 20007L;
 
         // when
-        Optional<WalletTxDetailResponseDto> detail = walletTxMapper.findDetailByWalletIdAndTransactionId(
-                walletId,
-                transactionId
-        );
+        Optional<WalletTxDetailResponseDto> detail =
+                walletTxMapper.findDetailByWalletIdAndTransactionId(
+                        walletId,
+                        transactionId
+                );
 
         // then
         assertThat(detail).isPresent();
 
         WalletTxDetailResponseDto response = detail.get();
 
-        assertThat(response.getTransactionId()).isEqualTo(transactionId);
-        assertThat(response.getTransactionType()).isNotBlank();
-        assertThat(response.getAmount()).isPositive();
-        assertThat(response.getStatus()).isNotBlank();
-        assertThat(response.getCreatedAt()).isNotNull();
+        assertThat(response.getTransactionId())
+                .isEqualTo(transactionId);
+
+        assertThat(response.getTransactionType())
+                .isNotBlank();
+
+        assertThat(response.getAmount())
+                .isPositive();
+
+        assertThat(response.getStatus())
+                .isNotBlank();
+
+        assertThat(response.getCreatedAt())
+                .isNotNull();
     }
 
     @Test
@@ -87,15 +104,14 @@ class WalletTxMapperTest {
     void findDetailByWalletIdAndTransactionIdWhenWalletDoesNotMatch() {
         // given
         Long walletId = 2001L;
-
-        // 2001번 지갑에 속하지 않는 거래 ID
         Long transactionId = 20010L;
 
         // when
-        Optional<WalletTxDetailResponseDto> detail = walletTxMapper.findDetailByWalletIdAndTransactionId(
-                walletId,
-                transactionId
-        );
+        Optional<WalletTxDetailResponseDto> detail =
+                walletTxMapper.findDetailByWalletIdAndTransactionId(
+                        walletId,
+                        transactionId
+                );
 
         // then
         assertThat(detail).isEmpty();
@@ -109,10 +125,11 @@ class WalletTxMapperTest {
         Long transactionId = Long.MAX_VALUE;
 
         // when
-        Optional<WalletTxDetailResponseDto> detail = walletTxMapper.findDetailByWalletIdAndTransactionId(
-                walletId,
-                transactionId
-        );
+        Optional<WalletTxDetailResponseDto> detail =
+                walletTxMapper.findDetailByWalletIdAndTransactionId(
+                        walletId,
+                        transactionId
+                );
 
         // then
         assertThat(detail).isEmpty();
