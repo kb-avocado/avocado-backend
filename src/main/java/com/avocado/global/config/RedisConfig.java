@@ -3,7 +3,6 @@ package com.avocado.global.config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
@@ -13,7 +12,6 @@ import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSeriali
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 @Configuration
-@PropertySource("classpath:config/application-local.properties")
 public class RedisConfig {
 
     @Value("${redis.host}")
@@ -22,7 +20,11 @@ public class RedisConfig {
     @Value("${redis.port}")
     private int port;
 
-    // Redis 연결을 생성하는 ConnectionFactory Bean
+    /**
+     * Redis 연결에 사용할 ConnectionFactory를 생성한다.
+     *
+     * @return RedisConnectionFactory
+     */
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
@@ -31,15 +33,29 @@ public class RedisConfig {
         return new LettuceConnectionFactory(redisConfig);
     }
 
-    // String 데이터 처리를 위한 Template Bean
+    /**
+     * 문자열 기반 Redis 작업에 사용할 Template을 생성한다.
+     *
+     * @param redisConnectionFactory Redis 연결 Factory
+     * @return StringRedisTemplate
+     */
     @Bean
-    public StringRedisTemplate stringRedisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public StringRedisTemplate stringRedisTemplate(
+            RedisConnectionFactory redisConnectionFactory
+    ) {
         return new StringRedisTemplate(redisConnectionFactory);
     }
 
-    // Object 데이터를 JSON 형태로 처리하기 위한 Template Bean
+    /**
+     * 객체 기반 Redis 작업에 사용할 JSON Template을 생성한다.
+     *
+     * @param redisConnectionFactory Redis 연결 Factory
+     * @return RedisTemplate
+     */
     @Bean
-    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(
+            RedisConnectionFactory redisConnectionFactory
+    ) {
         RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
 
         StringRedisSerializer stringSerializer = new StringRedisSerializer();

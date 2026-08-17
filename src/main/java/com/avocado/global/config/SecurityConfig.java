@@ -37,30 +37,28 @@ public class SecurityConfig {
     private static final String[] PERMIT_ALL_PATHS = {
             // 로그인, 회원가입
             "/api/auth/**",
+
             // Swagger
             "/swagger-ui/**",
             "/swagger-resources/**",
             "/v2/api-docs",
             "/webjars/**",
 
-            // TODO: 개발 편의용 임시 허용. 각 도메인이 인증 연동을 마치면 제거할 것
-            "/api/**",              // api 전체 허용
-//            "/api/home/**",         // 홈
-            "/api/wallets/**",      // 전자지갑
-            "/api/transfers/**",    // 송금하기
-            "/api/allowances/**",   // 용돈 보내기
-            "/api/transactions/**", // 거래내역
-            "/api/payments/**",     // 결제&결제 환불
-            "/api/piggybanks/**",   // 저금통
-//            "/api/news/**",         // 뉴스
-//            "/api/reports/**",      // 리포트
-            "/api/notifications/**",// 알림
-            "/api/accounts/**",     // 계좌
-            "/api/merchants/**"     // 가맹점
+            // TODO: 인증 연동 전 임시 허용
+            "/api/news/**",
+            "/api/reports/**"
     };
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
+    /**
+     * Spring Security 인증 및 인가 정책을 설정한다.
+     *
+     * @param http HttpSecurity
+     * @param jwtAuthenticationFilter JWT 인증 필터
+     * @return SecurityFilterChain
+     * @throws Exception Security 설정 실패 시 발생
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
@@ -83,33 +81,55 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         // 프리플라이트(OPTIONS)를 통과시켜야 ServletConfig의 CORS 설정이 처리할 수 있다.
                         // 여기서 막으면 브라우저 요청이 CORS 단계에서 전부 실패한다.
-                        .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .antMatchers(PERMIT_ALL_PATHS).permitAll()
-                        .anyRequest().authenticated())
+                        .antMatchers(HttpMethod.OPTIONS, "/**")
+                        .permitAll()
+                        .antMatchers(PERMIT_ALL_PATHS)
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
-    // 회원가입 시 해싱, 로그인 시 비교에 사용
+    /**
+     * 비밀번호 암호화에 사용할 BCrypt Encoder를 생성한다.
+     *
+     * @return PasswordEncoder
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // 인증되지 않은 요청 (토큰 없음, 만료, 위조)
+    /**
+     * 인증되지 않은 요청 처리기를 생성한다.
+     *
+     * @return AuthenticationEntryPoint
+     */
     private AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, authException) ->
                 writeError(response, ErrorCode.UNAUTHORIZED);
     }
 
-    // 인증은 됐지만 권한이 부족한 요청
+    /**
+     * 접근 권한이 부족한 요청 처리기를 생성한다.
+     *
+     * @return AccessDeniedHandler
+     */
     private AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) ->
                 writeError(response, ErrorCode.FORBIDDEN);
     }
 
+    /**
+     * 인증 및 인가 오류를 공통 JSON 형식으로 반환한다.
+     *
+     * @param response HTTP 응답
+     * @param errorCode 반환할 오류 코드
+     * @throws IOException 응답 작성 실패 시 발생
+     */
     private void writeError(
             HttpServletResponse response,
             ErrorCode errorCode

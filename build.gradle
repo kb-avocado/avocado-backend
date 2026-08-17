@@ -145,12 +145,16 @@ dependencies {
     implementation "org.springframework.data:spring-data-redis:${springDataRedisVersion}"
     implementation "io.lettuce:lettuce-core:${lettuceVersion}"
 
-
-
-    // RSS/Atom 피드 파싱
-//    implementation 'com.rometools:rome:2.1.0'
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.named('processResources') {
+    // 운영 배포용 빌드에서만 로컬 설정 파일을 제외한다.
+    if (project.hasProperty('prod')) {
+        exclude 'config/application-local.properties'
+        exclude 'config/*.example'
+    }
 }

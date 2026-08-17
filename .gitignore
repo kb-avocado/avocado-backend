@@ -12,6 +12,7 @@ gradle-app.setting
 !gradle/wrapper/gradle-wrapper.jar
 !gradle/wrapper/gradle-wrapper.properties
 
+
 # ==============================
 # IntelliJ IDEA
 # ==============================
@@ -21,12 +22,14 @@ gradle-app.setting
 *.ipr
 out/
 
+
 # ==============================
 # Visual Studio Code
 # ==============================
 .vscode/
 .history/
 *.vsix
+
 
 # ==============================
 # Eclipse / STS
@@ -39,6 +42,7 @@ bin/
 .factorypath
 .sts4-cache/
 
+
 # ==============================
 # Java
 # ==============================
@@ -50,6 +54,7 @@ bin/
 hs_err_pid*
 replay_pid*
 *.hprof
+
 
 # ==============================
 # macOS
@@ -73,6 +78,7 @@ Temporary Items
 .apdisk
 *.icloud
 
+
 # ==============================
 # Windows
 # ==============================
@@ -84,6 +90,7 @@ ehthumbs_vista.db
 [Dd]esktop.ini
 $RECYCLE.BIN/
 *.lnk
+
 
 # ==============================
 # Environment and secrets
@@ -99,6 +106,14 @@ src/main/resources/config/database-secret.properties
 
 !src/main/resources/config/application-local.properties.example
 !src/main/resources/config/database-local.properties.example
+
+
+# ==============================
+# Production secrets
+# ==============================
+application-prod.properties
+**/application-prod.properties
+
 
 # ==============================
 # Runtime-generated files
