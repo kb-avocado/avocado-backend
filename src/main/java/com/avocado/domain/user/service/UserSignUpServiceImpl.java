@@ -4,7 +4,9 @@ import com.avocado.domain.user.domain.User;
 import com.avocado.domain.user.domain.UserRole;
 import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.user.dto.request.EmailCheckRequestDto;
 import com.avocado.domain.user.dto.request.UserSignUpRequestDto;
+import com.avocado.domain.user.dto.response.EmailCheckResponseDto;
 import com.avocado.domain.user.dto.response.UserSignUpResponseDto;
 import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
@@ -87,8 +89,28 @@ public class UserSignUpServiceImpl implements UserSignUpService {
                 .build();
     }
 
+    /**
+     * 가입 전에 이메일이 이미 쓰이고 있는지 미리 알려준다.
+
+     * @param request 확인할 이메일
+     * @return 확인한 이메일과 사용 가능 여부
+     */
+    @Override
+    public EmailCheckResponseDto checkEmail(EmailCheckRequestDto request) {
+        String email = normalizeEmail(request.getEmail());
+
+        return EmailCheckResponseDto.builder()
+                // 어떤 값으로 확인했는지 그대로 돌려줘야 화면이 입력값과 대조할 수 있다.
+                .email(email)
+                .available(!userMapper.existsByEmail(email))
+                .build();
+    }
+
     // 대소문자만 다른 주소로 같은 계정이 두 번 만들어지지 않도록 소문자로 저장한다.
     // 언어 설정에 따라 I가 다른 문자로 바뀌는 것을 막기 위해 Locale.ROOT를 지정한다.
+    //
+    // 저장할 때와 조회할 때가 어긋나면 중복 검사 자체가 무의미해지므로,
+    // signUp과 checkEmail은 반드시 이 메서드 하나만 거쳐야 한다.
     private String normalizeEmail(String email) {
         return email.trim().toLowerCase(Locale.ROOT);
     }
