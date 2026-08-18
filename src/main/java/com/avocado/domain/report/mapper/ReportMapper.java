@@ -36,4 +36,7 @@ public interface ReportMapper {
 
     // 특정 날짜(하루) 소비 금액 (홈 화면 "오늘 사용"에 표시할 데이터)
     Long sumSpentAmountByDate(@Param("walletId") Long walletId, @Param("date") java.time.LocalDate date);
+
+    // 리포트 생성 대상(지갑을 가진 모든 자녀) ID 목록 - 월간 배치 스케줄러용
+    List<Long> findAllActiveChildIds();
 }

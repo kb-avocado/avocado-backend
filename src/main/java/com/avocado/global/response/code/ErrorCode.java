@@ -94,7 +94,10 @@ public enum ErrorCode implements ResponseCode {
     FAMILY_REQUEST_ALREADY_HANDLED(HttpStatus.CONFLICT, "FAM-005", "이미 처리된 요청입니다."),
     // 보호자 승인 전에 아이가 확정하려는 경우
     FAMILY_REQUEST_NOT_APPROVED(HttpStatus.CONFLICT, "FAM-006", "보호자가 아직 승인하지 않은 요청입니다."),
-    FAMILY_RELATION_NOT_FOUND(HttpStatus.NOT_FOUND, "FAM-007", "가족 관계를 확인할 수 없습니다.");
+    FAMILY_RELATION_NOT_FOUND(HttpStatus.NOT_FOUND, "FAM-007", "가족 관계를 확인할 수 없습니다."),
+
+    // 리포트 (RPT)
+    REPORT_NOT_READY(HttpStatus.NOT_FOUND, "RPT-001", "아직 생성되지 않은 리포트입니다.");
 
     private final HttpStatus httpStatus;
 

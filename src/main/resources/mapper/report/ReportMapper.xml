@@ -84,17 +84,17 @@
     <!-- 용돈 취소분을 제외한 실수형액, 저축률 분모로 사용-->
     <select id="sumAllowanceReceived" resultType="long">
         SELECT IFNULL(SUM(
-            CASE
-                WHEN transaction_type = 'CHARGE' THEN amount
-                WHEN transaction_type = 'CHARGE_CANCLE' THEN -amount
-                ELSE 0
-            END
-        ), 0)
+                              CASE
+                                  WHEN transaction_type = 'CHARGE' THEN amount
+                                  WHEN transaction_type = 'CHARGE_CANCEL' THEN -amount
+                                  ELSE 0
+                                  END
+                      ), 0)
         FROM wallet_histories
         WHERE wallet_id = #{walletId}
-            AND transaction_type IN ('CHARGE', 'CHARGE_CANCEL')
-            AND status = 'SUCCESS'
-            AND DATE_FORMAT(created_at, '%Y-%m')
+          AND transaction_type IN ('CHARGE', 'CHARGE_CANCEL')
+          AND status = 'SUCCESS'
+          AND DATE_FORMAT(created_at, '%Y-%m') = #{yearMonth}
     </select>
 
     <!-- 홈 화면 "오늘 사용" 금액. 하루 단위로 집계한다. -->
@@ -105,5 +105,10 @@
           AND transaction_type = 'PAYMENT'
           AND status = 'SUCCESS'
           AND DATE(created_at) = #{date}
+    </select>
+
+    <!-- 리포트 생성 대상: 지갑이 ACTIVE인 모든 자녀 -->
+    <select id="findAllActiveChildIds" resultType="Long">
+        SELECT child_id FROM wallets WHERE status = 'ACTIVE'
     </select>
 </mapper>
