@@ -11,13 +11,13 @@ import com.avocado.domain.family.dto.request.FamilyRequestDecisionRequestDto;
 import com.avocado.domain.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.domain.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
-import com.avocado.domain.family.mapper.FamilyWalletMapper;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import com.avocado.domain.user.domain.User;
 import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.domain.user.service.UserService;
+import com.avocado.domain.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +32,7 @@ import static com.avocado.global.response.code.ErrorCode.*;
 public class FamilyServiceImpl implements FamilyService {
 
     private final FamilyRelationMapper familyRelationMapper;
-    private final FamilyWalletMapper familyWalletMapper;
+    private final WalletService walletService;
     private final UserMapper userMapper;
     private final UserService userService;
 
@@ -202,7 +202,7 @@ public class FamilyServiceImpl implements FamilyService {
         // 연결이 끝나야 아이가 서비스를 쓸 수 있다. 취소한 경우에는 PENDING으로 남는다.
         if (confirmed == FamilyRelationStatus.ACTIVE) {
             userService.activate(relation.getChildId());
-            createWallet(relation.getChildId());
+            walletService.issueWallet(relation.getChildId());
         }
 
         return FamilyRequestResponseDto.builder()
@@ -228,25 +228,6 @@ public class FamilyServiceImpl implements FamilyService {
         if (!isFamily) {
             throw new BusinessException(FAMILY_RELATION_NOT_FOUND);
         }
-    }
-
-    /**
-     * 아이의 선불지갑을 만든다.
-     * 확정과 같은 트랜잭션이라 여기서 실패하면 관계와 계정 상태까지 함께 되돌아간다.
-     */
-    private void createWallet(Long childId) {
-        if (familyWalletMapper.existsByChildId(childId)) {
-            throw new BusinessException(WALLET_ALREADY_EXISTS);
-        }
-
-        familyWalletMapper.insertWallet(childId, temporaryWalletNumber(childId));
-    }
-
-    /**
-     * TODO: 지갑 번호 규칙은 지갑 담당자가 정한다. 지금은 UNIQUE 제약만 지키는 임시값이다.
-     */
-    private String temporaryWalletNumber(Long childId) {
-        return "WALLET-" + childId;
     }
 
     private void requireAuthenticated(AuthUser authUser) {
