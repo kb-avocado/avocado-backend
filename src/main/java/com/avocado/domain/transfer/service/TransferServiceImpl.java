@@ -3,6 +3,8 @@ package com.avocado.domain.transfer.service;
 import com.avocado.domain.account.domain.AccountVo;
 import com.avocado.domain.account.service.AccountService;
 import com.avocado.domain.family.service.FamilyService;
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.transaction.service.AccountTxService;
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
@@ -27,6 +29,7 @@ public class TransferServiceImpl implements TransferService {
     private final FamilyService familyService;
     private final UserService userService;
     private final WalletService walletService;
+    private final NotificationService notificationService;
 
     /**
      * 부모 외부 계좌에서 연결된 자녀의 선불지갑으로 금액을 송금한다.
@@ -79,6 +82,12 @@ public class TransferServiceImpl implements TransferService {
                 childId,
                 amount,
                 traceId
+        );
+
+        notificationService.create(
+                childId,
+                NotificationType.ALLOWANCE_RECEIVED,
+                String.format("%,d원이 입금되었습니다.", amount)
         );
 
         // 송금 결과를 반환한다.
@@ -134,6 +143,12 @@ public class TransferServiceImpl implements TransferService {
                 childId,
                 amount,
                 traceId
+        );
+
+        notificationService.create(
+                childId,
+                NotificationType.ALLOWANCE_RECEIVED,
+                String.format("%,d원이 입금되었습니다.", amount)
         );
     }
 

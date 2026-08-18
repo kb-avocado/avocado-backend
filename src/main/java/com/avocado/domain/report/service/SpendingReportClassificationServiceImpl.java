@@ -1,6 +1,8 @@
 package com.avocado.domain.report.service;
 
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.domain.wallet.mapper.WalletMapper;
 import com.avocado.global.exception.BusinessException;
@@ -85,6 +87,7 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
     private final ChildSpendingReportMapper childSpendingReportMapper;
     private final UserMapper userMapper;
     private final FamilyRelationMapper familyRelationMapper;
+    private final NotificationService notificationService;
 
     @Override
     public SpendingReportTypeDto classifyAndSave(String yearMonth, Long childId, AuthUser authUser) {
@@ -135,6 +138,14 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
         report.setReportYear(targetMonth.getYear());
         report.setReportMonth(targetMonth.getMonthValue());
         childSpendingReportMapper.upsert(report);
+
+        notificationService.create(
+                childId,
+                NotificationType.SPENDING_REPORT_CREATED,
+                String.format("%d년 %d월 소비 리포트가 생성되었습니다.",
+                        targetMonth.getYear(),
+                        targetMonth.getMonthValue())
+        );
 
         return toDto(type, targetMonth);
     }
