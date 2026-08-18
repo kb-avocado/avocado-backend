@@ -21,6 +21,8 @@ import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +45,7 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
     private final SpendingClassificationMapper spendingClassificationMapper;
     private final SpendingReportTypeMapper spendingReportTypeMapper;
     private final ChildSpendingReportMapper childSpendingReportMapper;
+    private final NotificationService notificationService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
@@ -96,6 +99,14 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         report.setAdvice(type.getDescription());
 
         childSpendingReportMapper.upsert(report);
+
+        notificationService.create(
+                childId,
+                NotificationType.SPENDING_REPORT_CREATED,
+                String.format("%d년 %d월 소비 리포트가 생성되었습니다.",
+                        targetMonth.getYear(),
+                        targetMonth.getMonthValue())
+        );
     }
 
     private String toJson(List<TopSpotDto> topSpots) {
