@@ -3,14 +3,12 @@ package com.avocado.domain.account.service;
 import com.avocado.domain.account.domain.AccountVo;
 import com.avocado.domain.account.mapper.AccountMapper;
 import com.avocado.global.exception.BusinessException;
-import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import static com.avocado.global.response.code.ErrorCode.*;
 
 @Service
