@@ -1,7 +1,6 @@
 package com.avocado.domain.family.service;
 
 import com.avocado.global.exception.BusinessException;
-import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.family.domain.FamilyRelation;
 import com.avocado.domain.family.domain.FamilyRelationStatus;
 import com.avocado.domain.family.dto.request.FamilyRequestConfirmRequestDto;
@@ -11,19 +10,19 @@ import com.avocado.domain.family.dto.request.FamilyRequestDecisionRequestDto;
 import com.avocado.domain.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.domain.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
-import com.avocado.domain.family.mapper.FamilyWalletMapper;
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import com.avocado.domain.user.domain.User;
 import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.domain.user.service.UserService;
+import com.avocado.domain.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Locale;
-
 import static com.avocado.global.response.code.ErrorCode.*;
 
 @Service
@@ -32,9 +31,10 @@ import static com.avocado.global.response.code.ErrorCode.*;
 public class FamilyServiceImpl implements FamilyService {
 
     private final FamilyRelationMapper familyRelationMapper;
-    private final FamilyWalletMapper familyWalletMapper;
+    private final WalletService walletService;
     private final UserMapper userMapper;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     /**
      * 아이가 보호자의 초대 코드로 가족 연결을 요청한다.
@@ -68,6 +68,12 @@ public class FamilyServiceImpl implements FamilyService {
         familyRelationMapper.cancelInProgressByChildId(childId);
 
         Long requestId = createOrRevive(parent.getId(), childId);
+
+        notificationService.create(
+                parent.getId(),
+                NotificationType.FAMILY_INVITE_RECEIVED,
+                String.format("%s님이 가족 연결을 요청했습니다.", userService.getUserName(childId))
+        );
 
         return FamilyRequestResponseDto.builder()
                 .requestId(requestId)
@@ -152,6 +158,14 @@ public class FamilyServiceImpl implements FamilyService {
             throw new BusinessException(FAMILY_REQUEST_ALREADY_HANDLED);
         }
 
+        if (decided == FamilyRelationStatus.APPROVED) {
+            notificationService.create(
+                    relation.getChildId(),
+                    NotificationType.FAMILY_RELATION_APPROVED,
+                    String.format("%s님이 가족 연결을 승인했습니다.", relation.getParentName())
+            );
+        }
+
         return FamilyRequestCheckResponseDto.builder()
                 .requestId(relation.getId())
                 .status(decided)
@@ -202,7 +216,7 @@ public class FamilyServiceImpl implements FamilyService {
         // 연결이 끝나야 아이가 서비스를 쓸 수 있다. 취소한 경우에는 PENDING으로 남는다.
         if (confirmed == FamilyRelationStatus.ACTIVE) {
             userService.activate(relation.getChildId());
-            createWallet(relation.getChildId());
+            walletService.issueWallet(relation.getChildId());
         }
 
         return FamilyRequestResponseDto.builder()
@@ -228,25 +242,6 @@ public class FamilyServiceImpl implements FamilyService {
         if (!isFamily) {
             throw new BusinessException(FAMILY_RELATION_NOT_FOUND);
         }
-    }
-
-    /**
-     * 아이의 선불지갑을 만든다.
-     * 확정과 같은 트랜잭션이라 여기서 실패하면 관계와 계정 상태까지 함께 되돌아간다.
-     */
-    private void createWallet(Long childId) {
-        if (familyWalletMapper.existsByChildId(childId)) {
-            throw new BusinessException(WALLET_ALREADY_EXISTS);
-        }
-
-        familyWalletMapper.insertWallet(childId, temporaryWalletNumber(childId));
-    }
-
-    /**
-     * TODO: 지갑 번호 규칙은 지갑 담당자가 정한다. 지금은 UNIQUE 제약만 지키는 임시값이다.
-     */
-    private String temporaryWalletNumber(Long childId) {
-        return "WALLET-" + childId;
     }
 
     private void requireAuthenticated(AuthUser authUser) {

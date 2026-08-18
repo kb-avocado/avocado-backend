@@ -16,7 +16,7 @@ public interface PiggyBankMapper {
 
     int updateBonus(
             @Param("id") Long id,
-            @Param("bonusType") PiggyBankBonusType piggyBankBonusType,
+            @Param("piggyBankBonusType") PiggyBankBonusType piggyBankBonusType,
             @Param("bonusValue") Long bonusValue
     );
 
@@ -70,4 +70,6 @@ public interface PiggyBankMapper {
     boolean existsByWalletId(@Param("walletId") Long walletId);
     // 환급: 저금통 잔액 0 처리
     int zeroBalance(@Param("id") Long id);
+
+    Long selectChildIdByPiggyBankId(@Param("piggyBankId") Long piggyBankId);
 }

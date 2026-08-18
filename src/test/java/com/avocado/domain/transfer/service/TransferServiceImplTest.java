@@ -3,6 +3,8 @@ package com.avocado.domain.transfer.service;
 import com.avocado.domain.account.domain.AccountVo;
 import com.avocado.domain.account.service.AccountService;
 import com.avocado.domain.family.service.FamilyService;
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.transaction.service.AccountTxService;
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
@@ -38,6 +40,9 @@ class TransferServiceImplTest {
 
     @Mock
     private WalletService walletService;
+
+    @Mock
+    private NotificationService notificationService;
 
     @InjectMocks
     private TransferServiceImpl transferService;
@@ -123,6 +128,13 @@ class TransferServiceImplTest {
                         amount,
                         traceId
                 );
+
+        verify(notificationService)
+                .create(
+                        eq(childId),
+                        eq(NotificationType.ALLOWANCE_RECEIVED),
+                        anyString()
+                );
     }
 
     /**
@@ -197,6 +209,13 @@ class TransferServiceImplTest {
                 .depositFromAccount(
                         eq(childId),
                         eq(amount),
+                        anyString()
+                );
+
+        verify(notificationService)
+                .create(
+                        eq(childId),
+                        eq(NotificationType.ALLOWANCE_RECEIVED),
                         anyString()
                 );
     }

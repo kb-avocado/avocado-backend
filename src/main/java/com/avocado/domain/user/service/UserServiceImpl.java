@@ -4,7 +4,6 @@ import com.avocado.domain.user.domain.UserStatus;
 import com.avocado.domain.user.domain.UserVo;
 import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
-import com.avocado.global.response.code.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
