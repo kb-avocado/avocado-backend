@@ -9,10 +9,19 @@
         <result property="reportTypeId" column="report_type_id"/>
         <result property="reportYear" column="report_year"/>
         <result property="reportMonth" column="report_month"/>
+        <result property="totalSpent" column="total_spent"/>
+        <result property="transactionCount" column="transaction_count"/>
+        <result property="topSpots" column="top_spots"/>
+        <result property="totalSaved" column="total_saved"/>
+        <result property="allowanceReceived" column="allowance_received"/>
+        <result property="savingRate" column="saving_rate"/>
+        <result property="advice" column="advice"/>
     </resultMap>
 
     <select id="findByChildAndYearMonth" resultMap="childSpendingReportMap">
-        SELECT id, child_id, report_type_id, report_year, report_month
+        SELECT id, child_id, report_type_id, report_year, report_month,
+               total_spent, transaction_count, top_spots, total_saved,
+               allowance_received, saving_rate, advice
         FROM child_spending_reports
         WHERE child_id = #{childId}
           AND report_year = #{year}
@@ -20,9 +29,23 @@
     </select>
 
     <insert id="upsert">
-        INSERT INTO child_spending_reports (child_id, report_type_id, report_year, report_month)
-        VALUES (#{childId}, #{reportTypeId}, #{reportYear}, #{reportMonth})
-        ON DUPLICATE KEY UPDATE report_type_id = VALUES(report_type_id)
+        INSERT INTO child_spending_reports
+        (child_id, report_type_id, report_year, report_month,
+         total_spent, transaction_count, top_spots, total_saved,
+         allowance_received, saving_rate, advice)
+        VALUES
+            (#{childId}, #{reportTypeId}, #{reportYear}, #{reportMonth},
+             #{totalSpent}, #{transactionCount}, #{topSpots}, #{totalSaved},
+             #{allowanceReceived}, #{savingRate}, #{advice})
+            ON DUPLICATE KEY UPDATE
+                                 report_type_id = VALUES(report_type_id),
+                                 total_spent = VALUES(total_spent),
+                                 transaction_count = VALUES(transaction_count),
+                                 top_spots = VALUES(top_spots),
+                                 total_saved = VALUES(total_saved),
+                                 allowance_received = VALUES(allowance_received),
+                                 saving_rate = VALUES(saving_rate),
+                                 advice = VALUES(advice)
     </insert>
 
     <select id="countByReportTypeAndYearMonth" resultType="long">

@@ -1,43 +1,29 @@
 package com.avocado.domain.report.service;
 
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
-import com.avocado.domain.user.mapper.UserMapper;
-import com.avocado.domain.wallet.mapper.WalletMapper;
-import com.avocado.global.exception.BusinessException;
-import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.report.domain.ChildSpendingReport;
 import com.avocado.domain.report.domain.SpendingReportType;
 import com.avocado.domain.report.dto.response.SpendingReportTypeDto;
 import com.avocado.domain.report.mapper.ChildSpendingReportMapper;
-import com.avocado.domain.report.mapper.ReportMapper;
-import com.avocado.domain.report.mapper.SpendingClassificationMapper;
 import com.avocado.domain.report.mapper.SpendingReportTypeMapper;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.global.exception.BusinessException;
+import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.YearMonth;
-import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
 import static com.avocado.global.response.code.ErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class SpendingReportClassificationServiceImpl implements SpendingReportClassificationService {
-
-    private static final int SAVING_DREAMER_MIN_ACHIEVED = 2;
-    private static final int FREQUENT_SPARROW_MIN_DAYS = 25;
-    private static final double BIG_SPENDER_MIN_AVG_AMOUNT = 15000;
-    private static final int BIG_SPENDER_MAX_COUNT = 5;
-    private static final double ROLLER_COASTER_RATE = 0.5;
-    private static final int CAREFUL_OWL_MAX_COUNT = 10;
-    private static final double ONE_STORE_SNIPER_SHARE = 0.5;
-    private static final long SMALL_SAVER_MAX_AMOUNT = 10000;
 
     // 유형별 아이용/부모용 설명. { childDescription, parentDescription } 순서.
     private static final Map<String, String[]> DESCRIPTIONS = Map.ofEntries(
@@ -79,8 +65,6 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
             })
     );
 
-    private final ReportMapper reportMapper;
-    private final SpendingClassificationMapper spendingClassificationMapper;
     private final SpendingReportTypeMapper spendingReportTypeMapper;
     private final ChildSpendingReportMapper childSpendingReportMapper;
     private final UserMapper userMapper;
@@ -92,49 +76,16 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
 
         YearMonth targetMonth = YearMonth.parse(yearMonth);
 
-        // 이미 이 달에 계산된 기록이 있으면 재계산하지 않고 그대로 반환 (한 달에 한 번만 계산)
         ChildSpendingReport existing = childSpendingReportMapper.findByChildAndYearMonth(
                 targetChildId, targetMonth.getYear(), targetMonth.getMonthValue());
-
-        if (existing != null) {
-            SpendingReportType cachedType = spendingReportTypeMapper.findById(existing.getReportTypeId());
-            if (cachedType == null) {
-                throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
-            }
-            return toDto(cachedType, targetMonth);
+        if (existing == null) {
+            throw new BusinessException(ErrorCode.REPORT_NOT_READY);
         }
 
-        return calculateAndSave(yearMonth, targetChildId, targetMonth);
-    }
-
-    /**
-     * 그 달 최초 조회 시에만 실행되는 실제 판정 로직.
-     */
-    private SpendingReportTypeDto calculateAndSave(String yearMonth, Long childId, YearMonth targetMonth) {
-        Long walletId = reportMapper.findWalletIdByChildId(childId);
-        if (walletId == null) {
-            throw new BusinessException(ErrorCode.WALLET_NOT_FOUND);
-        }
-
-        String previousMonth = targetMonth.minusMonths(1).format(DateTimeFormatter.ofPattern("yyyy-MM"));
-
-        long totalSpent = reportMapper.sumSpentAmount(walletId, yearMonth);
-        long lastMonthSpent = reportMapper.sumSpentAmount(walletId, previousMonth);
-        int transactionCount = reportMapper.countTransactions(walletId, yearMonth);
-
-        String code = classify(walletId, yearMonth, totalSpent, lastMonthSpent, transactionCount);
-
-        SpendingReportType type = spendingReportTypeMapper.findByCode(code);
+        SpendingReportType type = spendingReportTypeMapper.findById(existing.getReportTypeId());
         if (type == null) {
             throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-
-        ChildSpendingReport report = new ChildSpendingReport();
-        report.setChildId(childId);
-        report.setReportTypeId(type.getId());
-        report.setReportYear(targetMonth.getYear());
-        report.setReportMonth(targetMonth.getMonthValue());
-        childSpendingReportMapper.upsert(report);
 
         return toDto(type, targetMonth);
     }
@@ -166,65 +117,6 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
         return (int) Math.round(sameType * 100.0 / total);
     }
 
-    /**
-     * 9개 소비 유형 판정. 위에서부터 순서대로 검사해 처음 맞는 유형으로 확정한다.
-     * (spending_report_types에 우선순위 컬럼이 없어서, 이 검사 순서 자체가 우선순위 역할을 함)
-     */
-    private String classify(
-            Long walletId,
-            String yearMonth,
-            long totalSpent,
-            long lastMonthSpent,
-            int transactionCount
-    ) {
-        int achievedPiggyBankCount = spendingClassificationMapper.countAchievedPiggyBanks(walletId, yearMonth);
-        if (achievedPiggyBankCount >= SAVING_DREAMER_MIN_ACHIEVED) {
-            return "SAVING_DREAMER";
-        }
-
-        if (totalSpent == 0) {
-            return "ZERO_SPENDING";
-        }
-
-        int spendingDayCount = spendingClassificationMapper.findDistinctSpendingDayCount(walletId, yearMonth);
-        if (spendingDayCount >= FREQUENT_SPARROW_MIN_DAYS) {
-            return "FREQUENT_SPARROW";
-        }
-
-        double avgAmount = (double) totalSpent / transactionCount;
-        if (avgAmount >= BIG_SPENDER_MIN_AVG_AMOUNT && transactionCount <= BIG_SPENDER_MAX_COUNT) {
-            return "BIG_SPENDER";
-        }
-
-        double changeRate = lastMonthSpent == 0
-                ? Double.MAX_VALUE // 지난달 소비 0원 + 이번 달 소비 발생 = 급변으로 취급
-                : Math.abs((totalSpent - lastMonthSpent) / (double) lastMonthSpent);
-        if (changeRate >= ROLLER_COASTER_RATE) {
-            return "ROLLER_COASTER";
-        }
-
-        if (transactionCount <= CAREFUL_OWL_MAX_COUNT) {
-            return "CAREFUL_OWL";
-        }
-
-        long topMerchantAmount = spendingClassificationMapper.findTopMerchantAmount(walletId, yearMonth);
-        double merchantShare = (double) topMerchantAmount / totalSpent;
-        if (merchantShare >= ONE_STORE_SNIPER_SHARE) {
-            return "ONE_STORE_SNIPER";
-        }
-
-        if (totalSpent <= SMALL_SAVER_MAX_AMOUNT) {
-            return "SMALL_SAVER";
-        }
-
-        return "SPROUT";
-    }
-
-    /*
-     * 요청받은 childId와 로그인 사용자 정보를 바탕으로
-     * 실제 조회 대상 childId를 결정하고 접근 권한을 검증한다.
-     * News/Home/ReportServiceImpl과 동일한 패턴이다.
-     */
     private Long resolveTargetChildId(Long childId, AuthUser authUser) {
         if (authUser == null) {
             throw new BusinessException(UNAUTHORIZED);
