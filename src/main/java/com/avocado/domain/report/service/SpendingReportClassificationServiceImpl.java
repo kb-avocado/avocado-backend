@@ -69,7 +69,6 @@ public class SpendingReportClassificationServiceImpl implements SpendingReportCl
     private final ChildSpendingReportMapper childSpendingReportMapper;
     private final UserMapper userMapper;
     private final FamilyRelationMapper familyRelationMapper;
-    private final NotificationService notificationService;
 
     @Override
     public SpendingReportTypeDto classifyAndSave(String yearMonth, Long childId, AuthUser authUser) {
