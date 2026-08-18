@@ -10,6 +10,8 @@ import com.avocado.domain.family.dto.request.FamilyRequestDecisionRequestDto;
 import com.avocado.domain.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.domain.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import com.avocado.domain.user.domain.User;
 import com.avocado.domain.user.domain.UserStatus;
@@ -32,6 +34,7 @@ public class FamilyServiceImpl implements FamilyService {
     private final WalletService walletService;
     private final UserMapper userMapper;
     private final UserService userService;
+    private final NotificationService notificationService;
 
     /**
      * 아이가 보호자의 초대 코드로 가족 연결을 요청한다.
@@ -65,6 +68,12 @@ public class FamilyServiceImpl implements FamilyService {
         familyRelationMapper.cancelInProgressByChildId(childId);
 
         Long requestId = createOrRevive(parent.getId(), childId);
+
+        notificationService.create(
+                parent.getId(),
+                NotificationType.FAMILY_INVITE_RECEIVED,
+                String.format("%s님이 가족 연결을 요청했습니다.", userService.getUserName(childId))
+        );
 
         return FamilyRequestResponseDto.builder()
                 .requestId(requestId)
@@ -147,6 +156,14 @@ public class FamilyServiceImpl implements FamilyService {
 
         if (updated == 0) {
             throw new BusinessException(FAMILY_REQUEST_ALREADY_HANDLED);
+        }
+
+        if (decided == FamilyRelationStatus.APPROVED) {
+            notificationService.create(
+                    relation.getChildId(),
+                    NotificationType.FAMILY_RELATION_APPROVED,
+                    String.format("%s님이 가족 연결을 승인했습니다.", relation.getParentName())
+            );
         }
 
         return FamilyRequestCheckResponseDto.builder()

@@ -1,6 +1,9 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.transfer.service.TransferService;
+import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -24,6 +27,8 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
     private final PiggyBankMapper piggyBankMapper;
     private final PiggyBankHistoryMapper piggyBankHistoryMapper;
     private final TransferService transferService;
+    private final NotificationService notificationService;
+    private final UserMapper userMapper;
 
     @Override
     public List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId) {
@@ -67,6 +72,19 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
 
         String traceId = UUID.randomUUID().toString();
         piggyBankHistoryMapper.insertDeposit(piggyBankId, request.getAmount(), balanceBefore, balanceAfter, traceId);
+
+        if (goalReached) {
+            Long childId = piggyBankMapper.selectChildIdByPiggyBankId(piggyBankId);
+            if (childId == null) {
+                throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+            }
+
+            notificationService.create(
+                    childId,
+                    NotificationType.PIGGY_BANK_ACHIEVED,
+                    String.format("%s 저금통 목표 금액을 달성했습니다.", piggyBank.getName())
+            );
+        }
 
         return PiggyBankDepositResultResponseDto.builder()
                 .piggyBankId(piggyBankId)
@@ -126,6 +144,14 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
         piggyBankMapper.increaseBalance(piggyBankId, balanceAfter, newStatus, firstDepositedAt, targetReachedAt);
 
         piggyBankHistoryMapper.insertDeposit(piggyBankId, amount, balanceBefore, balanceAfter, traceId);
+
+        if (goalReached) {
+            notificationService.create(
+                    childId,
+                    NotificationType.PIGGY_BANK_ACHIEVED,
+                    String.format("%s 저금통 목표 금액을 달성했습니다.", piggyBank.getName())
+            );
+        }
 
         return PiggyBankDepositResultResponseDto.builder()
                 .piggyBankId(piggyBankId)
