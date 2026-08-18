@@ -16,7 +16,7 @@ public interface PiggyBankMapper {
 
     int updateBonus(
             @Param("id") Long id,
-            @Param("bonusType") PiggyBankBonusType piggyBankBonusType,
+            @Param("piggyBankBonusType") PiggyBankBonusType piggyBankBonusType,
             @Param("bonusValue") Long bonusValue
     );
 
