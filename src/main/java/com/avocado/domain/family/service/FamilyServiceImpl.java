@@ -1,7 +1,6 @@
 package com.avocado.domain.family.service;
 
 import com.avocado.global.exception.BusinessException;
-import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.family.domain.FamilyRelation;
 import com.avocado.domain.family.domain.FamilyRelationStatus;
 import com.avocado.domain.family.dto.request.FamilyRequestConfirmRequestDto;
@@ -21,9 +20,7 @@ import com.avocado.domain.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import java.util.Locale;
-
 import static com.avocado.global.response.code.ErrorCode.*;
 
 @Service
