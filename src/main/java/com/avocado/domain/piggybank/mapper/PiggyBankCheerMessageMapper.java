@@ -17,4 +17,6 @@ public interface PiggyBankCheerMessageMapper {
     int deleteById(@Param("messageId") Long messageId, @Param("parentId") Long parentId);
 
     Long selectLastInsertId();
+
+    Long selectChildIdByPiggyBankId(@Param("piggyBankId") Long piggyBankId);
 }

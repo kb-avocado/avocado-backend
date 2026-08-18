@@ -166,4 +166,12 @@
         updated_at = NOW()
         WHERE id = #{id}
     </update>
+
+
+    <select id="selectChildIdByPiggyBankId" resultType="Long">
+        SELECT w.child_id
+        FROM piggy_banks pb
+        JOIN wallets w ON pb.wallet_id = w.id
+        WHERE pb.id = #{piggyBankId}
+    </select>
 </mapper>

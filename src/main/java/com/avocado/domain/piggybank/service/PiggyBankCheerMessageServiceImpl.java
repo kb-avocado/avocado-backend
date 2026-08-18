@@ -1,5 +1,7 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBankCheerMessage;
@@ -9,6 +11,7 @@ import com.avocado.domain.piggybank.mapper.PiggyBankCheerMessageMapper;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,8 +20,10 @@ import java.util.List;
 public class PiggyBankCheerMessageServiceImpl implements PiggyBankCheerMessageService {
 
     private final PiggyBankCheerMessageMapper piggyBankCheerMessageMapper;
+    private final NotificationService notificationService;
 
     @Override
+    @Transactional
     public PiggyBankCheerMessageResponseDto sendMessage(
             Long piggyBankId,
             PiggyBankCheerMessageCreateRequestDto request,
@@ -38,6 +43,17 @@ public class PiggyBankCheerMessageServiceImpl implements PiggyBankCheerMessageSe
                 .build();
 
         piggyBankCheerMessageMapper.insert(cheerMessage);
+
+        Long childId = piggyBankCheerMessageMapper.selectChildIdByPiggyBankId(piggyBankId);
+        if (childId == null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        notificationService.create(
+                childId,
+                NotificationType.CHEER_MESSAGE_RECEIVED,
+                request.getMessage()
+        );
 
         List<PiggyBankCheerMessageResponseDto> messages = piggyBankCheerMessageMapper.selectByPiggyBankId(piggyBankId);
 

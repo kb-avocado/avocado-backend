@@ -15,6 +15,13 @@
         SELECT LAST_INSERT_ID()
     </select>
 
+    <select id="selectChildIdByPiggyBankId" resultType="Long">
+        SELECT w.child_id
+        FROM piggy_banks pb
+        JOIN wallets w ON pb.wallet_id = w.id
+        WHERE pb.id = #{piggyBankId}
+    </select>
+
     <select id="selectByPiggyBankId" resultType="com.avocado.domain.piggybank.dto.response.PiggyBankCheerMessageResponseDto">
         SELECT
         m.id AS cheerMessageId,
