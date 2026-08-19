@@ -15,13 +15,14 @@
         <result property="totalSaved" column="total_saved"/>
         <result property="allowanceReceived" column="allowance_received"/>
         <result property="savingRate" column="saving_rate"/>
-        <result property="advice" column="advice"/>
+        <result property="childAdvice" column="child_advice"/>
+        <result property="parentAdvice" column="parent_advice"/>
     </resultMap>
 
     <select id="findByChildAndYearMonth" resultMap="childSpendingReportMap">
         SELECT id, child_id, report_type_id, report_year, report_month,
                total_spent, transaction_count, top_spots, total_saved,
-               allowance_received, saving_rate, advice
+               allowance_received, saving_rate, child_advice, parent_advice
         FROM child_spending_reports
         WHERE child_id = #{childId}
           AND report_year = #{year}
@@ -32,11 +33,11 @@
         INSERT INTO child_spending_reports
         (child_id, report_type_id, report_year, report_month,
          total_spent, transaction_count, top_spots, total_saved,
-         allowance_received, saving_rate, advice)
+         allowance_received, saving_rate, child_advice, parent_advice)
         VALUES
             (#{childId}, #{reportTypeId}, #{reportYear}, #{reportMonth},
              #{totalSpent}, #{transactionCount}, #{topSpots}, #{totalSaved},
-             #{allowanceReceived}, #{savingRate}, #{advice})
+             #{allowanceReceived}, #{savingRate}, #{childAdvice}, #{parentAdvice})
             ON DUPLICATE KEY UPDATE
                                  report_type_id = VALUES(report_type_id),
                                  total_spent = VALUES(total_spent),
@@ -45,7 +46,8 @@
                                  total_saved = VALUES(total_saved),
                                  allowance_received = VALUES(allowance_received),
                                  saving_rate = VALUES(saving_rate),
-                                 advice = VALUES(advice)
+                                 child_advice = VALUES(child_advice),
+                                 parent_advice = VALUES(parent_advice)
     </insert>
 
     <select id="countByReportTypeAndYearMonth" resultType="long">
