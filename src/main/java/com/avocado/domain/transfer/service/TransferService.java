@@ -2,6 +2,7 @@ package com.avocado.domain.transfer.service;
 
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
+import com.avocado.domain.transfer.dto.response.AccountToWalletTransferResponseDto;
 
 public interface TransferService {
 
@@ -11,7 +12,8 @@ public interface TransferService {
      * @param requestDto 부모 계좌-자녀 선불지갑 송금 요청 정보
      * @return 송금 상대방과 송금 금액 정보
      */
-    TransferResultVo transferAccountToWallet(
+    AccountToWalletTransferResponseDto transferAccountToWallet(
+            Long parentId,
             AccountToWalletTransferRequestDto requestDto
     );
 

@@ -11,10 +11,6 @@ import javax.validation.constraints.Positive;
 @NoArgsConstructor
 public class AccountToWalletTransferRequestDto {
 
-    // 충전을 수행하는 부모 회원 ID
-    @NotNull
-    private Long parentId;
-
     // 충전 대상 아이 회원 ID
     @NotNull
     private Long childId;

@@ -6,8 +6,10 @@ import com.avocado.domain.transfer.dto.response.AccountToWalletTransferResponseD
 import com.avocado.domain.transfer.service.TransferService;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.response.code.SuccessCode;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,13 +26,16 @@ public class TransferController {
 
     @PostMapping("/account-to-wallet")
     public ResponseEntity<ApiResponse<AccountToWalletTransferResponseDto>> transferAccountToWallet(
+            @AuthenticationPrincipal
+            AuthUser authUser,
             @Valid
             @RequestBody
             AccountToWalletTransferRequestDto requestDto
     ) {
-        TransferResultVo resultVo = transferService.transferAccountToWallet(requestDto);
-
-        AccountToWalletTransferResponseDto response = AccountToWalletTransferResponseDto.from(resultVo);
+        AccountToWalletTransferResponseDto response = transferService.transferAccountToWallet(
+                authUser.getUserId(),
+                requestDto
+        );
 
         return ResponseEntity
                 .status(SuccessCode.TRANSFER_SUCCESS.getHttpStatus())

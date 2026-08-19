@@ -9,6 +9,7 @@ import com.avocado.domain.transaction.service.AccountTxService;
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
 import com.avocado.domain.transfer.dto.request.TransferRecipientListRequestDto;
+import com.avocado.domain.transfer.dto.response.AccountToWalletTransferResponseDto;
 import com.avocado.domain.transfer.dto.response.TransferRecipientResponseDto;
 import com.avocado.domain.user.service.UserService;
 import com.avocado.domain.wallet.service.WalletService;
@@ -39,10 +40,10 @@ public class TransferServiceImpl implements TransferService {
      */
     @Override
     @Transactional
-    public TransferResultVo transferAccountToWallet(
+    public AccountToWalletTransferResponseDto transferAccountToWallet(
+            Long parentId,
             AccountToWalletTransferRequestDto requestDto
     ) {
-        Long parentId = requestDto.getParentId();
         Long childId = requestDto.getChildId();
         Long amount = requestDto.getAmount();
 
@@ -90,11 +91,13 @@ public class TransferServiceImpl implements TransferService {
                 String.format("%,d원이 입금되었습니다.", amount)
         );
 
-        // 송금 결과를 반환한다.
-        return TransferResultVo.builder()
+
+        TransferResultVo transferResultVo = TransferResultVo.builder()
                 .counterpartyName(childName)
                 .amount(amount)
                 .build();
+
+        return AccountToWalletTransferResponseDto.from(transferResultVo);
     }
 
     /**
