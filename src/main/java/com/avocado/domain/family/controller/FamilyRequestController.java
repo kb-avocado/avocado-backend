@@ -1,6 +1,7 @@
 package com.avocado.domain.family.controller;
 
 import com.avocado.global.response.ApiResponse;
+import com.avocado.domain.family.domain.FamilyRelationStatus;
 import com.avocado.domain.family.dto.request.FamilyRequestConfirmRequestDto;
 import com.avocado.domain.family.dto.request.FamilyRequestCreateRequestDto;
 import com.avocado.domain.family.dto.request.FamilyRequestDecisionRequestDto;
@@ -19,14 +20,18 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
+
+import java.util.List;
 
 import static com.avocado.global.response.code.SuccessCode.FAMILY_REQUEST_CONFIRMED;
 import static com.avocado.global.response.code.SuccessCode.FAMILY_REQUEST_CREATED;
 import static com.avocado.global.response.code.SuccessCode.FAMILY_REQUEST_DECIDED;
 import static com.avocado.global.response.code.SuccessCode.FAMILY_REQUEST_FOUND;
+import static com.avocado.global.response.code.SuccessCode.FAMILY_REQUEST_LIST_FOUND;
 
 @Api(tags = "가족 연결 API")
 @RestController
@@ -78,6 +83,27 @@ public class FamilyRequestController {
     }
 
     @ApiOperation(
+            value = "[보호자] 가족 연결 요청 목록",
+            notes = "보호자가 자기에게 온 요청을 목록으로 확인합니다. "
+                    + "status를 주면 그 상태만, 주지 않으면 상태를 가리지 않고 모두 내려갑니다. "
+                    + "최근에 움직인 요청이 앞에 옵니다."
+    )
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<FamilyRequestCheckResponseDto>>> getRequests(
+            @AuthenticationPrincipal
+            AuthUser authUser,
+            @RequestParam(required = false)
+            FamilyRelationStatus status
+    ) {
+        List<FamilyRequestCheckResponseDto> responseDto =
+                familyService.findAllForParent(authUser, status);
+
+        return ResponseEntity
+                .status(FAMILY_REQUEST_LIST_FOUND.getHttpStatus())
+                .body(ApiResponse.success(FAMILY_REQUEST_LIST_FOUND, responseDto));
+    }
+
+    @ApiOperation(
             value = "[보호자] 가족 연결 요청 확인",
             notes = "보호자가 자기에게 온 요청을 확인합니다."
     )
@@ -121,8 +147,11 @@ public class FamilyRequestController {
     }
 
     @ApiOperation(
-            value = "[아이] 가족 연결 최종 확정",
-            notes = "보호자가 승인한 뒤, 아이가 보호자를 확인하고 연결을 확정하거나 취소합니다."
+            value = "[아이] 가족 연결 최종 확정·취소",
+            notes = "아이가 보호자를 확인하고 연결을 확정하거나(confirm=true), 요청을 취소합니다(confirm=false). "
+                    + "확정은 보호자가 승인한 요청에만 할 수 있지만, "
+                    + "취소는 승인을 기다리는 요청에도 할 수 있어 아이가 대기 화면에서 요청을 거둘 수 있습니다. "
+                    + "이미 끝난 요청을 다시 처리하면 409입니다."
     )
     @PatchMapping("/{requestId}/confirm")
     public ResponseEntity<ApiResponse<FamilyRequestResponseDto>> confirmRequest(
