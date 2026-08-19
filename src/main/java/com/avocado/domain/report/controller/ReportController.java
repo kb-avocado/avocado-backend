@@ -1,6 +1,7 @@
 package com.avocado.domain.report.controller;
 
 import com.avocado.domain.report.dto.response.SpendingReportTypeDto;
+import com.avocado.domain.report.service.ReportGenerationService;
 import com.avocado.domain.report.service.SpendingReportClassificationService;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.domain.report.dto.response.ReportResponseDto;
@@ -25,6 +26,7 @@ public class ReportController {
     private final ReportService reportService;
     private final SpendingReportClassificationService spendingReportClassificationService;
 
+    private final ReportGenerationService reportGenerationService;
     @GetMapping("/{yearMonth}")
     @ApiOperation(value = "월별 리포트 조회", notes = "소비 유형·AI 조언을 제외한 리포트 데이터를 조회합니다.")
     public ResponseEntity<ApiResponse<ReportResponseDto>> getReport(
@@ -51,5 +53,11 @@ public class ReportController {
         return ResponseEntity
                 .status(SPENDING_REPORT_TYPE_FOUND.getHttpStatus())
                 .body(ApiResponse.success(SPENDING_REPORT_TYPE_FOUND, data));
+    }
+
+    @PostMapping("/test/generate")
+    public ResponseEntity<Void> testGenerate() {
+        reportGenerationService.generateForAllChildren(java.time.YearMonth.of(2026, 7));
+        return ResponseEntity.ok().build();
     }
 }
