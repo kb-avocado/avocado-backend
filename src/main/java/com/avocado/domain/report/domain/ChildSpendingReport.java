@@ -19,5 +19,6 @@ public class ChildSpendingReport {
     private Long totalSaved;
     private Long allowanceReceived;
     private BigDecimal savingRate;
-    private String advice;
+    private String childAdvice;
+    private String parentAdvice;
 }
