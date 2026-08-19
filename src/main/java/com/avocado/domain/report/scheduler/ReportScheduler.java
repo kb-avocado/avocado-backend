@@ -14,8 +14,8 @@ public class ReportScheduler {
 
     private final ReportGenerationService reportGenerationService;
 
-    // 매월 1일 01:00 실행 (초 분 시 일 월 요일)
-    @Scheduled(cron = "0 0 1 1 * *")
+    // 매월 1일 07:00 실행 (초 분 시 일 월 요일)
+    @Scheduled(cron = "0 0 7 1 * *")
     public void generatePreviousMonthReports() {
         YearMonth previousMonth = YearMonth.now().minusMonths(1);
         reportGenerationService.generateForAllChildren(previousMonth);
