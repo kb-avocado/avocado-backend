@@ -1,8 +1,10 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.domain.piggybank.mapper.PiggyBankHistoryMapper;
 import com.avocado.domain.transfer.service.TransferService;
+import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -39,6 +41,12 @@ class PiggyBankServiceImplTest {
 
     @Mock
     private PiggyBankHistoryMapper piggyBankHistoryMapper;
+
+    @Mock
+    private NotificationService notificationService;
+
+    @Mock
+    private UserMapper userMapper;
 
     @InjectMocks
     private PiggyBankServiceImpl piggyBankService;
@@ -173,7 +181,7 @@ class PiggyBankServiceImplTest {
                         .targetAmount(120000L).balance(0L).status("ACTIVE")
                         .isFavorite(false).bonusType(PiggyBankBonusType.NONE).bonusValue(0L).build());
 
-        PiggyBankDetailResponseDto result = piggyBankService.create(1L, req);
+        PiggyBankDetailResponseDto result = piggyBankService.create(100L, 1L, req);
 
         assertThat(result.getPiggyBankId()).isEqualTo(10L);
         assertThat(result.getName()).isEqualTo("게임기");
@@ -189,7 +197,7 @@ class PiggyBankServiceImplTest {
         when(piggyBankMapper.countByWalletIdAndStatuses(1L, List.of("ACTIVE", "PENDING_ACHIEVE")))
                 .thenReturn(3);
 
-        assertThatThrownBy(() -> piggyBankService.create(1L, req))
+        assertThatThrownBy(() -> piggyBankService.create(100L, 1L, req))
                 .isInstanceOf(BusinessException.class)
                 .extracting("errorCode").isEqualTo(ErrorCode.PIGGY_BANK_LIMIT_EXCEEDED);
     }

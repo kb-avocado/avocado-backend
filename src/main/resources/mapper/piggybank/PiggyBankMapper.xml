@@ -174,4 +174,18 @@
         JOIN wallets w ON pb.wallet_id = w.id
         WHERE pb.id = #{piggyBankId}
     </select>
+
+    <!--  목표 달성 + 보너스 미지급 저금통 중, 오늘이 재촉 알림을 보낼 날(달성일 기준 0/7/14/21일째)인 대상 조회  -->
+    <select id="selectBonusReminderTargets"
+            resultType="com.avocado.domain.piggybank.domain.PiggyBankBonusReminderTarget">
+        SELECT pb.id AS piggyBankId, fr.parent_id AS parentId, pb.name AS name
+        FROM piggy_banks pb
+        JOIN wallets w ON pb.wallet_id = w.id
+        JOIN family_relations fr ON fr.child_id = w.child_id AND fr.status = 'ACTIVE'
+        WHERE pb.status = 'ACHIEVE'
+        AND pb.bonus_type &lt;&gt; 'NONE'
+        AND pb.bonus_paid_at IS NULL
+        AND pb.achieved_at IS NOT NULL
+        AND DATEDIFF(NOW(), pb.achieved_at) IN (0, 7, 14, 21)
+    </select>
 </mapper>

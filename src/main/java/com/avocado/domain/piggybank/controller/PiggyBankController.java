@@ -73,7 +73,7 @@ public class PiggyBankController {
         Long childId = authUser.getUserId();
         Long walletId = walletService.getChildWallet(childId, authUser).getWalletId();
 
-        PiggyBankDetailResponseDto response = piggyBankService.create(walletId, request);
+        PiggyBankDetailResponseDto response = piggyBankService.create(childId, walletId, request);
 
         return ResponseEntity
                 .status(PIGGY_BANK_CREATED.getHttpStatus())
