@@ -1,5 +1,6 @@
 package com.avocado.domain.family.service;
 
+import com.avocado.domain.family.domain.FamilyRelationStatus;
 import com.avocado.domain.family.dto.request.FamilyRequestConfirmRequestDto;
 import com.avocado.domain.family.dto.request.FamilyRequestCreateRequestDto;
 import com.avocado.domain.family.dto.request.FamilyRequestDecisionRequestDto;
@@ -7,6 +8,8 @@ import com.avocado.domain.family.dto.response.FamilyRequestCheckResponseDto;
 import com.avocado.domain.family.dto.response.FamilyRequestResponseDto;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.security.jwt.dto.AuthUser;
+
+import java.util.List;
 
 /**
  * 가족 연결 요청의 생성부터 확정까지를 담당한다.
@@ -40,6 +43,18 @@ public interface FamilyService {
      * @throws BusinessException 요청이 없거나(404) 본인에게 온 요청이 아닌 경우(403)
      */
     FamilyRequestCheckResponseDto findForParent(AuthUser authUser, Long requestId);
+
+    /**
+     * 보호자가 자기에게 온 요청을 목록으로 확인한다.
+     * 요청은 알림으로만 닿아 알림을 지우면 다시 찾을 길이 없으므로 목록으로도 열어 둔다.
+     *
+     * @param status 걸러낼 상태. null이면 상태를 가리지 않는다.
+     * @throws BusinessException 보호자 계정이 아닌 경우(403)
+     */
+    List<FamilyRequestCheckResponseDto> findAllForParent(
+            AuthUser authUser,
+            FamilyRelationStatus status
+    );
 
     /**
      * 보호자가 자기에게 온 요청을 승인하거나 거절한다.

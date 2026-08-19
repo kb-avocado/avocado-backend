@@ -4,6 +4,8 @@ import com.avocado.domain.family.domain.FamilyRelation;
 import com.avocado.domain.family.domain.FamilyRelationStatus;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
+
 /**
  * 가족 연결 요청의 생성과 상태 변경을 담당한다.
  * 로그인 응답에 쓰이는 가족 관계 조회는 UserMapper에 이미 있어 이곳에 두지 않는다.
@@ -34,6 +36,16 @@ public interface FamilyRelationMapper {
     // 폴링·보호자 확인·당사자 검증에 공통으로 쓰는 조회. 보호자와 아이 이름까지 채워 준다.
     FamilyRelation selectDetailById(
             @Param("id") Long id
+    );
+
+    /**
+     * 보호자가 받은 요청을 최근에 움직인 순서로 조회한다.
+     *
+     * @param status null이면 상태를 가리지 않고 전부 가져온다.
+     */
+    List<FamilyRelation> selectDetailsByParentId(
+            @Param("parentId") Long parentId,
+            @Param("status") FamilyRelationStatus status
     );
 
     /**

@@ -96,7 +96,9 @@ public enum SuccessCode implements ResponseCode {
     // 보호자가 승인 또는 거절한 결과. 어느 쪽인지는 응답의 status로 구분한다.
     FAMILY_REQUEST_DECIDED(HttpStatus.OK, "FAM-002", "가족 연결 요청을 처리했습니다."),
     // 아이가 최종 승인 또는 거절한 결과
-    FAMILY_REQUEST_CONFIRMED(HttpStatus.OK, "FAM-003", "가족 연결 요청을 확정했습니다.");
+    FAMILY_REQUEST_CONFIRMED(HttpStatus.OK, "FAM-003", "가족 연결 요청을 확정했습니다."),
+    // 보호자가 자기에게 온 요청을 목록으로 조회한 결과
+    FAMILY_REQUEST_LIST_FOUND(HttpStatus.OK, "FAM-004", "가족 연결 요청 목록을 조회했습니다.");
 
     private final HttpStatus httpStatus;
 

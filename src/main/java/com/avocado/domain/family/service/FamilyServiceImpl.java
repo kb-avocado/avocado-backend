@@ -22,7 +22,9 @@ import com.avocado.domain.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import static com.avocado.global.response.code.ErrorCode.*;
 
 @Service
@@ -113,12 +115,31 @@ public class FamilyServiceImpl implements FamilyService {
         FamilyRelation relation = findRelation(requestId);
         requireOwner(authUser, relation.getParentId());
 
-        return FamilyRequestCheckResponseDto.builder()
-                .requestId(relation.getId())
-                .status(relation.getStatus())
-                .childName(relation.getChildName())
-                .createdAt(relation.getCreatedAt())
-                .build();
+        return toCheckResponse(relation);
+    }
+
+    /**
+     * 보호자가 자기에게 온 요청을 목록으로 확인한다.
+     *
+     * @throws BusinessException 보호자 계정이 아닌 경우(403)
+     */
+    @Override
+    public List<FamilyRequestCheckResponseDto> findAllForParent(
+            AuthUser authUser,
+            FamilyRelationStatus status
+    ) {
+        requireAuthenticated(authUser);
+
+        if (authUser.getUserType() != UserType.PARENT) {
+            throw new BusinessException(NOT_PARENT_USER);
+        }
+
+        // 남의 요청이 섞일 수 없도록 조회 자체를 본인 것으로 좁힌다.
+        return familyRelationMapper
+                .selectDetailsByParentId(authUser.getUserId(), status)
+                .stream()
+                .map(this::toCheckResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -242,6 +263,15 @@ public class FamilyServiceImpl implements FamilyService {
         if (!isFamily) {
             throw new BusinessException(FAMILY_RELATION_NOT_FOUND);
         }
+    }
+
+    private FamilyRequestCheckResponseDto toCheckResponse(FamilyRelation relation) {
+        return FamilyRequestCheckResponseDto.builder()
+                .requestId(relation.getId())
+                .status(relation.getStatus())
+                .childName(relation.getChildName())
+                .createdAt(relation.getCreatedAt())
+                .build();
     }
 
     private void requireAuthenticated(AuthUser authUser) {
