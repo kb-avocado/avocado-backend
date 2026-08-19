@@ -15,8 +15,8 @@ public interface PiggyBankService {
     // 저금통 상세 조회 (소유권 검증용 walletId)
     PiggyBankDetailResponseDto getDetail(Long piggyBankId, Long walletId);
 
-    // 저금통 생성
-    PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request);
+    // 저금통 생성 (childId: 생성 알림을 받을 부모 조회용)
+    PiggyBankDetailResponseDto create(Long childId, Long walletId, PiggyBankCreateRequestDto request);
 
     // 7일 달성 승격 (스케줄러가 호출), 승격된 저금통 수 반환
     int promoteAchievements();

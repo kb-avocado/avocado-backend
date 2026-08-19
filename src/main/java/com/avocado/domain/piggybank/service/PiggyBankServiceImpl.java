@@ -1,9 +1,12 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.domain.piggybank.domain.PiggyBankRefundTarget;
 import com.avocado.domain.piggybank.mapper.PiggyBankHistoryMapper;
 import com.avocado.domain.transfer.service.TransferService;
+import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -32,6 +35,8 @@ public class PiggyBankServiceImpl implements PiggyBankService {
     private final PiggyBankMapper piggyBankMapper;
     private final TransferService transferService;
     private final PiggyBankHistoryMapper piggyBankHistoryMapper;
+    private final NotificationService notificationService;
+    private final UserMapper userMapper;
 
     @Override
     public PiggyBankListResponseDto getList(Long walletId, String status) {
@@ -143,7 +148,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
     @Override
     @Transactional
-    public PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request) {
+    public PiggyBankDetailResponseDto create(Long childId, Long walletId, PiggyBankCreateRequestDto request) {
         // 1) 최대 개수(3) 체크 — 진행중 개수로 판단
         int activeCount = piggyBankMapper.countByWalletIdAndStatuses(
                 walletId, List.of("ACTIVE", "PENDING_ACHIEVE"));
@@ -160,7 +165,17 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .build();
         piggyBankMapper.insert(piggyBank);
 
-        // 3) 생성된 id로 상세 반환
+        // 3) 부모에게 저금통 생성 알림
+        Long parentId = userMapper.selectParentIdByChildId(childId);
+        if (parentId != null) {
+            notificationService.create(
+                    parentId,
+                    NotificationType.PIGGY_BANK_CREATED,
+                    String.format("자녀가 '%s' 저금통을 만들었어요.", request.getName())
+            );
+        }
+
+        // 4) 생성된 id로 상세 반환
         Long newId = piggyBankMapper.selectLastInsertId();
         return getDetail(newId, walletId);
     }
@@ -195,6 +210,21 @@ public class PiggyBankServiceImpl implements PiggyBankService {
             transferService.transferPiggyBankToWallet(childId, refund, traceId);  // 지갑 반영
             // 저금통 출금 이력 (같은 traceId로 지갑 거래와 연결, before=원금 after=0)
             piggyBankHistoryMapper.insertWithdrawal(piggyBankId, refund, refund, 0L, traceId);
+
+            notificationService.create(
+                    childId,
+                    NotificationType.PIGGY_BANK_REFUNDED,
+                    String.format("%s 저금통이 중도 해지되어 %,d원이 지갑으로 환급됐어요.", p.getName(), refund)
+            );
+
+            Long parentId = userMapper.selectParentIdByChildId(childId);
+            if (parentId != null) {
+                notificationService.create(
+                        parentId,
+                        NotificationType.PIGGY_BANK_REFUNDED,
+                        String.format("자녀의 %s 저금통이 중도 해지되어 %,d원이 환급됐어요.", p.getName(), refund)
+                );
+            }
         }
 
     }

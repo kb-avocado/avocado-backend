@@ -1,5 +1,8 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
+import com.avocado.domain.piggybank.domain.PiggyBankBonusReminderTarget;
 import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
@@ -13,21 +16,24 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
 
     private final PiggyBankMapper piggyBankMapper;
+    private final NotificationService notificationService;
 
     @Override
-    public PiggyBankBonusResponseDto setBonus(Long piggyBankId, PiggyBankBonusSetRequestDto request, Long walletId) {
+    @Transactional
+    public PiggyBankBonusResponseDto setBonus(Long piggyBankId, PiggyBankBonusSetRequestDto request, Long walletId, Long childId) {
         PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
 
         if (piggyBank == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
         }
-      
+
         // 소유권 검증: 이 저금통이 요청자의 지갑 소속인지
         if (!piggyBank.getWalletId().equals(walletId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
@@ -40,6 +46,12 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
         validateBonusValue(request.getPiggyBankBonusType(), request.getBonusValue());
 
         piggyBankMapper.updateBonus(piggyBankId, request.getPiggyBankBonusType(), request.getBonusValue());
+
+        notificationService.create(
+                childId,
+                NotificationType.PIGGY_BANK_BONUS_SET,
+                String.format("%s 저금통에 보너스가 설정됐어요.", piggyBank.getName())
+        );
 
         return PiggyBankBonusResponseDto.builder()
                 .piggyBankId(piggyBankId)
@@ -84,6 +96,22 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
                 .bonusValue(piggyBank.getBonusValue())
                 .paidAt(paidAt)
                 .build();
+    }
+
+    @Override
+    @Transactional
+    public int sendBonusReminders() {
+        List<PiggyBankBonusReminderTarget> targets = piggyBankMapper.selectBonusReminderTargets();
+
+        for (PiggyBankBonusReminderTarget target : targets) {
+            notificationService.create(
+                    target.getParentId(),
+                    NotificationType.PIGGY_BANK_BONUS_REMINDER,
+                    String.format("%s 저금통 보너스 지급을 기다리고 있어요.", target.getName())
+            );
+        }
+
+        return targets.size();
     }
 
     private void validateBonusValue(PiggyBankBonusType piggyBankBonusType, Long bonusValue) {

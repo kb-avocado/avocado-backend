@@ -1,5 +1,6 @@
 package com.avocado.domain.piggybank.mapper;
 
+import com.avocado.domain.piggybank.domain.PiggyBankBonusReminderTarget;
 import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.domain.piggybank.domain.PiggyBank;
 import com.avocado.domain.piggybank.domain.PiggyBankRefundTarget;
@@ -72,4 +73,7 @@ public interface PiggyBankMapper {
     int zeroBalance(@Param("id") Long id);
 
     Long selectChildIdByPiggyBankId(@Param("piggyBankId") Long piggyBankId);
+
+    // 목표 달성 + 보너스 미지급 저금통 중, 오늘이 재촉 알림을 보낼 날(0/7/14/21일째)인 대상 조회
+    List<PiggyBankBonusReminderTarget> selectBonusReminderTargets();
 }

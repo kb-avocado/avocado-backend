@@ -1,5 +1,7 @@
 package com.avocado.domain.news.service;
 
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
@@ -14,6 +16,7 @@ import com.avocado.domain.news.mapper.NewsActivityMapper;
 import com.avocado.domain.news.mapper.NewsArticleMapper;
 import com.avocado.domain.news.mapper.NewsConverter;
 import com.avocado.domain.user.domain.UserType;
+import com.avocado.domain.user.mapper.UserMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +37,8 @@ public class NewsServiceImpl implements NewsService {
     private final NewsArticleMapper newsArticleMapper;
     private final NewsActivityMapper newsActivityMapper;
     private final NewsConverter newsConverter;
+    private final NotificationService notificationService;
+    private final UserMapper userMapper;
 
     @Override
     public NewsListResponseDto getNewsList(int page, int size, Long childId, Boolean completed, AuthUser authUser) {
@@ -102,6 +107,17 @@ public class NewsServiceImpl implements NewsService {
         } else {
             activity.saveAnswer(request.getChildAnswer());
             newsActivityMapper.update(activity);
+        }
+
+        Long parentId = userMapper.selectParentIdByChildId(targetChildId);
+        if (parentId != null) {
+            NewsArticle article = newsArticleMapper.findById(newsId);
+            String title = (article != null) ? article.getTitle() : "뉴스";
+            notificationService.create(
+                    parentId,
+                    NotificationType.NEWS_ACTIVITY_COMPLETED,
+                    String.format("자녀가 '%s' 뉴스 활동을 완료했어요.", title)
+            );
         }
 
         return newsConverter.toAnswerResponseDto(activity);
