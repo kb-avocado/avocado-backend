@@ -27,7 +27,7 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
 
     @Override
     @Transactional
-    public PiggyBankBonusResponseDto setBonus(Long piggyBankId, PiggyBankBonusSetRequestDto request, Long walletId) {
+    public PiggyBankBonusResponseDto setBonus(Long piggyBankId, PiggyBankBonusSetRequestDto request, Long walletId, Long childId) {
         PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
 
         if (piggyBank == null) {
@@ -47,7 +47,6 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
 
         piggyBankMapper.updateBonus(piggyBankId, request.getPiggyBankBonusType(), request.getBonusValue());
 
-        Long childId = piggyBankMapper.selectChildIdByPiggyBankId(piggyBankId);
         notificationService.create(
                 childId,
                 NotificationType.PIGGY_BANK_BONUS_SET,

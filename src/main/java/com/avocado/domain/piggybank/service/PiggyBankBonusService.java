@@ -6,7 +6,7 @@ import com.avocado.domain.piggybank.dto.response.PiggyBankBonusResponseDto;
 
 public interface PiggyBankBonusService {
 
-    PiggyBankBonusResponseDto setBonus(Long piggyBankId, PiggyBankBonusSetRequestDto request, Long walletId);
+    PiggyBankBonusResponseDto setBonus(Long piggyBankId, PiggyBankBonusSetRequestDto request, Long walletId, Long childId);
 
     PiggyBankBonusPayResponseDto payBonus(Long piggyBankId, Long walletId);
 
