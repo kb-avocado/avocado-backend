@@ -147,8 +147,11 @@ public class FamilyRequestController {
     }
 
     @ApiOperation(
-            value = "[아이] 가족 연결 최종 확정",
-            notes = "보호자가 승인한 뒤, 아이가 보호자를 확인하고 연결을 확정하거나 취소합니다."
+            value = "[아이] 가족 연결 최종 확정·취소",
+            notes = "아이가 보호자를 확인하고 연결을 확정하거나(confirm=true), 요청을 취소합니다(confirm=false). "
+                    + "확정은 보호자가 승인한 요청에만 할 수 있지만, "
+                    + "취소는 승인을 기다리는 요청에도 할 수 있어 아이가 대기 화면에서 요청을 거둘 수 있습니다. "
+                    + "이미 끝난 요청을 다시 처리하면 409입니다."
     )
     @PatchMapping("/{requestId}/confirm")
     public ResponseEntity<ApiResponse<FamilyRequestResponseDto>> confirmRequest(
