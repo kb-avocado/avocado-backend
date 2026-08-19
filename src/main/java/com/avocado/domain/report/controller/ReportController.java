@@ -1,6 +1,7 @@
 package com.avocado.domain.report.controller;
 
 import com.avocado.domain.report.dto.response.SpendingReportTypeDto;
+import com.avocado.domain.report.service.ReportGenerationService;
 import com.avocado.domain.report.service.SpendingReportClassificationService;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.domain.report.dto.response.ReportResponseDto;
@@ -12,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.avocado.domain.report.service.ReportGenerationService;
+import java.time.YearMonth;
 
 import static com.avocado.global.response.code.SuccessCode.REPORT_FOUND;
 import static com.avocado.global.response.code.SuccessCode.SPENDING_REPORT_TYPE_FOUND;
@@ -24,6 +27,7 @@ public class ReportController {
 
     private final ReportService reportService;
     private final SpendingReportClassificationService spendingReportClassificationService;
+    private final ReportGenerationService reportGenerationService;
 
     @GetMapping("/{yearMonth}")
     @ApiOperation(value = "월별 리포트 조회", notes = "소비 유형·AI 조언을 제외한 리포트 데이터를 조회합니다.")
@@ -51,5 +55,22 @@ public class ReportController {
         return ResponseEntity
                 .status(SPENDING_REPORT_TYPE_FOUND.getHttpStatus())
                 .body(ApiResponse.success(SPENDING_REPORT_TYPE_FOUND, data));
+    }
+
+    //리포트 로직 테스트용 API
+    @PostMapping("/test/generate/{childId}/{yearMonth}")
+    @ApiOperation(
+            value = "[TEST] 특정 자녀 월간 리포트 강제 생성",
+            notes = "테스트용으로 특정 자녀의 특정 월 리포트를 생성합니다."
+    )
+    public ResponseEntity<Void> generateReportForTest(
+            @PathVariable Long childId,
+            @PathVariable String yearMonth
+    ) {
+        reportGenerationService.generateForAllChildren(
+                YearMonth.parse(yearMonth)
+        );
+
+        return ResponseEntity.noContent().build();
     }
 }
