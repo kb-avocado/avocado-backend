@@ -3,6 +3,8 @@ package com.avocado.domain.wallet.service;
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.merchant.domain.MerchantVo;
 import com.avocado.domain.merchant.service.MerchantService;
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.payment.domain.PaymentRequestedResult;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.transaction.domain.LedgerType;
@@ -38,12 +40,15 @@ public class WalletServiceImpl implements WalletService {
     private static final int MAX_WALLET_NUMBER_GENERATION_ATTEMPTS = 10;
     // 선불지갑 번호 생성에 사용하는 난수 생성기
     private static final SecureRandom RANDOM = new SecureRandom();
+    // 고액 결제 알림 발송 기준 금액
+    private static final long HIGH_AMOUNT_NOTIFICATION_THRESHOLD = 50_000L;
 
     private final UserMapper userMapper;
     private final FamilyRelationMapper familyRelationMapper;
     private final WalletMapper walletMapper;
     private final WalletTxMapper walletTxMapper;
     private final MerchantService merchantService;
+    private final NotificationService notificationService;
 
     /**
      * 자녀 회원 ID를 기준으로 조회 권한을 검증하고 선불지갑 정보를 조회한다.
@@ -333,6 +338,15 @@ public class WalletServiceImpl implements WalletService {
         }
 
         if (merchant.isRestrictedForChild()) {
+            Long parentId = userMapper.selectParentIdByChildId(childId);
+            if (parentId != null) {
+                notificationService.create(
+                        parentId,
+                        NotificationType.PAYMENT_RESTRICTED_MERCHANT,
+                        String.format("%s에서 결제가 차단됐어요.", merchant.getName())
+                );
+            }
+
             return createFailedPaymentResult(
                     wallet,
                     merchant,
@@ -341,11 +355,24 @@ public class WalletServiceImpl implements WalletService {
             );
         }
 
-        return createSuccessfulPaymentResult(
+        PaymentSimulationResult result = createSuccessfulPaymentResult(
                 wallet,
                 merchant,
                 amount
         );
+
+        if (amount >= HIGH_AMOUNT_NOTIFICATION_THRESHOLD) {
+            Long parentId = userMapper.selectParentIdByChildId(childId);
+            if (parentId != null) {
+                notificationService.create(
+                        parentId,
+                        NotificationType.PAYMENT_HIGH_AMOUNT,
+                        String.format("%s에서 %,d원이 결제됐어요.", merchant.getName(), amount)
+                );
+            }
+        }
+
+        return result;
     }
 
     /**

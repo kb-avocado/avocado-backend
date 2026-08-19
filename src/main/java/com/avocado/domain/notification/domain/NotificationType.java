@@ -30,7 +30,11 @@ public enum NotificationType {
 
     PIGGY_BANK_BONUS_REMINDER("보너스 지급을 기다리고 있어요"),
 
-    NEWS_ACTIVITY_COMPLETED("아이가 오늘의 뉴스 활동을 완료했어요");
+    NEWS_ACTIVITY_COMPLETED("아이가 오늘의 뉴스 활동을 완료했어요"),
+
+    PAYMENT_HIGH_AMOUNT("고액 결제가 있었어요"),
+
+    PAYMENT_RESTRICTED_MERCHANT("유해 결제 시도가 차단됐어요");
 
     private final String title;
 }
