@@ -164,6 +164,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .targetAmount(request.getTargetAmount())
                 .build();
         piggyBankMapper.insert(piggyBank);
+        Long newId = piggyBankMapper.selectLastInsertId();
 
         // 3) 부모에게 저금통 생성 알림
         Long parentId = userMapper.selectParentIdByChildId(childId);
@@ -176,7 +177,6 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         }
 
         // 4) 생성된 id로 상세 반환
-        Long newId = piggyBankMapper.selectLastInsertId();
         return getDetail(newId, walletId);
     }
 

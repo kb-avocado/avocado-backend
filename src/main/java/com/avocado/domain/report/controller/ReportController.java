@@ -16,6 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.avocado.domain.report.service.ReportGenerationService;
+import java.time.YearMonth;
 
 import java.time.YearMonth;
 import java.time.format.DateTimeParseException;
@@ -67,61 +69,20 @@ public class ReportController {
                 .body(ApiResponse.success(SPENDING_REPORT_TYPE_FOUND, data));
     }
 
-    /*
-     * 리포트 생성 테스트용 임시 엔드포인트. 테스트 후 삭제
-     *
-     * 리포트는 매월 1일 ReportScheduler가 전달치를 만든다. 그전에 화면을 확인하려면
-     * 다음 배치를 기다려야 해서, 같은 계산을 지금 실행할 수 있게 열어둔다.
-     * 파라미터를 모두 비우면 배치와 똑같이 "지난달, 전체 자녀"를 만든다.
-     */
-    @PostMapping("/generate")
+    //리포트 로직 테스트용 API
+    @PostMapping("/test/generate/{childId}/{yearMonth}")
     @ApiOperation(
-            value = "월별 리포트 수동 생성 (테스트용)",
-            notes = "배치를 기다리지 않고 리포트를 즉시 생성한다. 이미 있는 달은 다시 계산한 값으로 덮어쓴다."
+            value = "[TEST] 특정 자녀 월간 리포트 강제 생성",
+            notes = "테스트용으로 특정 자녀의 특정 월 리포트를 생성합니다."
     )
-    public ResponseEntity<String> generate(
-            @ApiParam(value = "생성할 마지막 달 (yyyy-MM). 비우면 지난달", example = "2026-07")
-            @RequestParam(required = false) String yearMonth,
-
-            @ApiParam(value = "그 달부터 거슬러 올라가며 만들 개월 수", example = "4")
-            @RequestParam(defaultValue = "1") int months,
-
-            @ApiParam(value = "대상 자녀 ID. 비우면 지갑이 ACTIVE인 전체 자녀", example = "19")
-            @RequestParam(required = false) Long childId
+    public ResponseEntity<Void> generateReportForTest(
+            @PathVariable Long childId,
+            @PathVariable String yearMonth
     ) {
-        YearMonth lastMonth = parseYearMonth(yearMonth);
+        reportGenerationService.generateForAllChildren(
+                YearMonth.parse(yearMonth)
+        );
 
-        if (months < 1 || months > MAX_GENERATE_MONTHS) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
-
-        // 오래된 달부터 만든다. 화면의 "지난달 대비" 금액이 직전 달 리포트를 참조하기 때문.
-        YearMonth firstMonth = lastMonth.minusMonths(months - 1L);
-        for (YearMonth target = firstMonth; !target.isAfter(lastMonth); target = target.plusMonths(1)) {
-            if (childId == null) {
-                reportGenerationService.generateForAllChildren(target);
-            } else {
-                reportGenerationService.generateForChild(childId, target);
-            }
-        }
-
-        return ResponseEntity.ok(String.format(
-                "%s ~ %s 리포트 생성 완료 (대상: %s)",
-                firstMonth,
-                lastMonth,
-                childId == null ? "전체 자녀" : "자녀 " + childId
-        ));
-    }
-
-    private YearMonth parseYearMonth(String yearMonth) {
-        if (yearMonth == null || yearMonth.isBlank()) {
-            return YearMonth.now().minusMonths(1);
-        }
-
-        try {
-            return YearMonth.parse(yearMonth);
-        } catch (DateTimeParseException e) {
-            throw new BusinessException(ErrorCode.INVALID_REQUEST);
-        }
+        return ResponseEntity.noContent().build();
     }
 }

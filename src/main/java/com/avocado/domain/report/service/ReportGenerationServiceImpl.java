@@ -101,6 +101,10 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         report.setAllowanceReceived(allowanceReceived);
         report.setSavingRate(savingRate);
 
+        // SpendingReportClassificationServiceImpl의 DESCRIPTIONS 맵(유형별 아이용/부모용 문구) 참고
+        report.setChildAdvice(type.getDescription());
+        report.setParentAdvice(type.getDescription());
+
         childSpendingReportMapper.upsert(report);
 
         notificationService.create(
