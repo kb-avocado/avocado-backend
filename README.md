@@ -20,9 +20,7 @@
 
 <br/>
 
----
-
-### 📑 목차
+## 📑 목차
 - [1. 프로젝트 소개](#-1-프로젝트-소개)
 - [2. 팀원 소개](#-2-팀원-소개)
 - [3. 기술 스택](#-3-기술-스택)
@@ -32,23 +30,23 @@
 - [7. 트러블 슈팅](#-7-트러블-슈팅-troubleshooting)
 - [8. 실행 방법](#-8-실행-방법)
 
----
+<br/>
 
-### 📢 1. 프로젝트 소개
+## 📢 1. 프로젝트 소개
 
-**📌 서비스 개요**
+#### 📌 서비스 개요
 - **프로젝트명:** 아보카도 (Avocado)
 - **개발 기간:** 2026.07 ~ 2026.08
 - **한 줄 소개:** 부모와 함께하는 어린이 금융 습관 형성 전자지갑 서비스
 
-**🌱 기획 배경 및 핵심 가치**
+#### 🌱 기획 배경 및 핵심 가치
 - **주도적인 금융 습관 형성:** 만 6~13세 아동이 수동적인 소비자를 넘어, 직접 소비/저축 계획을 세우고 결과를 점검하는 주체로 성장하도록 돕습니다.
 - **통제가 아닌 '소통과 가이드':** 부모는 유해업종 차단, 한도 설정 등 안전망을 제공하고, 아이와 함께 목표를 논의하는 페이스메이커 역할을 합니다.
 - **생활 밀착형 All-in-One 경험:** 용돈 관리, 결제, 저금 기능은 물론, 문화·예술시설 예약 및 금융 교육 프로그램까지 하나의 앱에서 통합 제공합니다.
 
----
+<br/>
 
-### 👥 2. 팀원 소개
+## 👥 2. 팀원 소개
 
 | [김은성](https://github.com/github주소) | [김호정](https://github.com/github주소) | [이세미](https://github.com/github주소) | [이윤정](https://github.com/github주소) | [조재훈](https://github.com/7aeHoon) | [황지민](https://github.com/github주소) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -56,9 +54,9 @@
 | **FullStack** | **FullStack** | **FullStack** | **FullStack** | **Backend** | **FullStack** |
 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 프론트엔드 리드 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 리드<br>백엔드 API 개발<br>인프라 및 서버 구축 | 팀장<br>프로젝트 총괄 및 기획<br>역할 설명 |
 
----
+<br/>
 
-### 🛠 3. 기술 스택
+## 🛠 3. 기술 스택
 
 #### Backend
 
@@ -84,16 +82,16 @@
   <img src="https://skillicons.dev/icons?i=notion,git,github,githubactions,idea,postman&theme=light" alt="tools">
 </p>
 
----
+<br/>
 
-### 📌 4. 주요 기능
+## 📌 4. 주요 기능
 - **기능 1:** 
 - **기능 2:** 
 - **기능 3:** 
 
----
+<br/>
 
-### 🖥️ 5. 서비스 화면
+## 🖥️ 5. 서비스 화면
 
 > 실제 서비스 화면 GIF 또는 캡처 이미지를 추가해 주세요.
 
@@ -167,18 +165,19 @@
 | <img src="https://via.placeholder.com/250x350?text=Notifications" width="100%"> | <img src="https://via.placeholder.com/250x350?text=Real+Time+Notification" width="100%"> | <img src="https://via.placeholder.com/250x350?text=Notification+Detail" width="100%"> |
 | 최근 알림을 목록으로 확인할 수 있습니다. | SSE를 통해 주요 금융 이벤트를 실시간으로 전달합니다. | 용돈, 결제, 저금통, 가족 연결 등의 알림 상세 내용을 확인합니다. |
 
----
+<br/>
 
-### 🏗 6. 아키텍처 및 설계
+## 🏗 6. 아키텍처 및 설계
+
 #### 시스템 아키텍처
 > 아키텍처 다이어그램 이미지 삽입 (예: `![architecture](/path/to/image.png)`)
 
 #### ERD
 > ERD 이미지 삽입
 
----
+<br/>
 
-### 🚀 7. 트러블 슈팅 (Troubleshooting)
+## 🚀 7. 트러블 슈팅 (Troubleshooting)
 <details>
 <summary>문제 상황 및 해결 요약 (클릭하여 펼치기)</summary>
 
@@ -187,10 +186,6 @@
 - **해결 방안:** 적용한 기술적 해결책과 그로 인한 개선 결과 (수치화된 결과가 있으면 좋습니다).
 </details>
 
----
+<br/>
 
-### 💻 8. 실행 방법
-```bash
-$ git clone [https://github.com/사용자명/레포지토리명.git](https://github.com/사용자명/레포지토리명.git)
-$ cd 레포지토리명
-$./gradlew build$ java -jar build/libs/프로젝트명.jar
+## 💻 8. 실행 방법
