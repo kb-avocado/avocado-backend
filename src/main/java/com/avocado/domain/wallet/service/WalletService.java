@@ -2,9 +2,12 @@ package com.avocado.domain.wallet.service;
 
 import com.avocado.domain.payment.domain.PaymentRequestedResult;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
+import com.avocado.domain.wallet.domain.WalletBalanceChangeVo;
 import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.domain.wallet.dto.response.WalletResponseDto;
 import com.avocado.global.security.jwt.dto.AuthUser;
+
+import java.util.List;
 
 public interface WalletService {
 
@@ -101,5 +104,61 @@ public interface WalletService {
             Long merchantId,
             Long amount,
             PaymentRequestedResult requestedResult
+    );
+
+    /**
+     * 지갑 번호로 ACTIVE 상태의 선불지갑을 조회한다.
+     *
+     * @param walletNumber 조회할 선불지갑 번호
+     * @return ACTIVE 상태의 선불지갑
+     */
+    WalletVo getActiveWalletByNumber(
+            String walletNumber
+    );
+
+    /**
+     * 두 선불지갑을 배타적 잠금으로 조회한다.
+     *
+     * @param firstWalletId 첫 번째 지갑 ID
+     * @param secondWalletId 두 번째 지갑 ID
+     * @return 잠금 조회된 선불지갑 목록
+     */
+    List<WalletVo> getWalletsForUpdate(
+            Long firstWalletId,
+            Long secondWalletId
+    );
+
+    /**
+     * 선불지갑에서 금액을 출금한다.
+     *
+     * @param wallet 잠금 조회된 선불지갑
+     * @param amount 출금 금액
+     * @return 잔액 변경 전후 정보
+     */
+    WalletBalanceChangeVo withdraw(
+            WalletVo wallet,
+            Long amount
+    );
+
+    /**
+     * 선불지갑에 금액을 입금한다.
+     *
+     * @param wallet 잠금 조회된 선불지갑
+     * @param amount 입금 금액
+     * @return 잔액 변경 전후 정보
+     */
+    WalletBalanceChangeVo deposit(
+            WalletVo wallet,
+            Long amount
+    );
+
+    /**
+     * 자녀의 선불지갑을 배타적 잠금으로 조회한다.
+     *
+     * @param childId 선불지갑 소유 아이 ID
+     * @return 잠금 조회된 ACTIVE 선불지갑
+     */
+    WalletVo getActiveWalletForUpdate(
+            Long childId
     );
 }

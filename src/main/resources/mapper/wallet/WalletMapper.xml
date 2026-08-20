@@ -138,4 +138,41 @@
         FOR UPDATE
     </select>
 
+    <!-- 지갑 번호로 ACTIVE 상태의 선불지갑을 조회한다. -->
+    <select id="findActiveByWalletNumber"
+            resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id,
+            wallet_number,
+            balance,
+            status,
+            created_at,
+            updated_at
+        FROM wallets
+        WHERE wallet_number = #{walletNumber}
+            AND status = 'ACTIVE'
+    </select>
+
+
+    <!-- 두 지갑을 ID 순서로 잠금 조회한다. -->
+    <select id="findForUpdateByIds"
+            resultType="com.avocado.domain.wallet.domain.WalletVo">
+        SELECT
+            id,
+            child_id,
+            wallet_number,
+            balance,
+            status,
+            created_at,
+            updated_at
+        FROM wallets
+            WHERE id IN (
+                #{firstWalletId},
+                #{secondWalletId}
+            )
+        ORDER BY id
+        FOR UPDATE
+    </select>
+
 </mapper>

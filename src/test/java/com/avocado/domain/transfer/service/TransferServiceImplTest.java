@@ -1,14 +1,17 @@
 package com.avocado.domain.transfer.service;
 
-import com.avocado.domain.account.domain.AccountVo;
+import com.avocado.domain.account.domain.BankCode;
 import com.avocado.domain.account.service.AccountService;
 import com.avocado.domain.family.service.FamilyService;
-import com.avocado.domain.notification.domain.NotificationType;
 import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.transaction.service.AccountTxService;
-import com.avocado.domain.transfer.domain.TransferResultVo;
-import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
+import com.avocado.domain.transaction.service.WalletTxService;
+import com.avocado.domain.transfer.dto.request.WalletTransferRequestDto;
+import com.avocado.domain.transfer.dto.response.WalletTransferResponseDto;
 import com.avocado.domain.user.service.UserService;
+import com.avocado.domain.wallet.domain.WalletBalanceChangeVo;
+import com.avocado.domain.wallet.domain.WalletStatus;
+import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.domain.wallet.service.WalletService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,9 +21,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,142 +46,132 @@ class TransferServiceImplTest {
     private WalletService walletService;
 
     @Mock
+    private WalletTxService walletTxService;
+
+    @Mock
     private NotificationService notificationService;
 
     @InjectMocks
     private TransferServiceImpl transferService;
 
-    private Long parentId;
-    private Long childId;
-    private Long accountId;
-    private Long amount;
-    private String traceId;
+    private WalletVo senderWallet;
+    private WalletVo receiverWallet;
 
     @BeforeEach
     void setUp() {
-        // ACTIVE 부모 회원 김민준 ID
-        parentId = 101L;
+        senderWallet = WalletVo.builder()
+                .id(1L)
+                .childId(100L)
+                .walletNumber("111111111111")
+                .balance(50_000L)
+                .status(WalletStatus.ACTIVE)
+                .build();
 
-        // 김민준과 ACTIVE 가족 관계인 자녀 김지원 ID
-        childId = 102L;
-
-        // 김민준이 보유한 ACTIVE 계좌 ID
-        accountId = 1001L;
-
-        // 테스트 송금 금액
-        amount = 10_000L;
-
-        // 내부 서비스 호출에 사용할 거래 추적 ID
-        traceId = "test-account-to-wallet-trace-id";
+        receiverWallet = WalletVo.builder()
+                .id(2L)
+                .childId(200L)
+                .walletNumber("222222222222")
+                .balance(10_000L)
+                .status(WalletStatus.ACTIVE)
+                .build();
     }
 
     /**
-     * 내부 호출용 부모 계좌-자녀 선불지갑 송금이 정상 수행되는지 검증한다.
+     * 내부 선불지갑 송금 시 양쪽 지갑 잔액과 거래 기록이 모두 처리되는지 검증한다.
      */
     @Test
-    @DisplayName("내부 호출 - 부모 계좌에서 자녀 선불지갑으로 정상 송금한다")
-    void transferAccountToWallet_internal_success() {
-        // 부모의 ACTIVE 계좌 조회 결과를 준비한다.
-        AccountVo account = mock(AccountVo.class);
+    @DisplayName("아이 선불지갑에서 다른 아이 선불지갑으로 송금한다")
+    void transferWalletToWallet() {
+        // given
+        WalletTransferRequestDto request = WalletTransferRequestDto.builder()
+                .bankCode(BankCode.AVOCADO.getCode())
+                .recipientNumber("222222222222")
+                .recipientName("수취인")
+                .amount(10_000L)
+                .build();
 
-        when(account.getId())
-                .thenReturn(accountId);
+        when(walletService.getActiveWallet(100L))
+                .thenReturn(senderWallet);
 
-        when(accountService.getActiveAccount(parentId))
-                .thenReturn(account);
+        when(walletService.getActiveWalletByNumber("222222222222"))
+                .thenReturn(receiverWallet);
 
-        // 부모 계좌에서 자녀 선불지갑으로 송금한다.
-        transferService.transferAccountToWallet(
-                parentId,
-                childId,
-                amount,
-                traceId
+        when(walletService.getWalletsForUpdate(1L, 2L))
+                .thenReturn(List.of(senderWallet, receiverWallet));
+
+        when(walletService.withdraw(senderWallet, 10_000L))
+                .thenReturn(
+                        WalletBalanceChangeVo.builder()
+                                .walletId(1L)
+                                .balanceBefore(50_000L)
+                                .balanceAfter(40_000L)
+                                .build()
+                );
+
+        when(walletService.deposit(receiverWallet, 10_000L))
+                .thenReturn(
+                        WalletBalanceChangeVo.builder()
+                                .walletId(2L)
+                                .balanceBefore(10_000L)
+                                .balanceAfter(20_000L)
+                                .build()
+                );
+
+        when(userService.getUserName(100L))
+                .thenReturn("김아이");
+
+        when(userService.getUserName(200L))
+                .thenReturn("박아이");
+
+        // when
+        WalletTransferResponseDto response =
+                transferService.transferFromWallet(
+                        100L,
+                        request
+                );
+
+        // then
+        assertThat(response.getRecipientName()).isEqualTo("박아이");
+        assertThat(response.getBankCode()).isEqualTo("999");
+        assertThat(response.getRecipientNumber()).isEqualTo("222222222222");
+        assertThat(response.getAmount()).isEqualTo(10_000L);
+        assertThat(response.getBalance()).isEqualTo(40_000L);
+
+        // 송금자 잔액 감소 확인
+        verify(walletService).withdraw(
+                senderWallet,
+                10_000L
         );
 
-        // ACTIVE 부모 회원 검증이 호출됐는지 확인한다.
-        verify(userService)
-                .validateActiveParent(parentId);
-
-        // ACTIVE 자녀 회원 검증이 호출됐는지 확인한다.
-        verify(userService)
-                .validateActiveChild(childId);
-
-        // 부모의 ACTIVE 계좌를 조회했는지 확인한다.
-        verify(accountService)
-                .getActiveAccount(parentId);
-
-        // 부모와 자녀의 ACTIVE 가족 관계를 검증했는지 확인한다.
-        verify(familyService)
-                .validateActiveRelation(
-                        parentId,
-                        childId
-                );
-
-        // 부모 계좌의 송금 거래 이력을 기록했는지 확인한다.
-        verify(accountTxService)
-                .recordWalletCharge(
-                        accountId,
-                        traceId,
-                        amount
-                );
-
-        // 자녀의 선불지갑에 송금 금액을 입금했는지 확인한다.
-        verify(walletService)
-                .depositFromAccount(
-                        childId,
-                        amount,
-                        traceId
-                );
-
-        verify(notificationService)
-                .create(
-                        eq(childId),
-                        eq(NotificationType.ALLOWANCE_RECEIVED),
-                        anyString()
-                );
-    }
-
-    /**
-     * 자녀 선불지갑에서 저금통으로 송금 요청을 정상 전달하는지 검증한다.
-     */
-    @Test
-    @DisplayName("자녀 선불지갑에서 저금통으로 정상 송금한다")
-    void transferWalletToPiggyBank_success() {
-        // 자녀 선불지갑에서 저금통으로 송금한다.
-        transferService.transferWalletToPiggyBank(
-                childId,
-                amount,
-                traceId
+        // 수취자 잔액 증가 확인
+        verify(walletService).deposit(
+                receiverWallet,
+                10_000L
         );
 
-        // WalletService의 저금통 출금 처리가 호출됐는지 확인한다.
-        verify(walletService)
-                .withdrawForPiggyBank(
-                        childId,
-                        amount,
-                        traceId
-                );
-    }
-
-    /**
-     * 저금통에서 자녀 선불지갑으로 송금 요청을 정상 전달하는지 검증한다.
-     */
-    @Test
-    @DisplayName("저금통에서 자녀 선불지갑으로 정상 송금한다")
-    void transferPiggyBankToWallet_success() {
-        // 저금통에서 자녀 선불지갑으로 송금한다.
-        transferService.transferPiggyBankToWallet(
-                childId,
-                amount,
-                traceId
+        // 송금자의 거래 기록 확인
+        verify(walletTxService).recordTransferOutToWallet(
+                eq(1L),
+                anyString(),
+                eq(10_000L),
+                eq(2L),
+                eq("박아이"),
+                eq(50_000L),
+                eq(40_000L)
         );
 
-        // WalletService의 저금통 반환금 입금 처리가 호출됐는지 확인한다.
-        verify(walletService)
-                .depositFromPiggyBank(
-                        childId,
-                        amount,
-                        traceId
-                );
+        // 수취자의 거래 기록 확인
+        verify(walletTxService).recordTransferInFromWallet(
+                eq(2L),
+                anyString(),
+                eq(10_000L),
+                eq(1L),
+                eq("김아이"),
+                eq(10_000L),
+                eq(20_000L)
+        );
+
+        // 내부 지갑 송금에서는 계좌 거래가 발생하지 않는다.
+        verifyNoInteractions(accountTxService);
     }
 }

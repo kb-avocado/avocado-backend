@@ -26,4 +26,21 @@
         )
     </insert>
 
+    <!-- 아이 선불지갑에서 서비스 등록 계좌로 들어온 입금 거래를 기록한다. -->
+    <insert id="insertWalletDepositHistory">
+        INSERT INTO account_histories (
+            account_id,
+            trace_id,
+            transaction_type,
+            amount,
+            status
+        ) VALUES (
+            #{accountId},
+            #{traceId},
+            'DEPOSIT',
+            #{amount},
+            'SUCCESS'
+        )
+    </insert>
+
 </mapper>
