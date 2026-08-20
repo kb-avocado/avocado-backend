@@ -100,11 +100,6 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         report.setTotalSaved(totalSaved);
         report.setAllowanceReceived(allowanceReceived);
         report.setSavingRate(savingRate);
-        // V3에서 조언이 아이용/부모용으로 분리됐다. 개인화된 AI 조언은 아직 없어서
-        // 기존과 동일하게 유형 설명을 아이용 조언에 넣고, 부모용은 비워 둔다.
-        // TODO: AI 조언이 붙으면 두 값 모두 그쪽에서 채운다.
-        report.setChildAdvice(type.getDescription());
-        report.setParentAdvice(null);
 
         childSpendingReportMapper.upsert(report);
 
