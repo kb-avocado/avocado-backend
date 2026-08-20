@@ -84,7 +84,20 @@ public class ReportServiceImpl implements ReportService {
                 .monthlyComparison(monthlyComparison)
                 .savings(savings)
                 .navigation(navigation)
+                .advice(resolveAdvice(report, authUser))
                 .build();
+    }
+
+    /*
+     * 보는 사람에 맞는 조언을 고른다.
+     *
+     * 화면에 들어갈 자리는 하나뿐이라, 아이용·보호자용 중 어느 쪽을 쓸지는 여기서 정해
+     * 프론트가 분기하지 않도록 한다. AI 배치 전이면 두 값 모두 null이다.
+     */
+    private String resolveAdvice(ChildSpendingReport report, AuthUser authUser) {
+        return UserType.PARENT.equals(authUser.getUserType())
+                ? report.getParentAdvice()
+                : report.getChildAdvice();
     }
 
     private ChildSpendingReport findReport(Long childId, YearMonth month) {

@@ -37,7 +37,10 @@ public class ReportController {
     private final ReportGenerationService reportGenerationService;
 
     @GetMapping("/{yearMonth}")
-    @ApiOperation(value = "월별 리포트 조회", notes = "소비 유형·AI 조언을 제외한 리포트 데이터를 조회합니다.")
+    @ApiOperation(
+            value = "월별 리포트 조회",
+            notes = "소비 유형을 제외한 리포트 데이터를 조회합니다. "
+    )
     public ResponseEntity<ApiResponse<ReportResponseDto>> getReport(
             @PathVariable String yearMonth,
             @RequestParam(required = false) Long childId,
