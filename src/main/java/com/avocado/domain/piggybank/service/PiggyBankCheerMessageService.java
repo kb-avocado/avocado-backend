@@ -10,9 +10,10 @@ public interface PiggyBankCheerMessageService {
 
     PiggyBankCheerMessageResponseDto sendMessage(Long piggyBankId,
                                                  PiggyBankCheerMessageCreateRequestDto request,
-                                                 AuthUser authUser);
+                                                 AuthUser authUser,
+                                                 Long walletId);
 
-    List<PiggyBankCheerMessageResponseDto> getMessages(Long piggyBankId);
+    List<PiggyBankCheerMessageResponseDto> getMessages(Long piggyBankId, Long walletId);
 
     void deleteMessage(Long piggyBankId, Long messageId, AuthUser authUser);
 }

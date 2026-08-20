@@ -31,7 +31,15 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
     private final UserMapper userMapper;
 
     @Override
-    public List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId) {
+    public List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId, Long walletId) {
+        PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
+        if (piggyBank == null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+        if (!piggyBank.getWalletId().equals(walletId)) {
+            throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
         return piggyBankHistoryMapper.selectDepositsByPiggyBankId(piggyBankId);
     }
 
