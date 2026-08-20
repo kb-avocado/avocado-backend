@@ -31,10 +31,6 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
 
     private static final int TOP_SPOTS_LIMIT = 5;
 
-    // 저축률 상한. child_spending_reports.saving_rate에 CHECK(0~100)가 걸려 있어
-    // 이월 잔액으로 저금해 100%를 넘긴 아이가 있으면 저장 자체가 실패한다.
-    private static final BigDecimal MAX_SAVING_RATE = BigDecimal.valueOf(100);
-
     // 소비 유형 판정 기준값 (SpendingReportClassificationServiceImpl과 동일)
     private static final int SAVING_DREAMER_MIN_ACHIEVED = 2;
     private static final int FREQUENT_SPARROW_MIN_DAYS = 25;
@@ -85,9 +81,7 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         long allowanceReceived = reportMapper.sumAllowanceReceived(walletId, yearMonth);
         BigDecimal savingRate = allowanceReceived <= 0
                 ? BigDecimal.ZERO
-                : BigDecimal.valueOf(totalSaved * 100.0 / allowanceReceived)
-                        .setScale(2, RoundingMode.HALF_UP)
-                        .min(MAX_SAVING_RATE);
+                : BigDecimal.valueOf(totalSaved * 100.0 / allowanceReceived).setScale(2, RoundingMode.HALF_UP);
 
         String code = classify(walletId, yearMonth, totalSpent, lastMonthSpent, transactionCount);
         SpendingReportType type = spendingReportTypeMapper.findByCode(code);
