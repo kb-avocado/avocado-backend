@@ -79,7 +79,7 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         int transactionCount = reportMapper.countTransactions(walletId, yearMonth);
 
         List<TopSpotRow> topSpotRows = reportMapper.findTopSpots(walletId, yearMonth, TOP_SPOTS_LIMIT);
-        List<TopSpotDto> topSpots = reportConverter.toTopSpotDtos(topSpotRows);
+        List<TopSpotDto> topSpots = reportConverter.toTopSpotDtos(topSpotRows, totalSpent);
 
         long totalSaved = reportMapper.sumSavedAmount(walletId, yearMonth);
         long allowanceReceived = reportMapper.sumAllowanceReceived(walletId, yearMonth);

@@ -22,13 +22,15 @@ public class ReportConverter {
                 .build();
     }
 
-    public List<TopSpotDto> toTopSpotDtos(List<TopSpotRow> rows) {
-        long total = rows.stream().mapToLong(TopSpotRow::getAmount).sum();
+    /*
+     * 비중(percentage)은 그 달 전체 소비 금액 대비로 계산한다.
+     */
+    public List<TopSpotDto> toTopSpotDtos(List<TopSpotRow> rows, long totalSpent) {
         java.util.List<TopSpotDto> result = new java.util.ArrayList<>();
 
         int rank = 1;
         for (TopSpotRow row : rows) {
-            int percentage = total == 0 ? 0 : (int) Math.round(row.getAmount() * 100.0 / total);
+            int percentage = totalSpent <= 0 ? 0 : (int) Math.round(row.getAmount() * 100.0 / totalSpent);
             result.add(TopSpotDto.builder()
                     .rank(rank++)
                     .category(row.getCategory())
