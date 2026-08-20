@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface PiggyBankDepositService {
 
-    List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId);
+    List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId, Long walletId);
 
     PiggyBankDepositResultResponseDto deposit(Long piggyBankId, PiggyBankDepositRequestDto request);
 

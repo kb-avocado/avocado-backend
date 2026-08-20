@@ -5,7 +5,9 @@ import com.avocado.domain.piggybank.dto.response.PiggyBankDepositResponseDto;
 import com.avocado.domain.piggybank.dto.response.PiggyBankDepositResultResponseDto;
 import com.avocado.domain.piggybank.service.PiggyBankDepositService;
 import com.avocado.domain.wallet.service.WalletService;
+import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.ApiResponse;
+import com.avocado.global.response.code.ErrorCode;
 import com.avocado.global.security.jwt.dto.AuthUser;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,9 +34,17 @@ public class PiggyBankDepositController {
     @GetMapping
     @ApiOperation(value = "저금통 거래내역 조회", notes = "저금통의 입금 내역을 조회합니다.")
     public ResponseEntity<ApiResponse<List<PiggyBankDepositResponseDto>>> getDeposits(
-            @PathVariable Long piggyBankId
+            @PathVariable Long piggyBankId,
+            @RequestParam(required = false) Long childId,
+            @AuthenticationPrincipal AuthUser authUser
     ) {
-        List<PiggyBankDepositResponseDto> deposits = piggyBankDepositService.getDeposits(piggyBankId);
+        if (authUser == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        Long targetChildId = (childId != null) ? childId : authUser.getUserId();
+        Long walletId = walletService.getChildWallet(targetChildId, authUser).getWalletId();
+
+        List<PiggyBankDepositResponseDto> deposits = piggyBankDepositService.getDeposits(piggyBankId, walletId);
 
         return ResponseEntity
                 .status(DEPOSIT_HISTORY_FETCHED.getHttpStatus())
