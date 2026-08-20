@@ -9,6 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
+
 import static com.avocado.global.response.code.ErrorCode.*;
 
 @Service
@@ -96,5 +99,23 @@ public class AccountServiceImpl implements AccountService {
         return accountMapper
                 .findActiveByUserId(parentId)
                 .orElseThrow(() -> new BusinessException(ACTIVE_PARENT_NOT_FOUND));
+    }
+
+    /**
+     * 은행 코드와 계좌번호로 서비스에 등록된 ACTIVE 계좌를 조회한다.
+     *
+     * @param bankCode      금융기관 코드
+     * @param accountNumber 계좌번호
+     * @return 서비스에 등록된 ACTIVE 계좌
+     */
+    @Override
+    public Optional<AccountVo> findActiveAccount(
+            String bankCode,
+            String accountNumber
+    ) {
+        return accountMapper.findActiveByBankCodeAndAccountNumber(
+                bankCode,
+                accountNumber
+        );
     }
 }
