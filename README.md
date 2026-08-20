@@ -27,8 +27,9 @@
 - [4. 주요 기능](#-4-주요-기능)
 - [5. 서비스 화면](#️-5-서비스-화면)
 - [6. 아키텍처 및 설계](#-6-아키텍처-및-설계)
-- [7. 트러블 슈팅](#-7-트러블-슈팅-troubleshooting)
-- [8. 실행 방법](#-8-실행-방법)
+- [7. 디렉터리 구조](#-7-디렉터리-구조)
+- [8. 트러블 슈팅](#-8-트러블-슈팅-troubleshooting)
+- [9. 실행 방법](#-9-실행-방법)
 
 <br/>
 
@@ -177,7 +178,81 @@
 
 <br/>
 
-## 🚀 7. 트러블 슈팅 (Troubleshooting)
+## 📂 7. 디렉터리 구조
+
+#### Backend
+
+```text
+src/main
+├── java
+│   └── com.avocado
+│       ├── domain
+│       │   ├── account
+│       │   ├── family
+│       │   ├── notification
+│       │   ├── piggybank
+│       │   ├── report
+│       │   ├── transfer
+│       │   ├── user
+│       │   └── wallet
+│       │
+│       └── global
+│           ├── config
+│           ├── exception
+│           ├── response
+│           └── security
+│
+└── resources
+    ├── mapper
+    └── db
+        └── migration
+```
+
+- **`domain`**: 서비스의 비즈니스 기능을 도메인 단위로 분리하여 관리합니다.
+  - `account`: 부모 계좌 및 계좌 거래 관련 기능
+  - `family`: 부모·자녀 가족 관계 및 초대 관련 기능
+  - `notification`: 알림 조회 및 SSE 기반 실시간 알림 기능
+  - `piggybank`: 저금통 생성, 저축, 출금 및 보상 관련 기능
+  - `report`: 자녀의 소비 및 저축 통계 리포트 기능
+  - `transfer`: 계좌 및 선불지갑 간 송금 관련 기능
+  - `user`: 회원 정보 및 회원 상태 관련 기능
+  - `wallet`: 자녀 선불지갑 및 거래 내역 관련 기능
+
+- **`global`**: 특정 도메인에 종속되지 않는 애플리케이션 공통 기능을 관리합니다.
+  - `config`: Spring, MyBatis, Redis 등 애플리케이션 설정
+  - `exception`: 비즈니스 예외 및 전역 예외 처리
+  - `response`: 공통 API 응답 및 응답 코드 관리
+  - `security`: Spring Security, JWT 인증 및 인가 관련 기능
+
+- **`resources/mapper`**: MyBatis Mapper XML 파일을 관리합니다.
+- **`resources/db/migration`**: Flyway를 이용한 데이터베이스 스키마 변경 이력을 관리합니다.
+
+각 도메인은 기능에 따라 다음과 같은 계층 구조를 따릅니다.
+
+```text
+domain/{domain-name}
+├── controller
+├── service
+├── mapper
+├── domain
+└── dto
+    ├── request
+    └── response
+```
+
+| 계층 | 역할 |
+| :--- | :--- |
+| `controller` | 클라이언트의 HTTP 요청을 받고 응답을 반환합니다. |
+| `service` | 비즈니스 로직과 트랜잭션을 처리합니다. |
+| `mapper` | MyBatis를 이용하여 데이터베이스에 접근합니다. |
+| `domain` | VO, Enum 등 도메인 모델을 관리합니다. |
+| `dto/request` | API 요청 데이터를 정의합니다. |
+| `dto/response` | API 응답 데이터를 정의합니다. |
+
+<br/>
+
+## 🚀 8. 트러블 슈팅 (Troubleshooting)
+
 <details>
 <summary>문제 상황 및 해결 요약 (클릭하여 펼치기)</summary>
 
@@ -188,4 +263,4 @@
 
 <br/>
 
-## 💻 8. 실행 방법
+## 💻 9. 실행 방법
