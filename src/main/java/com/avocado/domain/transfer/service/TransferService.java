@@ -2,7 +2,9 @@ package com.avocado.domain.transfer.service;
 
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
+import com.avocado.domain.transfer.dto.request.WalletTransferRequestDto;
 import com.avocado.domain.transfer.dto.response.AccountToWalletTransferResponseDto;
+import com.avocado.domain.transfer.dto.response.WalletTransferResponseDto;
 
 public interface TransferService {
 
@@ -56,5 +58,17 @@ public interface TransferService {
             Long childId,
             Long amount,
             String traceId
+    );
+
+    /**
+     * 아이 선불지갑에서 내부 선불지갑 또는 외부 계좌로 송금한다.
+     *
+     * @param childId 송금하는 아이 회원 ID
+     * @param requestDto 송금 요청 정보
+     * @return 송금 처리 결과
+     */
+    WalletTransferResponseDto transferFromWallet(
+            Long childId,
+            WalletTransferRequestDto requestDto
     );
 }
