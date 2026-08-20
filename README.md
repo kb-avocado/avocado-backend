@@ -52,7 +52,7 @@
 | :---: | :---: | :---: | :---: | :---: | :---: |
 | <img width="120" height="120" alt="김은성" src="https://github.com/user-attachments/assets/496ffd57-51a0-4bef-94cc-c799528324c9" /> | <img width="120" height="120" alt="김호정" src="https://github.com/user-attachments/assets/2c69cbf1-555c-4d8a-8d5f-78a47a5421b4" /> | <img width="120" height="120" alt="이세미" src="https://github.com/user-attachments/assets/f45ec1c3-576f-4990-82b4-aab4f2b71f02" /> | <img width="120" height="120" alt="이윤정" src="https://github.com/user-attachments/assets/4a23e246-6190-4c5c-adca-01a1b20ab4d7" /> | <img width="120" height="120" alt="조재훈" src="https://github.com/user-attachments/assets/3d202512-c97f-46ce-9cdd-5eb2bf8096ad" /> | <img width="120" height="120" alt="황지민" src="https://github.com/user-attachments/assets/12f831f1-5dc1-4123-819b-cd3a786fbdf3" /> |
 | **FullStack** | **FullStack** | **FullStack** | **FullStack** | **Backend** | **FullStack** |
-| 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 프론트엔드 리드 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 리드<br>백엔드 API 개발<br>인프라 및 서버 구축 | 팀장<br>프로젝트 총괄 및 기획<br>역할 설명 |
+| 프론트엔드 기능 구현 | 프론트엔드 기능 구현 | 프론트엔드 기능 구현 | 프론트엔드 기능 구현 | 인프라 및 서버 구축 | 프론트엔드 기능 구현 |
 
 <br/>
 
