@@ -25,9 +25,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 
 import com.avocado.domain.piggybank.dto.request.PiggyBankCreateRequestDto;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -76,9 +78,9 @@ class PiggyBankServiceImplTest {
         assertThat(result.isCanCreate()).isTrue();
     }
     @Test
-    @DisplayName("완료 탭 - ACHIEVE 상태로 조회")
+    @DisplayName("완료 탭 - ACHIEVE + (보너스 없음 또는 지급 완료) 조회")
     void getList_closed() {
-        when(piggyBankMapper.selectByWalletIdAndStatuses(1L, List.of("ACHIEVE")))
+        when(piggyBankMapper.selectCompletedByWalletId(1L))
                 .thenReturn(List.of());
         when(piggyBankMapper.countByWalletIdAndStatuses(1L, List.of("ACTIVE", "PENDING_ACHIEVE")))
                 .thenReturn(0);
@@ -87,6 +89,62 @@ class PiggyBankServiceImplTest {
 
         assertThat(result.getPiggyBanks()).isEmpty();
     }
+
+    @Test
+    @DisplayName("보너스 미지급 탭 - ACHIEVE + 보너스 있음 + 미지급 조회")
+    void getList_bonusUnpaid() {
+        PiggyBank p = PiggyBank.builder()
+                .id(2L).walletId(1L).name("여행 가방")
+                .targetAmount(200000L).balance(200000L)
+                .status("ACHIEVE").isFavorite(false)
+                .bonusType(PiggyBankBonusType.FIXED).bonusValue(10000L)
+                .build();
+
+        when(piggyBankMapper.selectBonusUnpaidByWalletId(1L)).thenReturn(List.of(p));
+        when(piggyBankMapper.countByWalletIdAndStatuses(1L, List.of("ACTIVE", "PENDING_ACHIEVE")))
+                .thenReturn(0);
+
+        PiggyBankListResponseDto result = piggyBankService.getList(1L, "BONUS_UNPAID");
+
+        assertThat(result.getPiggyBanks()).hasSize(1);
+        assertThat(result.getPiggyBanks().get(0).getStatus()).isEqualTo("ACHIEVE");
+    }
+
+    @Test
+    @DisplayName("즉시 승격 - 목표금액 도달 시 이미 7일 지났으면 스케줄러 없이 바로 ACHIEVE")
+    void promoteIfDue_alreadyElapsed() {
+        PiggyBank p = PiggyBank.builder()
+                .id(3L).walletId(1L).status("PENDING_ACHIEVE")
+                .balance(50000L)
+                .firstDepositedAt(LocalDateTime.now().minusDays(8))
+                .build();
+        when(piggyBankMapper.selectById(3L)).thenReturn(p);
+        when(piggyBankMapper.selectChildIdByPiggyBankId(3L)).thenReturn(100L);
+
+        boolean promoted = piggyBankService.promoteIfDue(3L);
+
+        assertThat(promoted).isTrue();
+        verify(piggyBankMapper).promoteById(3L);
+        verify(piggyBankMapper).zeroBalance(3L);
+        verify(transferService).transferPiggyBankToWallet(eq(100L), eq(50000L), anyString());
+    }
+
+    @Test
+    @DisplayName("즉시 승격 안 함 - 아직 7일 안 지났으면 스케줄러에 맡김")
+    void promoteIfDue_notYetElapsed() {
+        PiggyBank p = PiggyBank.builder()
+                .id(4L).walletId(1L).status("PENDING_ACHIEVE")
+                .balance(50000L)
+                .firstDepositedAt(LocalDateTime.now().minusDays(2))
+                .build();
+        when(piggyBankMapper.selectById(4L)).thenReturn(p);
+
+        boolean promoted = piggyBankService.promoteIfDue(4L);
+
+        assertThat(promoted).isFalse();
+        verify(piggyBankMapper, never()).promoteById(4L);
+    }
+
     @Test
     @DisplayName("진행중 3개면 더 못 만든다")
     void getList_maxReached() {

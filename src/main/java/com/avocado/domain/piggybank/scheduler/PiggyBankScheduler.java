@@ -14,8 +14,8 @@ public class PiggyBankScheduler {
     private final PiggyBankService piggyBankService;
     private final PiggyBankBonusService piggyBankBonusService;
 
-    // 매일 자정 실행 (초 분 시 일 월 요일)
-    @Scheduled(cron = "0 0 0 * * *")
+    // 매시 정각 실행 (초 분 시 일 월 요일). 최대 1시간 지연으로 7일 경과 승격을 반영한다.
+    @Scheduled(cron = "0 0 * * * *")
     public void promoteAchievements() {
         piggyBankService.promoteAchievements();
     }
