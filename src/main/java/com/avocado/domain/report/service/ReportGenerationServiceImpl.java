@@ -59,7 +59,9 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         }
     }
 
-    private void generateForChild(Long childId, YearMonth targetMonth) {
+    @Override
+    @Transactional
+    public void generateForChild(Long childId, YearMonth targetMonth) {
         Long walletId = reportMapper.findWalletIdByChildId(childId);
         if (walletId == null) {
             return; // 지갑 없는 아이는 건너뜀
@@ -73,7 +75,7 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         int transactionCount = reportMapper.countTransactions(walletId, yearMonth);
 
         List<TopSpotRow> topSpotRows = reportMapper.findTopSpots(walletId, yearMonth, TOP_SPOTS_LIMIT);
-        List<TopSpotDto> topSpots = reportConverter.toTopSpotDtos(topSpotRows);
+        List<TopSpotDto> topSpots = reportConverter.toTopSpotDtos(topSpotRows, totalSpent);
 
         long totalSaved = reportMapper.sumSavedAmount(walletId, yearMonth);
         long allowanceReceived = reportMapper.sumAllowanceReceived(walletId, yearMonth);
@@ -99,7 +101,6 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         report.setAllowanceReceived(allowanceReceived);
         report.setSavingRate(savingRate);
 
-        // TODO: 아이용/부모용 문구를 각각 채워야 함 — 지금은 임시로 동일한 값 사용.
         // SpendingReportClassificationServiceImpl의 DESCRIPTIONS 맵(유형별 아이용/부모용 문구) 참고
         report.setChildAdvice(type.getDescription());
         report.setParentAdvice(type.getDescription());
@@ -164,11 +165,14 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
             return "BIG_SPENDER";
         }
 
-        double changeRate = lastMonthSpent == 0
-                ? Double.MAX_VALUE
-                : Math.abs((totalSpent - lastMonthSpent) / (double) lastMonthSpent);
-        if (changeRate >= ROLLER_COASTER_RATE) {
-            return "ROLLER_COASTER";
+        // 첫 달은 비교할 지난달이 없다. 전달 소비 0원과 구분되지 않아 무조건 롤러코스터로 빠지므로
+        if (!isFirstTransactionMonth(walletId, yearMonth)) {
+            double changeRate = lastMonthSpent == 0
+                    ? Double.MAX_VALUE
+                    : Math.abs((totalSpent - lastMonthSpent) / (double) lastMonthSpent);
+            if (changeRate >= ROLLER_COASTER_RATE) {
+                return "ROLLER_COASTER";
+            }
         }
 
         if (transactionCount <= CAREFUL_OWL_MAX_COUNT) {
@@ -186,5 +190,11 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         }
 
         return "SPROUT";
+    }
+
+    // 대상 월이 이 지갑의 첫 거래 달인지. 거래가 아예 없으면 첫 달로 본다.
+    private boolean isFirstTransactionMonth(Long walletId, String yearMonth) {
+        String earliestMonth = reportMapper.findEarliestTransactionMonth(walletId);
+        return earliestMonth == null || earliestMonth.equals(yearMonth);
     }
 }

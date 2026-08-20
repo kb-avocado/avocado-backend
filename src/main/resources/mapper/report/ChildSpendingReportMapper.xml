@@ -33,11 +33,11 @@
         INSERT INTO child_spending_reports
         (child_id, report_type_id, report_year, report_month,
          total_spent, transaction_count, top_spots, total_saved,
-         allowance_received, saving_rate, child_advice, parent_advice)
+         allowance_received, saving_rate)
         VALUES
             (#{childId}, #{reportTypeId}, #{reportYear}, #{reportMonth},
              #{totalSpent}, #{transactionCount}, #{topSpots}, #{totalSaved},
-             #{allowanceReceived}, #{savingRate}, #{childAdvice}, #{parentAdvice})
+             #{allowanceReceived}, #{savingRate})
             ON DUPLICATE KEY UPDATE
                                  report_type_id = VALUES(report_type_id),
                                  total_spent = VALUES(total_spent),
@@ -45,9 +45,7 @@
                                  top_spots = VALUES(top_spots),
                                  total_saved = VALUES(total_saved),
                                  allowance_received = VALUES(allowance_received),
-                                 saving_rate = VALUES(saving_rate),
-                                 child_advice = VALUES(child_advice),
-                                 parent_advice = VALUES(parent_advice)
+                                 saving_rate = VALUES(saving_rate)
     </insert>
 
     <select id="countByReportTypeAndYearMonth" resultType="long">

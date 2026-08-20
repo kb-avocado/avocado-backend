@@ -44,6 +44,9 @@ public class SecurityConfig {
             "/v2/api-docs",
             "/webjars/**",
 
+            // Admin
+            "/api/admin/payment/**",
+
             // TODO: 인증 연동 전 임시 허용
             "/api/news/**",
             "/api/reports/**"
