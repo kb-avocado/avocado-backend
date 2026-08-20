@@ -29,7 +29,7 @@ public class PiggyBankController {
     private final PiggyBankService piggyBankService;
     private final WalletService walletService;
     @GetMapping
-    @ApiOperation(value = "저금통 목록 조회", notes = "상태별(IN_PROGRESS/CLOSED) 저금통 목록을 조회합니다.")
+    @ApiOperation(value = "저금통 목록 조회", notes = "탭별(IN_PROGRESS/BONUS_UNPAID/CLOSED) 저금통 목록을 조회합니다.")
     public ResponseEntity<ApiResponse<PiggyBankListResponseDto>> getList(
             @RequestParam(defaultValue = "IN_PROGRESS") String status,
             @RequestParam(required = false) Long childId,   // 부모가 아이 조회 시 사용 (아이는 생략)

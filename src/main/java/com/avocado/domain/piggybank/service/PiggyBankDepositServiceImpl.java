@@ -29,6 +29,7 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
     private final TransferService transferService;
     private final NotificationService notificationService;
     private final UserMapper userMapper;
+    private final PiggyBankService piggyBankService;
 
     @Override
     public List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId) {
@@ -84,6 +85,11 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
                     NotificationType.PIGGY_BANK_ACHIEVED,
                     String.format("%s 저금통 목표 금액을 달성했습니다.", piggyBank.getName())
             );
+
+            // 이 입금으로 목표금액을 채운 시점에 이미 7일도 지나있었다면, 스케줄러를 기다리지 않고 바로 승격
+            if (piggyBankService.promoteIfDue(piggyBankId)) {
+                newStatus = "ACHIEVE";
+            }
         }
 
         return PiggyBankDepositResultResponseDto.builder()
@@ -151,6 +157,11 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
                     NotificationType.PIGGY_BANK_ACHIEVED,
                     String.format("%s 저금통 목표 금액을 달성했습니다.", piggyBank.getName())
             );
+
+            // 이 입금으로 목표금액을 채운 시점에 이미 7일도 지나있었다면, 스케줄러를 기다리지 않고 바로 승격
+            if (piggyBankService.promoteIfDue(piggyBankId)) {
+                newStatus = "ACHIEVE";
+            }
         }
 
         return PiggyBankDepositResultResponseDto.builder()
