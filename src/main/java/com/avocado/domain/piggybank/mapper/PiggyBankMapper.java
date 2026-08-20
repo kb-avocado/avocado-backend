@@ -29,11 +29,18 @@ public interface PiggyBankMapper {
             @Param("targetReachedAt") LocalDateTime targetReachedAt
     );
 
-    // 지갑 + 상태(여러 개)로 저금통 목록 조회 (진행중/완료 탭 공용)
+    // 지갑 + 상태(여러 개)로 저금통 목록 조회 (진행중 탭용)
     List<PiggyBank> selectByWalletIdAndStatuses(
             @Param("walletId") Long walletId,
             @Param("statuses") List<String> statuses
     );
+
+    // 달성(ACHIEVE) + 보너스 있음 + 미지급 저금통 목록 (보너스 미지급 탭용)
+    List<PiggyBank> selectBonusUnpaidByWalletId(@Param("walletId") Long walletId);
+
+    // 달성(ACHIEVE) + (보너스 없음 or 지급 완료) 저금통 목록 (완료 탭용)
+    List<PiggyBank> selectCompletedByWalletId(@Param("walletId") Long walletId);
+
     //지갑 + 상태(여러 개)에 해당하는 저금통 개수 (진행중 개수 카운트용)
     int countByWalletIdAndStatuses(
             @Param("walletId") Long walletId,
