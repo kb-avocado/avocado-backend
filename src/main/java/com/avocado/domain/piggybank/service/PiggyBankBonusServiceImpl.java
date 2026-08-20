@@ -121,5 +121,8 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
         if (piggyBankBonusType == PiggyBankBonusType.FIXED && bonusValue <= 0) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST);
         }
+        if (piggyBankBonusType == PiggyBankBonusType.NONE && bonusValue != 0) {
+            throw new BusinessException(ErrorCode.INVALID_REQUEST);
+        }
     }
 }
