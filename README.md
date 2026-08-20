@@ -19,7 +19,8 @@
 </div>
 
 <br/>
-<br/>
+
+---
 
 ### 📑 목차
 - [1. 프로젝트 소개](#-1-프로젝트-소개)
@@ -31,8 +32,7 @@
 - [7. 트러블 슈팅](#-7-트러블-슈팅-troubleshooting)
 - [8. 실행 방법](#-8-실행-방법)
 
-<br/>
-<br/>
+---
 
 ### 📢 1. 프로젝트 소개
 
@@ -46,8 +46,7 @@
 - **통제가 아닌 '소통과 가이드':** 부모는 유해업종 차단, 한도 설정 등 안전망을 제공하고, 아이와 함께 목표를 논의하는 페이스메이커 역할을 합니다.
 - **생활 밀착형 All-in-One 경험:** 용돈 관리, 결제, 저금 기능은 물론, 문화·예술시설 예약 및 금융 교육 프로그램까지 하나의 앱에서 통합 제공합니다.
 
-<br/>
-<br/>
+---
 
 ### 👥 2. 팀원 소개
 
@@ -57,8 +56,7 @@
 | **FullStack** | **FullStack** | **FullStack** | **FullStack** | **Backend** | **FullStack** |
 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 프론트엔드 리드 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 리드<br>백엔드 API 개발<br>인프라 및 서버 구축 | 팀장<br>프로젝트 총괄 및 기획<br>역할 설명 |
 
-<br/>
-<br/>
+---
 
 ### 🛠 3. 기술 스택
 
@@ -86,16 +84,14 @@
   <img src="https://skillicons.dev/icons?i=notion,git,github,githubactions,idea,postman&theme=light" alt="tools">
 </p>
 
-<br/>
-<br/>
+---
 
 ### 📌 4. 주요 기능
 - **기능 1:** 
 - **기능 2:** 
 - **기능 3:** 
 
-<br/>
-<br/>
+---
 
 ### 🖥️ 5. 서비스 화면
 
@@ -171,8 +167,7 @@
 | <img src="https://via.placeholder.com/250x350?text=Notifications" width="100%"> | <img src="https://via.placeholder.com/250x350?text=Real+Time+Notification" width="100%"> | <img src="https://via.placeholder.com/250x350?text=Notification+Detail" width="100%"> |
 | 최근 알림을 목록으로 확인할 수 있습니다. | SSE를 통해 주요 금융 이벤트를 실시간으로 전달합니다. | 용돈, 결제, 저금통, 가족 연결 등의 알림 상세 내용을 확인합니다. |
 
-<br/>
-<br/>
+---
 
 ### 🏗 6. 아키텍처 및 설계
 #### 시스템 아키텍처
@@ -181,8 +176,7 @@
 #### ERD
 > ERD 이미지 삽입
 
-<br/>
-<br/>
+---
 
 ### 🚀 7. 트러블 슈팅 (Troubleshooting)
 <details>
@@ -193,7 +187,10 @@
 - **해결 방안:** 적용한 기술적 해결책과 그로 인한 개선 결과 (수치화된 결과가 있으면 좋습니다).
 </details>
 
-<br/>
-<br/>
+---
 
 ### 💻 8. 실행 방법
+```bash
+$ git clone [https://github.com/사용자명/레포지토리명.git](https://github.com/사용자명/레포지토리명.git)
+$ cd 레포지토리명
+$./gradlew build$ java -jar build/libs/프로젝트명.jar
