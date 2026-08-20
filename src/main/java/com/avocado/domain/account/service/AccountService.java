@@ -2,6 +2,8 @@ package com.avocado.domain.account.service;
 
 import com.avocado.domain.account.domain.AccountVo;
 
+import java.util.Optional;
+
 public interface AccountService {
     /**
      * 부모 회원의 오픈뱅킹 계좌를 등록한다.
@@ -24,5 +26,17 @@ public interface AccountService {
      */
     AccountVo getActiveAccount(
             Long parentId
+    );
+
+    /**
+     * 은행 코드와 계좌번호로 서비스에 등록된 ACTIVE 계좌를 조회한다.
+     *
+     * @param bankCode 금융기관 코드
+     * @param accountNumber 계좌번호
+     * @return 서비스에 등록된 ACTIVE 계좌
+     */
+    Optional<AccountVo> findActiveAccount(
+            String bankCode,
+            String accountNumber
     );
 }

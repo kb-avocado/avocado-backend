@@ -3,6 +3,8 @@ package com.avocado.domain.wallet.service;
 import com.avocado.domain.family.mapper.FamilyRelationMapper;
 import com.avocado.domain.merchant.domain.MerchantVo;
 import com.avocado.domain.merchant.service.MerchantService;
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.payment.domain.PaymentRequestedResult;
 import com.avocado.domain.payment.domain.PaymentSimulationResult;
 import com.avocado.domain.transaction.domain.LedgerType;
@@ -12,6 +14,7 @@ import com.avocado.domain.transaction.domain.WalletTransactionType;
 import com.avocado.domain.transaction.mapper.WalletTxMapper;
 import com.avocado.domain.user.domain.UserType;
 import com.avocado.domain.user.mapper.UserMapper;
+import com.avocado.domain.wallet.domain.WalletBalanceChangeVo;
 import com.avocado.domain.wallet.domain.WalletStatus;
 import com.avocado.domain.wallet.domain.WalletVo;
 import com.avocado.domain.wallet.dto.response.WalletResponseDto;
@@ -24,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.util.List;
 import java.util.UUID;
 
 import static com.avocado.global.response.code.ErrorCode.*;
@@ -38,12 +42,15 @@ public class WalletServiceImpl implements WalletService {
     private static final int MAX_WALLET_NUMBER_GENERATION_ATTEMPTS = 10;
     // 선불지갑 번호 생성에 사용하는 난수 생성기
     private static final SecureRandom RANDOM = new SecureRandom();
+    // 고액 결제 알림 발송 기준 금액
+    private static final long HIGH_AMOUNT_NOTIFICATION_THRESHOLD = 50_000L;
 
     private final UserMapper userMapper;
     private final FamilyRelationMapper familyRelationMapper;
     private final WalletMapper walletMapper;
     private final WalletTxMapper walletTxMapper;
     private final MerchantService merchantService;
+    private final NotificationService notificationService;
 
     /**
      * 자녀 회원 ID를 기준으로 조회 권한을 검증하고 선불지갑 정보를 조회한다.
@@ -182,9 +189,9 @@ public class WalletServiceImpl implements WalletService {
     /**
      * 저금통 저축을 위해 자녀 선불지갑에서 금액을 출금하고 거래 이력과 원장을 기록한다.
      *
-     * @param childId  선불지갑 소유 자녀 ID
-     * @param amount   출금 금액
-     * @param traceId  저금통 거래와 연결하기 위한 추적 ID
+     * @param childId 선불지갑 소유 자녀 ID
+     * @param amount  출금 금액
+     * @param traceId 저금통 거래와 연결하기 위한 추적 ID
      * @throws BusinessException 지갑이 유효하지 않거나 잔액이 부족하거나 거래 저장에 실패한 경우
      */
     @Override
@@ -333,6 +340,15 @@ public class WalletServiceImpl implements WalletService {
         }
 
         if (merchant.isRestrictedForChild()) {
+            Long parentId = userMapper.selectParentIdByChildId(childId);
+            if (parentId != null) {
+                notificationService.create(
+                        parentId,
+                        NotificationType.PAYMENT_RESTRICTED_MERCHANT,
+                        String.format("%s에서 결제가 차단됐어요.", merchant.getName())
+                );
+            }
+
             return createFailedPaymentResult(
                     wallet,
                     merchant,
@@ -341,11 +357,170 @@ public class WalletServiceImpl implements WalletService {
             );
         }
 
-        return createSuccessfulPaymentResult(
+        PaymentSimulationResult result = createSuccessfulPaymentResult(
                 wallet,
                 merchant,
                 amount
         );
+
+        if (amount >= HIGH_AMOUNT_NOTIFICATION_THRESHOLD) {
+            Long parentId = userMapper.selectParentIdByChildId(childId);
+            if (parentId != null) {
+                notificationService.create(
+                        parentId,
+                        NotificationType.PAYMENT_HIGH_AMOUNT,
+                        String.format("%s에서 %,d원이 결제됐어요.", merchant.getName(), amount)
+                );
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * 지갑 번호로 ACTIVE 상태의 선불지갑을 조회한다.
+     *
+     * @param walletNumber 조회할 선불지갑 번호
+     * @return ACTIVE 상태의 선불지갑
+     * @throws BusinessException ACTIVE 선불지갑이 존재하지 않는 경우
+     */
+    @Override
+    public WalletVo getActiveWalletByNumber(
+            String walletNumber
+    ) {
+        return walletMapper.findActiveByWalletNumber(walletNumber)
+                .orElseThrow(() -> new BusinessException(WALLET_NOT_FOUND));
+    }
+
+    /**
+     * 두 선불지갑을 배타적 잠금으로 조회한다.
+     *
+     * @param firstWalletId 첫 번째 지갑 ID
+     * @param secondWalletId 두 번째 지갑 ID
+     * @return 잠금 조회된 선불지갑 목록
+     * @throws BusinessException 두 지갑을 모두 조회하지 못한 경우
+     */
+    @Override
+    @Transactional
+    public List<WalletVo> getWalletsForUpdate(
+            Long firstWalletId,
+            Long secondWalletId
+    ) {
+        List<WalletVo> wallets = walletMapper.findForUpdateByIds(
+                firstWalletId,
+                secondWalletId
+        );
+
+        // 송금자와 수취자 두 지갑이 모두 존재하지 않을 경우
+        if (wallets.size() != 2) {
+            throw new BusinessException(WALLET_NOT_FOUND);
+        }
+
+        // 두 지갑 모두 ACTIVE 상태가 아닐 경우
+        if (wallets.stream().anyMatch(wallet -> wallet.getStatus() != WalletStatus.ACTIVE)) {
+            throw new BusinessException(WALLET_INACTIVE);
+        }
+
+        return wallets;
+    }
+
+    /**
+     * 선불지갑에서 금액을 출금한다.
+     *
+     * @param wallet 잠금 조회된 선불지갑
+     * @param amount 출금 금액
+     * @return 잔액 변경 전후 정보
+     * @throws BusinessException 잔액 부족 또는 잔액 변경 실패인 경우
+     */
+    @Override
+    @Transactional
+    public WalletBalanceChangeVo withdraw(
+            WalletVo wallet,
+            Long amount
+    ) {
+        // 송금 금액보다 잔액이 부족할 경우
+        if (wallet.getBalance() < amount) {
+            throw new BusinessException(INSUFFICIENT_BALANCE);
+        }
+
+        long balanceBefore = wallet.getBalance();
+        long balanceAfter = balanceBefore - amount;
+
+        // 실제 지갑 잔액을 감소
+        int updatedRows = walletMapper.decreaseBalance(
+                wallet.getId(),
+                amount
+        );
+
+        // 지갑 잔액 감소에 실패했을 경우
+        if (updatedRows != 1) {
+            throw new BusinessException(WALLET_UPDATE_FAILED);
+        }
+
+        return WalletBalanceChangeVo.builder()
+                .walletId(wallet.getId())
+                .balanceBefore(balanceBefore)
+                .balanceAfter(balanceAfter)
+                .build();
+    }
+
+    /**
+     * 선불지갑에 금액을 입금한다.
+     *
+     * @param wallet 잠금 조회된 선불지갑
+     * @param amount 입금 금액
+     * @return 잔액 변경 전후 정보
+     * @throws BusinessException 잔액 변경에 실패한 경우
+     */
+    @Override
+    @Transactional
+    public WalletBalanceChangeVo deposit(
+            WalletVo wallet,
+            Long amount
+    ) {
+        long balanceBefore = wallet.getBalance();
+        long balanceAfter = balanceBefore + amount;
+
+        // 실제 지갑 잔액을 증가
+        int updatedRows = walletMapper.increaseBalance(
+                wallet.getId(),
+                amount
+        );
+
+        // 지갑 잔액 증가에 실패했을 경우
+        if (updatedRows != 1) {
+            throw new BusinessException(WALLET_UPDATE_FAILED);
+        }
+
+        return WalletBalanceChangeVo.builder()
+                .walletId(wallet.getId())
+                .balanceBefore(balanceBefore)
+                .balanceAfter(balanceAfter)
+                .build();
+    }
+
+    /**
+     * 자녀 소유의 선불지갑을 잠금 조회하고 ACTIVE 상태인지 검증한다.
+     *
+     * @param childId 선불지갑 소유 자녀 ID
+     * @return 잠금 조회된 ACTIVE 선불지갑 정보
+     * @throws BusinessException 지갑이 없거나 ACTIVE 상태가 아닌 경우
+     */
+    @Override
+    public WalletVo getActiveWalletForUpdate(
+            Long childId
+    ) {
+        // 해당 자녀 소유의 선불지갑을 잠금 조회
+        WalletVo wallet = walletMapper
+                .findForUpdateByChildId(childId)
+                .orElseThrow(() -> new BusinessException(WALLET_NOT_FOUND));
+
+        // ACTIVE 상태가 아닌 지갑은 사용 불가
+        if (wallet.getStatus() != WalletStatus.ACTIVE) {
+            throw new BusinessException(WALLET_INACTIVE);
+        }
+
+        return wallet;
     }
 
     /**
@@ -400,31 +575,6 @@ public class WalletServiceImpl implements WalletService {
                 balanceBefore,
                 balanceAfter
         );
-    }
-
-    /**
-     * 자녀 소유의 선불지갑을 잠금 조회하고 ACTIVE 상태인지 검증한다.
-     *
-     * @param childId 선불지갑 소유 자녀 ID
-     * @return 잠금 조회된 ACTIVE 선불지갑 정보
-     * @throws BusinessException 지갑이 없거나 ACTIVE 상태가 아닌 경우
-     */
-    private WalletVo getActiveWalletForUpdate(
-            Long childId
-    ) {
-        // 해당 자녀 소유의 선불지갑을 잠금 조회한다.
-        WalletVo wallet = walletMapper
-                .findForUpdateByChildId(
-                        childId
-                )
-                .orElseThrow(() -> new BusinessException(WALLET_NOT_FOUND));
-
-        // ACTIVE 상태가 아닌 지갑은 사용할 수 없다.
-        if (wallet.getStatus() != WalletStatus.ACTIVE) {
-            throw new BusinessException(WALLET_INACTIVE);
-        }
-
-        return wallet;
     }
 
     /**

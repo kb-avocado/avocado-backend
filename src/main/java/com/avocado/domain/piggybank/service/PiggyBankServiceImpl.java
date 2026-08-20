@@ -1,9 +1,12 @@
 package com.avocado.domain.piggybank.service;
 
+import com.avocado.domain.notification.domain.NotificationType;
+import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.piggybank.domain.PiggyBankBonusType;
 import com.avocado.domain.piggybank.domain.PiggyBankRefundTarget;
 import com.avocado.domain.piggybank.mapper.PiggyBankHistoryMapper;
 import com.avocado.domain.transfer.service.TransferService;
+import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -18,6 +21,7 @@ import org.springframework.stereotype.Service;
 import com.avocado.domain.piggybank.dto.request.PiggyBankCreateRequestDto;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,15 +36,13 @@ public class PiggyBankServiceImpl implements PiggyBankService {
     private final PiggyBankMapper piggyBankMapper;
     private final TransferService transferService;
     private final PiggyBankHistoryMapper piggyBankHistoryMapper;
+    private final NotificationService notificationService;
+    private final UserMapper userMapper;
 
     @Override
     public PiggyBankListResponseDto getList(Long walletId, String status) {
-        // 탭(IN_PROGRESS/CLOSED) → 실제 DB status 값들로 변환
-        List<String> statuses = toStatuses(status);
-
-        // 조회 후 도메인 → 응답 DTO 변환
-        List<PiggyBankResponseDto> piggyBanks = piggyBankMapper
-                .selectByWalletIdAndStatuses(walletId, statuses)
+        // 탭(IN_PROGRESS/BONUS_UNPAID/CLOSED) → 실제 조회 방식으로 매핑
+        List<PiggyBankResponseDto> piggyBanks = fetchByGroup(walletId, status)
                 .stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());
@@ -59,14 +61,18 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
     /**
      * 화면 탭을 실제 저장 상태값으로 매핑.
-     * - CLOSED      : ACHIEVE(달성)
-     * - IN_PROGRESS : ACTIVE(진행중), PENDING_ACHIEVE(7일 대기중)
+     * - IN_PROGRESS  : ACTIVE(진행중), PENDING_ACHIEVE(7일 대기중)
+     * - BONUS_UNPAID : ACHIEVE(달성) 중 보너스가 설정돼 있고 아직 미지급
+     * - CLOSED       : ACHIEVE(달성) 중 보너스가 없거나(NONE) 이미 지급 완료
      */
-    private List<String> toStatuses(String group) {
-        if ("CLOSED".equalsIgnoreCase(group)) {
-            return List.of("ACHIEVE");        // 목록 조회 완료 탭
+    private List<PiggyBank> fetchByGroup(Long walletId, String group) {
+        if ("BONUS_UNPAID".equalsIgnoreCase(group)) {
+            return piggyBankMapper.selectBonusUnpaidByWalletId(walletId);
         }
-        return List.of("ACTIVE", "PENDING_ACHIEVE");     // 목록 조회 진행중인 탭
+        if ("CLOSED".equalsIgnoreCase(group)) {
+            return piggyBankMapper.selectCompletedByWalletId(walletId);
+        }
+        return piggyBankMapper.selectByWalletIdAndStatuses(walletId, List.of("ACTIVE", "PENDING_ACHIEVE"));
     }
 
     // 도메인 → 응답 DTO. progressRate(달성률)는 여기서 계산
@@ -143,7 +149,7 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
     @Override
     @Transactional
-    public PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request) {
+    public PiggyBankDetailResponseDto create(Long childId, Long walletId, PiggyBankCreateRequestDto request) {
         // 1) 최대 개수(3) 체크 — 진행중 개수로 판단
         int activeCount = piggyBankMapper.countByWalletIdAndStatuses(
                 walletId, List.of("ACTIVE", "PENDING_ACHIEVE"));
@@ -159,9 +165,19 @@ public class PiggyBankServiceImpl implements PiggyBankService {
                 .targetAmount(request.getTargetAmount())
                 .build();
         piggyBankMapper.insert(piggyBank);
-
-        // 3) 생성된 id로 상세 반환
         Long newId = piggyBankMapper.selectLastInsertId();
+
+        // 3) 부모에게 저금통 생성 알림
+        Long parentId = userMapper.selectParentIdByChildId(childId);
+        if (parentId != null) {
+            notificationService.create(
+                    parentId,
+                    NotificationType.PIGGY_BANK_CREATED,
+                    String.format("자녀가 '%s' 저금통을 만들었어요.", request.getName())
+            );
+        }
+
+        // 4) 생성된 id로 상세 반환
         return getDetail(newId, walletId);
     }
 
@@ -195,6 +211,21 @@ public class PiggyBankServiceImpl implements PiggyBankService {
             transferService.transferPiggyBankToWallet(childId, refund, traceId);  // 지갑 반영
             // 저금통 출금 이력 (같은 traceId로 지갑 거래와 연결, before=원금 after=0)
             piggyBankHistoryMapper.insertWithdrawal(piggyBankId, refund, refund, 0L, traceId);
+
+            notificationService.create(
+                    childId,
+                    NotificationType.PIGGY_BANK_REFUNDED,
+                    String.format("%s 저금통이 중도 해지되어 %,d원이 지갑으로 환급됐어요.", p.getName(), refund)
+            );
+
+            Long parentId = userMapper.selectParentIdByChildId(childId);
+            if (parentId != null) {
+                notificationService.create(
+                        parentId,
+                        NotificationType.PIGGY_BANK_REFUNDED,
+                        String.format("자녀의 %s 저금통이 중도 해지되어 %,d원이 환급됐어요.", p.getName(), refund)
+                );
+            }
         }
 
     }
@@ -205,20 +236,46 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         List<PiggyBankRefundTarget> targets = piggyBankMapper.selectPromotable();
 
         for (PiggyBankRefundTarget target : targets) {
-            piggyBankMapper.promoteById(target.getPiggyBankId());
-
-            long refund = target.getBalance() == null ? 0 : target.getBalance();
-            if (refund > 0) {
-                String traceId = UUID.randomUUID().toString();
-                piggyBankMapper.zeroBalance(target.getPiggyBankId());
-                transferService.transferPiggyBankToWallet(target.getChildId(), refund, traceId);
-                piggyBankHistoryMapper.insertWithdrawal(target.getPiggyBankId(), refund, refund, 0L, traceId);
-            }
+            promote(target.getPiggyBankId(), target.getChildId(), target.getBalance());
         }
 
         return targets.size();
     }
 
+    @Override
+    @Transactional
+    public boolean promoteIfDue(Long piggyBankId) {
+        PiggyBank p = piggyBankMapper.selectById(piggyBankId);
+
+        // 승격 대상(목표금액 도달 후 대기 중)이 아니면 스케줄러에 맡긴다
+        if (p == null || !"PENDING_ACHIEVE".equals(p.getStatus()) || p.getFirstDepositedAt() == null) {
+            return false;
+        }
+
+        // selectPromotable과 같은 기준(최초입금일 + 7일)으로 판단
+        boolean periodElapsed = !LocalDate.now().isBefore(p.getFirstDepositedAt().toLocalDate().plusDays(7));
+        if (!periodElapsed) {
+            return false;
+        }
+
+        Long childId = piggyBankMapper.selectChildIdByPiggyBankId(piggyBankId);
+        promote(piggyBankId, childId, p.getBalance());
+
+        return true;
+    }
+
+    // 승격(ACHIEVE) + 잔액 환급 공용 처리
+    private void promote(Long piggyBankId, Long childId, Long balance) {
+        piggyBankMapper.promoteById(piggyBankId);
+
+        long refund = balance == null ? 0 : balance;
+        if (refund > 0) {
+            String traceId = UUID.randomUUID().toString();
+            piggyBankMapper.zeroBalance(piggyBankId);
+            transferService.transferPiggyBankToWallet(childId, refund, traceId);
+            piggyBankHistoryMapper.insertWithdrawal(piggyBankId, refund, refund, 0L, traceId);
+        }
+    }
 
     // 저금통 즐겨찾기 토글 (아이당 1개만)
     @Override

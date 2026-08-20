@@ -22,7 +22,9 @@ import com.avocado.domain.wallet.service.WalletService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 import static com.avocado.global.response.code.ErrorCode.*;
 
 @Service
@@ -113,12 +115,31 @@ public class FamilyServiceImpl implements FamilyService {
         FamilyRelation relation = findRelation(requestId);
         requireOwner(authUser, relation.getParentId());
 
-        return FamilyRequestCheckResponseDto.builder()
-                .requestId(relation.getId())
-                .status(relation.getStatus())
-                .childName(relation.getChildName())
-                .createdAt(relation.getCreatedAt())
-                .build();
+        return toCheckResponse(relation);
+    }
+
+    /**
+     * 보호자가 자기에게 온 요청을 목록으로 확인한다.
+     *
+     * @throws BusinessException 보호자 계정이 아닌 경우(403)
+     */
+    @Override
+    public List<FamilyRequestCheckResponseDto> findAllForParent(
+            AuthUser authUser,
+            FamilyRelationStatus status
+    ) {
+        requireAuthenticated(authUser);
+
+        if (authUser.getUserType() != UserType.PARENT) {
+            throw new BusinessException(NOT_PARENT_USER);
+        }
+
+        // 남의 요청이 섞일 수 없도록 조회 자체를 본인 것으로 좁힌다.
+        return familyRelationMapper
+                .selectDetailsByParentId(authUser.getUserId(), status)
+                .stream()
+                .map(this::toCheckResponse)
+                .collect(Collectors.toList());
     }
 
     /**
@@ -175,12 +196,16 @@ public class FamilyServiceImpl implements FamilyService {
     }
 
     /**
-     * 아이가 보호자를 확인하고 연결을 확정하거나 취소한다. 가족 연결의 마지막 단계다.
+     * 아이가 보호자를 확인하고 연결을 확정하거나, 요청을 취소한다. 가족 연결의 마지막 단계다.
      * 확정하면 관계가 ACTIVE가 되고, 아이 계정도 함께 ACTIVE로 바뀐다.
      * 두 테이블을 함께 바꾸므로 하나라도 실패하면 전부 되돌린다.
      *
+     * 확정은 보호자가 승인한(APPROVED) 요청에만 할 수 있지만,
+     * 취소는 승인을 기다리는(PENDING) 요청에도 할 수 있다.
+     *
      * @throws BusinessException 요청이 없거나(404), 본인 요청이 아니거나(403),
-     *                           보호자가 아직 승인하지 않은 경우(409)
+     *                           확정인데 보호자가 아직 승인하지 않았거나(409),
+     *                           취소인데 이미 끝난 요청인 경우(409)
      */
     @Override
     @Transactional
@@ -194,23 +219,36 @@ public class FamilyServiceImpl implements FamilyService {
         FamilyRelation relation = findRelation(requestId);
         requireOwner(authUser, relation.getChildId());
 
-        if (relation.getStatus() != FamilyRelationStatus.APPROVED) {
-            throw new BusinessException(FAMILY_REQUEST_NOT_APPROVED);
+        boolean confirming = Boolean.TRUE.equals(request.getConfirm());
+        FamilyRelationStatus current = relation.getStatus();
+
+        // 확정은 보호자가 승인한 뒤에만 할 수 있다.
+        // 반면 취소는 승인을 기다리는 동안에도 아이가 요청을 거둘 수 있어야 해 PENDING까지 받아준다.
+        if (confirming) {
+            if (current != FamilyRelationStatus.APPROVED) {
+                throw new BusinessException(FAMILY_REQUEST_NOT_APPROVED);
+            }
+        } else if (current != FamilyRelationStatus.PENDING
+                && current != FamilyRelationStatus.APPROVED) {
+            throw new BusinessException(FAMILY_REQUEST_ALREADY_HANDLED);
         }
 
-        FamilyRelationStatus confirmed = request.getConfirm()
+        FamilyRelationStatus confirmed = confirming
                 ? FamilyRelationStatus.ACTIVE
                 : FamilyRelationStatus.CANCELED;
 
-        // 확인 버튼을 연타해도 한 번만 통과한다.
+        // 조회했을 때의 상태 그대로일 때만 바꾼다. 버튼을 연타하거나, 아이가 취소를 누르는 사이
+        // 보호자가 승인해 상태가 움직였다면 바뀐 행이 없다.
         int updated = familyRelationMapper.updateStatus(
                 relation.getId(),
-                FamilyRelationStatus.APPROVED,
+                current,
                 confirmed
         );
 
         if (updated == 0) {
-            throw new BusinessException(FAMILY_REQUEST_NOT_APPROVED);
+            throw new BusinessException(
+                    confirming ? FAMILY_REQUEST_NOT_APPROVED : FAMILY_REQUEST_ALREADY_HANDLED
+            );
         }
 
         // 연결이 끝나야 아이가 서비스를 쓸 수 있다. 취소한 경우에는 PENDING으로 남는다.
@@ -242,6 +280,15 @@ public class FamilyServiceImpl implements FamilyService {
         if (!isFamily) {
             throw new BusinessException(FAMILY_RELATION_NOT_FOUND);
         }
+    }
+
+    private FamilyRequestCheckResponseDto toCheckResponse(FamilyRelation relation) {
+        return FamilyRequestCheckResponseDto.builder()
+                .requestId(relation.getId())
+                .status(relation.getStatus())
+                .childName(relation.getChildName())
+                .createdAt(relation.getCreatedAt())
+                .build();
     }
 
     private void requireAuthenticated(AuthUser authUser) {

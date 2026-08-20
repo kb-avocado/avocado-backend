@@ -45,6 +45,64 @@
         </foreach>
         ORDER BY created_at DESC
     </select>
+
+    <!-- 보너스 미지급 탭: 달성(ACHIEVE) + 보너스 설정됨(NONE 아님) + 아직 미지급 -->
+    <select id="selectBonusUnpaidByWalletId"
+            resultType="com.avocado.domain.piggybank.domain.PiggyBank">
+        SELECT
+        id,
+        wallet_id,
+        name,
+        icon,
+        target_amount,
+        balance,
+        bonus_type,
+        bonus_value,
+        status,
+        is_favorite,
+        first_deposited_at,
+        target_reached_at,
+        achieved_at,
+        bonus_paid_at,
+        canceled_at,
+        created_at,
+        updated_at
+        FROM piggy_banks
+        WHERE wallet_id = #{walletId}
+        AND status = 'ACHIEVE'
+        AND bonus_type &lt;&gt; 'NONE'
+        AND bonus_paid_at IS NULL
+        ORDER BY achieved_at DESC
+    </select>
+
+    <!-- 완료 탭: 달성(ACHIEVE) + (보너스 없음 또는 이미 지급 완료) -->
+    <select id="selectCompletedByWalletId"
+            resultType="com.avocado.domain.piggybank.domain.PiggyBank">
+        SELECT
+        id,
+        wallet_id,
+        name,
+        icon,
+        target_amount,
+        balance,
+        bonus_type,
+        bonus_value,
+        status,
+        is_favorite,
+        first_deposited_at,
+        target_reached_at,
+        achieved_at,
+        bonus_paid_at,
+        canceled_at,
+        created_at,
+        updated_at
+        FROM piggy_banks
+        WHERE wallet_id = #{walletId}
+        AND status = 'ACHIEVE'
+        AND (bonus_type = 'NONE' OR bonus_paid_at IS NOT NULL)
+        ORDER BY achieved_at DESC
+    </select>
+
     <!-- 진행중 개수 카운트 (canCreate 판단용) -->
     <select id="countByWalletIdAndStatuses" resultType="int">
         SELECT COUNT(*)
@@ -124,7 +182,7 @@
         JOIN wallets w ON pb.wallet_id = w.id
         WHERE pb.status = 'PENDING_ACHIEVE'
         AND pb.first_deposited_at IS NOT NULL
-        AND pb.first_deposited_at &lt;= DATE_SUB(NOW(), INTERVAL 7 DAY)
+        AND DATE(pb.first_deposited_at) &lt;= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
     </select>
 
     <!--  만기 저금통 승격  -->
@@ -173,5 +231,19 @@
         FROM piggy_banks pb
         JOIN wallets w ON pb.wallet_id = w.id
         WHERE pb.id = #{piggyBankId}
+    </select>
+
+    <!--  목표 달성 + 보너스 미지급 저금통 중, 오늘이 재촉 알림을 보낼 날(달성일 기준 0/7/14/21일째)인 대상 조회  -->
+    <select id="selectBonusReminderTargets"
+            resultType="com.avocado.domain.piggybank.domain.PiggyBankBonusReminderTarget">
+        SELECT pb.id AS piggyBankId, fr.parent_id AS parentId, pb.name AS name
+        FROM piggy_banks pb
+        JOIN wallets w ON pb.wallet_id = w.id
+        JOIN family_relations fr ON fr.child_id = w.child_id AND fr.status = 'ACTIVE'
+        WHERE pb.status = 'ACHIEVE'
+        AND pb.bonus_type &lt;&gt; 'NONE'
+        AND pb.bonus_paid_at IS NULL
+        AND pb.achieved_at IS NOT NULL
+        AND DATEDIFF(NOW(), pb.achieved_at) IN (0, 7, 14, 21)
     </select>
 </mapper>

@@ -2,12 +2,16 @@ package com.avocado.domain.transfer.controller;
 
 import com.avocado.domain.transfer.domain.TransferResultVo;
 import com.avocado.domain.transfer.dto.request.AccountToWalletTransferRequestDto;
+import com.avocado.domain.transfer.dto.request.WalletTransferRequestDto;
 import com.avocado.domain.transfer.dto.response.AccountToWalletTransferResponseDto;
+import com.avocado.domain.transfer.dto.response.WalletTransferResponseDto;
 import com.avocado.domain.transfer.service.TransferService;
 import com.avocado.global.response.ApiResponse;
 import com.avocado.global.response.code.SuccessCode;
+import com.avocado.global.security.jwt.dto.AuthUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,13 +28,38 @@ public class TransferController {
 
     @PostMapping("/account-to-wallet")
     public ResponseEntity<ApiResponse<AccountToWalletTransferResponseDto>> transferAccountToWallet(
+            @AuthenticationPrincipal
+            AuthUser authUser,
             @Valid
             @RequestBody
             AccountToWalletTransferRequestDto requestDto
     ) {
-        TransferResultVo resultVo = transferService.transferAccountToWallet(requestDto);
+        AccountToWalletTransferResponseDto response = transferService.transferAccountToWallet(
+                authUser.getUserId(),
+                requestDto
+        );
 
-        AccountToWalletTransferResponseDto response = AccountToWalletTransferResponseDto.from(resultVo);
+        return ResponseEntity
+                .status(SuccessCode.TRANSFER_SUCCESS.getHttpStatus())
+                .body(ApiResponse.success(SuccessCode.TRANSFER_SUCCESS, response));
+    }
+
+    /**
+     * 아이 선불지갑에서 내부 선불지갑 또는 외부 은행 계좌로 송금한다.
+     *
+     * @param authUser   인증된 사용자 정보
+     * @param requestDto 송금 요청 정보
+     * @return 송금 결과
+     */
+    @PostMapping("/wallet")
+    public ResponseEntity<ApiResponse<WalletTransferResponseDto>> transferFromWallet(
+            @AuthenticationPrincipal AuthUser authUser,
+            @Valid @RequestBody WalletTransferRequestDto requestDto
+    ) {
+        WalletTransferResponseDto response = transferService.transferFromWallet(
+                authUser.getUserId(),
+                requestDto
+        );
 
         return ResponseEntity
                 .status(SuccessCode.TRANSFER_SUCCESS.getHttpStatus())

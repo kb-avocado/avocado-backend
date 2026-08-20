@@ -3,6 +3,7 @@ package com.avocado.domain.wallet.mapper;
 import com.avocado.domain.wallet.domain.WalletVo;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -139,5 +140,27 @@ public interface WalletMapper {
      */
     Optional<WalletVo> findForUpdateByChildId(
             @Param("childId") Long childId
+    );
+
+    /**
+     * 지갑 번호로 ACTIVE 상태의 선불지갑을 조회한다.
+     *
+     * @param walletNumber 조회할 선불지갑 번호
+     * @return ACTIVE 상태의 선불지갑
+     */
+    Optional<WalletVo> findActiveByWalletNumber(
+            @Param("walletNumber") String walletNumber
+    );
+
+    /**
+     * 두 선불지갑을 ID 순서로 배타적 잠금 조회한다.
+     *
+     * @param firstWalletId 첫 번째 선불지갑 ID
+     * @param secondWalletId 두 번째 선불지갑 ID
+     * @return 잠금 조회된 선불지갑 목록
+     */
+    List<WalletVo> findForUpdateByIds(
+            @Param("firstWalletId") Long firstWalletId,
+            @Param("secondWalletId") Long secondWalletId
     );
 }

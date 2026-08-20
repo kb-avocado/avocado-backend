@@ -47,7 +47,7 @@ public class PiggyBankBonusController {
         Long targetChildId = (childId != null) ? childId : authUser.getUserId();
         Long walletId = walletService.getChildWallet(targetChildId, authUser).getWalletId();
 
-        PiggyBankBonusResponseDto response = piggyBankBonusService.setBonus(piggyBankId, request, walletId);
+        PiggyBankBonusResponseDto response = piggyBankBonusService.setBonus(piggyBankId, request, walletId, targetChildId);
 
         return ResponseEntity
                 .status(PIGGY_BANK_BONUS_SET.getHttpStatus())

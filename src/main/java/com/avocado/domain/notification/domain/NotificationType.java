@@ -20,7 +20,21 @@ public enum NotificationType {
 
     CHEER_MESSAGE_RECEIVED("새 응원 메시지가 도착했어요"),
 
-    PIGGY_BANK_ACHIEVED("저금통 목표를 달성했어요");
+    PIGGY_BANK_ACHIEVED("저금통 목표를 달성했어요"),
+
+    PIGGY_BANK_BONUS_SET("저금통 보너스가 설정됐어요"),
+
+    PIGGY_BANK_REFUNDED("저금통이 환급됐어요"),
+
+    PIGGY_BANK_CREATED("새 저금통이 생겼어요"),
+
+    PIGGY_BANK_BONUS_REMINDER("보너스 지급을 기다리고 있어요"),
+
+    NEWS_ACTIVITY_COMPLETED("아이가 오늘의 뉴스 활동을 완료했어요"),
+
+    PAYMENT_HIGH_AMOUNT("고액 결제가 있었어요"),
+
+    PAYMENT_RESTRICTED_MERCHANT("유해 결제 시도가 차단됐어요");
 
     private final String title;
 }

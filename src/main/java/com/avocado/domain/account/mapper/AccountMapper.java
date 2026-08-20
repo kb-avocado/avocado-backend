@@ -22,4 +22,16 @@ public interface AccountMapper {
     Optional<AccountVo> findActiveByUserId(
             @Param("userId") Long userId
     );
+
+    /**
+     * 은행 코드와 계좌번호로 ACTIVE 상태의 연동 계좌를 조회한다.
+     *
+     * @param bankCode 금융기관 코드
+     * @param accountNumber 계좌번호
+     * @return ACTIVE 상태의 연동 계좌
+     */
+    Optional<AccountVo> findActiveByBankCodeAndAccountNumber(
+            @Param("bankCode") String bankCode,
+            @Param("accountNumber") String accountNumber
+    );
 }

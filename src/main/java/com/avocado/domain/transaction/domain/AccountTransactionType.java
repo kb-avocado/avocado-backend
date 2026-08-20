@@ -12,7 +12,9 @@ public enum AccountTransactionType {
 
     WITHDRAWAL("계좌 출금"),
 
-    REFUND("계좌 출금 환불");
+    REFUND("계좌 출금 환불"),
+
+    DEPOSIT("계좌 입금");
 
     private final String description;
 }

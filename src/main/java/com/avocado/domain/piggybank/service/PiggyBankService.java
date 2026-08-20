@@ -15,11 +15,15 @@ public interface PiggyBankService {
     // 저금통 상세 조회 (소유권 검증용 walletId)
     PiggyBankDetailResponseDto getDetail(Long piggyBankId, Long walletId);
 
-    // 저금통 생성
-    PiggyBankDetailResponseDto create(Long walletId, PiggyBankCreateRequestDto request);
+    // 저금통 생성 (childId: 생성 알림을 받을 부모 조회용)
+    PiggyBankDetailResponseDto create(Long childId, Long walletId, PiggyBankCreateRequestDto request);
 
     // 7일 달성 승격 (스케줄러가 호출), 승격된 저금통 수 반환
     int promoteAchievements();
+
+    // 목표금액 도달 시점에 이미 7일 경과 조건도 충족됐다면, 스케줄러를 기다리지 않고 즉시 승격
+    // (입금 서비스에서 호출), 즉시 승격됐으면 true
+    boolean promoteIfDue(Long piggyBankId);
 
     // 즐겨찾기
     boolean toggleFavorite(Long piggyBankId, Long walletId);
