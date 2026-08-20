@@ -8,6 +8,8 @@
 
 </div>
 
+<br/>
+
 <div align="center">
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/kb-avocado/avocado-backend)
@@ -16,19 +18,23 @@
 
 </div>
 
-## 📑 목차
+<br/>
+<br/>
+
+### 📑 목차
 - [1. 프로젝트 소개](#-1-프로젝트-소개)
 - [2. 팀원 소개](#-2-팀원-소개)
 - [3. 기술 스택](#-3-기술-스택)
 - [4. 주요 기능](#-4-주요-기능)
-- [5. 서비스 화면](#-5-서비스-화면)
+- [5. 서비스 화면](#️-5-서비스-화면)
 - [6. 아키텍처 및 설계](#-6-아키텍처-및-설계)
 - [7. 트러블 슈팅](#-7-트러블-슈팅-troubleshooting)
 - [8. 실행 방법](#-8-실행-방법)
 
 <br/>
+<br/>
 
-## 📢 1. 프로젝트 소개
+### 📢 1. 프로젝트 소개
 
 **📌 서비스 개요**
 - **프로젝트명:** 아보카도 (Avocado)
@@ -41,57 +47,61 @@
 - **생활 밀착형 All-in-One 경험:** 용돈 관리, 결제, 저금 기능은 물론, 문화·예술시설 예약 및 금융 교육 프로그램까지 하나의 앱에서 통합 제공합니다.
 
 <br/>
+<br/>
 
-## 👥 2. 팀원 소개
+### 👥 2. 팀원 소개
 
 | [김은성](https://github.com/github주소) | [김호정](https://github.com/github주소) | [이세미](https://github.com/github주소) | [이윤정](https://github.com/github주소) | [조재훈](https://github.com/7aeHoon) | [황지민](https://github.com/github주소) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
 | <img width="120" height="120" alt="김은성" src="https://github.com/user-attachments/assets/496ffd57-51a0-4bef-94cc-c799528324c9" /> | <img width="120" height="120" alt="김호정" src="https://github.com/user-attachments/assets/2c69cbf1-555c-4d8a-8d5f-78a47a5421b4" /> | <img width="120" height="120" alt="이세미" src="https://github.com/user-attachments/assets/f45ec1c3-576f-4990-82b4-aab4f2b71f02" /> | <img width="120" height="120" alt="이윤정" src="https://github.com/user-attachments/assets/4a23e246-6190-4c5c-adca-01a1b20ab4d7" /> | <img width="120" height="120" alt="조재훈" src="https://github.com/user-attachments/assets/3d202512-c97f-46ce-9cdd-5eb2bf8096ad" /> | <img width="120" height="120" alt="황지민" src="https://github.com/user-attachments/assets/12f831f1-5dc1-4123-819b-cd3a786fbdf3" /> |
 | **FullStack** | **FullStack** | **FullStack** | **FullStack** | **Backend** | **FullStack** |
-| 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 API 개발<br>인프라 및 서버 구축 | 프로젝트 총괄 및 기획<br>역할 설명 |
+| 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 프론트엔드 리드 | 백엔드 API 개발<br>프론트엔드 기능 구현 | 백엔드 리드<br>백엔드 API 개발<br>인프라 및 서버 구축 | 팀장<br>프로젝트 총괄 및 기획<br>역할 설명 |
 
 <br/>
+<br/>
 
-## 🛠 3. 기술 스택
+### 🛠 3. 기술 스택
 
-### Backend
+#### Backend
 
 <p>
   <img src="https://skillicons.dev/icons?i=java,spring,gradle,mysql,redis&theme=light" alt="backend">
 </p>
 
-### Frontend
+#### Frontend
 
 <p>
   <img src="https://skillicons.dev/icons?i=vue,vite,pinia,html,css,js&theme=light" alt="frontend">
 </p>
 
-### Infrastructure
+#### Infrastructure
 
 <p>
   <img src="https://skillicons.dev/icons?i=aws,docker,jenkins,nginx,vercel&theme=light" alt="infrastructure">
 </p>
 
-### Collaboration & Tools
+#### Collaboration & Tools
 
 <p>
   <img src="https://skillicons.dev/icons?i=notion,git,github,githubactions,idea,postman&theme=light" alt="tools">
 </p>
 
 <br/>
+<br/>
 
-## 📌 4. 주요 기능
+### 📌 4. 주요 기능
 - **기능 1:** 
 - **기능 2:** 
 - **기능 3:** 
 
 <br/>
+<br/>
 
-## 🖥️ 5. 서비스 화면
+### 🖥️ 5. 서비스 화면
 
 > 실제 서비스 화면 GIF 또는 캡처 이미지를 추가해 주세요.
 
-### 👨‍👩‍👧 1. 회원가입 및 가족 연결
+#### 👨‍👩‍👧 1. 회원가입 및 가족 연결
 
 | 회원가입 | 가족 초대 | 가족 연결 완료 |
 | :---: | :---: | :---: |
@@ -100,7 +110,7 @@
 
 <br>
 
-### 💳 2. 선불지갑 및 거래 내역
+#### 💳 2. 선불지갑 및 거래 내역
 
 | 선불지갑 조회 | 거래 내역 | 거래 상세 |
 | :---: | :---: | :---: |
@@ -109,7 +119,7 @@
 
 <br>
 
-### 💸 3. 부모 → 자녀 용돈 송금
+#### 💸 3. 부모 → 자녀 용돈 송금
 
 | 자녀 선택 | 송금 금액 입력 | 송금 완료 |
 | :---: | :---: | :---: |
@@ -118,7 +128,7 @@
 
 <br>
 
-### 🔁 4. 자녀 송금 및 최근 수취처
+#### 🔁 4. 자녀 송금 및 최근 수취처
 
 | 최근 송금 목록 | 수취처 선택 | 송금 완료 |
 | :---: | :---: | :---: |
@@ -127,7 +137,7 @@
 
 <br>
 
-### 🐷 5. 저금통
+#### 🐷 5. 저금통
 
 | 저금통 목록 | 저축하기 | 목표 달성 |
 | :---: | :---: | :---: |
@@ -136,7 +146,7 @@
 
 <br>
 
-### 🎁 6. 저금통 보상
+#### 🎁 6. 저금통 보상
 
 | 보상 설정 | 목표 달성 확인 | 보상 지급 |
 | :---: | :---: | :---: |
@@ -145,7 +155,7 @@
 
 <br>
 
-### 📊 7. 월별 소비 리포트
+#### 📊 7. 월별 소비 리포트
 
 | 소비 요약 | 주요 소비처 | 저축률 |
 | :---: | :---: | :---: |
@@ -154,25 +164,27 @@
 
 <br>
 
-### 🔔 8. 실시간 알림
+#### 🔔 8. 실시간 알림
 
 | 알림 목록 | 실시간 알림 | 알림 상세 |
 | :---: | :---: | :---: |
 | <img src="https://via.placeholder.com/250x350?text=Notifications" width="100%"> | <img src="https://via.placeholder.com/250x350?text=Real+Time+Notification" width="100%"> | <img src="https://via.placeholder.com/250x350?text=Notification+Detail" width="100%"> |
 | 최근 알림을 목록으로 확인할 수 있습니다. | SSE를 통해 주요 금융 이벤트를 실시간으로 전달합니다. | 용돈, 결제, 저금통, 가족 연결 등의 알림 상세 내용을 확인합니다. |
 
-<br>
+<br/>
+<br/>
 
-## 🏗 6. 아키텍처 및 설계
-### 시스템 아키텍처
+### 🏗 6. 아키텍처 및 설계
+#### 시스템 아키텍처
 > 아키텍처 다이어그램 이미지 삽입 (예: `![architecture](/path/to/image.png)`)
 
-### ERD
+#### ERD
 > ERD 이미지 삽입
 
 <br/>
+<br/>
 
-## 🚀 7. 트러블 슈팅 (Troubleshooting)
+### 🚀 7. 트러블 슈팅 (Troubleshooting)
 <details>
 <summary>문제 상황 및 해결 요약 (클릭하여 펼치기)</summary>
 
@@ -182,5 +194,6 @@
 </details>
 
 <br/>
+<br/>
 
-## 💻 8. 실행 방법
+### 💻 8. 실행 방법
