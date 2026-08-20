@@ -19,5 +19,6 @@ public class ChildSpendingReport {
     private Long totalSaved;
     private Long allowanceReceived;
     private BigDecimal savingRate;
-    private String advice;
+    private String childAdvice;       // 아이에게 보여줄 조언
+    private String parentAdvice;      // 보호자에게 보여줄 조언
 }
