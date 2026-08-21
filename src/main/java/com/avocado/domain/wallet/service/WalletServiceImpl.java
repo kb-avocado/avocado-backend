@@ -341,10 +341,15 @@ public class WalletServiceImpl implements WalletService {
 
         if (merchant.isRestrictedForChild()) {
             Long parentId = userMapper.selectParentIdByChildId(childId);
+
             if (parentId != null) {
+                String childName = userMapper.findNameById(childId)
+                        .orElse("아이");
+
                 notificationService.create(
                         parentId,
                         NotificationType.PAYMENT_RESTRICTED_MERCHANT,
+                        childName + "의 유해 결제 차단",
                         String.format("%s에서 결제가 차단됐어요.", merchant.getName())
                 );
             }
@@ -365,10 +370,15 @@ public class WalletServiceImpl implements WalletService {
 
         if (amount >= HIGH_AMOUNT_NOTIFICATION_THRESHOLD) {
             Long parentId = userMapper.selectParentIdByChildId(childId);
+
             if (parentId != null) {
+                String childName = userMapper.findNameById(childId)
+                        .orElse("아이");
+
                 notificationService.create(
                         parentId,
                         NotificationType.PAYMENT_HIGH_AMOUNT,
+                        childName + "의 고액 결제",
                         String.format("%s에서 %,d원이 결제됐어요.", merchant.getName(), amount)
                 );
             }

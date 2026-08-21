@@ -67,7 +67,7 @@ class NotificationServiceImplTest {
         notificationService.create(
                 receiverId,
                 NotificationType.ALLOWANCE_RECEIVED,
-                "10,000원이 입금되었습니다."
+                "10,000원이 입금되었어요."
         );
 
         // then
@@ -117,7 +117,7 @@ class NotificationServiceImplTest {
                 notificationService.create(
                         102L,
                         NotificationType.ALLOWANCE_RECEIVED,
-                        "10,000원이 입금되었습니다."
+                        "10,000원이 입금되었어요."
                 )
         ).isInstanceOf(BusinessException.class);
 
@@ -143,7 +143,7 @@ class NotificationServiceImplTest {
                 notificationService.create(
                         102L,
                         NotificationType.ALLOWANCE_RECEIVED,
-                        "10,000원이 입금되었습니다."
+                        "10,000원이 입금되었어요."
                 )
         ).isInstanceOf(BusinessException.class);
 
