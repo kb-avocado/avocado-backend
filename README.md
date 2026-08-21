@@ -21,33 +21,36 @@
 <br/>
 
 ## 📑 목차
-- [1. 프로젝트 소개](#-1-프로젝트-소개)
-- [2. 팀원 소개](#-2-팀원-소개)
-- [3. 기술 스택](#-3-기술-스택)
-- [4. 주요 기능](#-4-주요-기능)
-- [5. 서비스 화면](#️-5-서비스-화면)
-- [6. 아키텍처 및 설계](#-6-아키텍처-및-설계)
-- [7. 디렉터리 구조](#-7-디렉터리-구조)
-- [8. 트러블 슈팅](#-8-트러블-슈팅-troubleshooting)
-- [9. 실행 방법](#-9-실행-방법)
+
+- [1. 프로젝트 소개](#1-프로젝트-소개)
+- [2. 팀원 소개](#2-팀원-소개)
+- [3. 기술 스택](#3-기술-스택)
+- [4. 주요 기능](#4-주요-기능)
+- [5. 서비스 화면](#5-서비스-화면)
+- [6. 아키텍처 및 설계](#6-아키텍처-및-설계)
+- [7. 디렉터리 구조](#7-디렉터리-구조)
+- [8. 트러블 슈팅](#8-트러블-슈팅)
+- [9. 실행 방법](#9-실행-방법)
 
 <br/>
 
-## 📢 1. 프로젝트 소개
+## 1. 프로젝트 소개 📢
 
 #### 📌 서비스 개요
+
 - **프로젝트명:** 아보카도 (Avocado)
 - **개발 기간:** 2026.07 ~ 2026.08
 - **한 줄 소개:** 부모와 함께하는 어린이 금융 습관 형성 전자지갑 서비스
 
 #### 🌱 기획 배경 및 핵심 가치
+
 - **주도적인 금융 습관 형성:** 만 6~13세 아동이 수동적인 소비자를 넘어, 직접 소비/저축 계획을 세우고 결과를 점검하는 주체로 성장하도록 돕습니다.
 - **통제가 아닌 '소통과 가이드':** 부모는 유해업종 차단, 한도 설정 등 안전망을 제공하고, 아이와 함께 목표를 논의하는 페이스메이커 역할을 합니다.
 - **생활 밀착형 All-in-One 경험:** 용돈 관리, 결제, 저금 기능은 물론, 문화·예술시설 예약 및 금융 교육 프로그램까지 하나의 앱에서 통합 제공합니다.
 
 <br/>
 
-## 👥 2. 팀원 소개
+## 2. 팀원 소개 👥
 
 | [김은성](https://github.com/github주소) | [김호정](https://github.com/github주소) | [이세미](https://github.com/github주소) | [이윤정](https://github.com/github주소) | [조재훈](https://github.com/7aeHoon) | [황지민](https://github.com/github주소) |
 | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -57,7 +60,7 @@
 
 <br/>
 
-## 🛠 3. 기술 스택
+## 3. 기술 스택 🛠
 
 #### Backend
 
@@ -85,14 +88,15 @@
 
 <br/>
 
-## 📌 4. 주요 기능
-- **기능 1:** 
-- **기능 2:** 
-- **기능 3:** 
+## 4. 주요 기능 📌
+
+- **기능 1:**
+- **기능 2:**
+- **기능 3:**
 
 <br/>
 
-## 🖥️ 5. 서비스 화면
+## 5. 서비스 화면 🖥️
 
 > 실제 서비스 화면 GIF 또는 캡처 이미지를 추가해 주세요.
 
@@ -168,81 +172,101 @@
 
 <br/>
 
-## 🏗 6. 아키텍처 및 설계
+## 6. 아키텍처 및 설계 🏗
 
 #### 시스템 아키텍처
-> 아키텍처 다이어그램 이미지 삽입 (예: `![architecture](/path/to/image.png)`)
+
+> 아키텍처 다이어그램 이미지 삽입  
+> 예: `![architecture](/path/to/image.png)`
 
 #### ERD
+
 > ERD 이미지 삽입
 
 <br/>
 
-## 📂 7. 디렉터리 구조
+## 7. 디렉터리 구조 📂
 
 #### Backend
 
 ```text
 src/main
-├── java
-│   └── com.avocado
-│       ├── domain
-│       │   ├── account
-│       │   ├── family
-│       │   ├── notification
-│       │   ├── piggybank
-│       │   ├── report
-│       │   ├── transfer
-│       │   ├── user
-│       │   └── wallet
-│       │
-│       └── global
-│           ├── config
-│           ├── exception
-│           ├── response
-│           └── security
+├── java/com/avocado
+│   ├── domain
+│   │   ├── account
+│   │   ├── family
+│   │   ├── home
+│   │   ├── merchant
+│   │   ├── news
+│   │   ├── notification
+│   │   ├── payment
+│   │   ├── piggybank
+│   │   ├── report
+│   │   ├── transaction
+│   │   ├── transfer
+│   │   ├── user
+│   │   └── wallet
+│   │
+│   └── global
+│       ├── config
+│       ├── exception
+│       ├── response
+│       ├── security
+│       └── util
 │
 └── resources
+    ├── config
+    ├── db
+    │   └── migration
     ├── mapper
-    └── db
-        └── migration
+    └── mybatis
 ```
 
 - **`domain`**: 서비스의 비즈니스 기능을 도메인 단위로 분리하여 관리합니다.
-  - `account`: 부모 계좌 및 계좌 거래 관련 기능
+  - `account`: 부모 계좌 관련 기능
   - `family`: 부모·자녀 가족 관계 및 초대 관련 기능
+  - `home`: 홈 화면에 필요한 데이터 조회 기능
+  - `merchant`: 가맹점 정보 관련 기능
+  - `news`: 금융 뉴스 및 활동 관련 기능
   - `notification`: 알림 조회 및 SSE 기반 실시간 알림 기능
+  - `payment`: QR 기반 결제 관련 기능
   - `piggybank`: 저금통 생성, 저축, 출금 및 보상 관련 기능
   - `report`: 자녀의 소비 및 저축 통계 리포트 기능
+  - `transaction`: 계좌 및 선불지갑 거래 내역 관련 기능
   - `transfer`: 계좌 및 선불지갑 간 송금 관련 기능
-  - `user`: 회원 정보 및 회원 상태 관련 기능
-  - `wallet`: 자녀 선불지갑 및 거래 내역 관련 기능
+  - `user`: 회원 정보, 인증 및 회원 상태 관련 기능
+  - `wallet`: 자녀 선불지갑 관련 기능
 
 - **`global`**: 특정 도메인에 종속되지 않는 애플리케이션 공통 기능을 관리합니다.
   - `config`: Spring, MyBatis, Redis 등 애플리케이션 설정
   - `exception`: 비즈니스 예외 및 전역 예외 처리
   - `response`: 공통 API 응답 및 응답 코드 관리
-  - `security`: Spring Security, JWT 인증 및 인가 관련 기능
+  - `security`: Spring Security 및 JWT 인증·인가 관련 기능
+  - `util`: 여러 도메인에서 공통으로 사용하는 유틸리티 기능
 
+- **`resources/config`**: 실행 환경별 애플리케이션 설정 파일을 관리합니다.
 - **`resources/mapper`**: MyBatis Mapper XML 파일을 관리합니다.
 - **`resources/db/migration`**: Flyway를 이용한 데이터베이스 스키마 변경 이력을 관리합니다.
+- **`resources/mybatis`**: MyBatis 공통 설정을 관리합니다.
 
-각 도메인은 기능에 따라 다음과 같은 계층 구조를 따릅니다.
+각 도메인은 기능에 따라 다음과 같은 기본 계층 구조를 따릅니다.
 
 ```text
 domain/{domain-name}
 ├── controller
-├── service
-├── mapper
 ├── domain
-└── dto
-    ├── request
-    └── response
+├── dto
+│   ├── request
+│   └── response
+├── mapper
+└── service
 ```
+
+도메인의 특성에 따라 `repository`, `scheduler`, `event`, `listener`, `batch` 등의 패키지를 추가로 사용합니다.
 
 | 계층 | 역할 |
 | :--- | :--- |
-| `controller` | 클라이언트의 HTTP 요청을 받고 응답을 반환합니다. |
+| `controller` | 클라이언트의 HTTP 요청을 처리하고 응답을 반환합니다. |
 | `service` | 비즈니스 로직과 트랜잭션을 처리합니다. |
 | `mapper` | MyBatis를 이용하여 데이터베이스에 접근합니다. |
 | `domain` | VO, Enum 등 도메인 모델을 관리합니다. |
@@ -251,16 +275,19 @@ domain/{domain-name}
 
 <br/>
 
-## 🚀 8. 트러블 슈팅 (Troubleshooting)
+## 8. 트러블 슈팅 🚀
 
 <details>
 <summary>문제 상황 및 해결 요약 (클릭하여 펼치기)</summary>
 
 - **문제 상황:** 개발 중 직면했던 구체적인 에러나 성능 이슈.
 - **원인 분석:** 문제의 근본적인 원인.
-- **해결 방안:** 적용한 기술적 해결책과 그로 인한 개선 결과 (수치화된 결과가 있으면 좋습니다).
+- **해결 방안:** 적용한 기술적 해결책과 그로 인한 개선 결과
+
 </details>
 
 <br/>
 
-## 💻 9. 실행 방법
+## 9. 실행 방법 💻
+
+> 프로젝트 실행 방법을 추가해 주세요.
