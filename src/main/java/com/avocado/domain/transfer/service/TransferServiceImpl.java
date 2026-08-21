@@ -102,7 +102,7 @@ public class TransferServiceImpl implements TransferService {
         notificationService.create(
                 childId,
                 NotificationType.ALLOWANCE_RECEIVED,
-                String.format("%,d원이 입금되었습니다.", amount)
+                String.format("%,d원이 용돈으로 들어왔어요.", amount)
         );
 
 
@@ -165,7 +165,7 @@ public class TransferServiceImpl implements TransferService {
         notificationService.create(
                 childId,
                 NotificationType.ALLOWANCE_RECEIVED,
-                String.format("%,d원이 입금되었습니다.", amount)
+                String.format("%,d원이 용돈으로 들어왔어요.", amount)
         );
     }
 

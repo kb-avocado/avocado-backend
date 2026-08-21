@@ -11,5 +11,6 @@ import lombok.Getter;
 public class PiggyBankBonusReminderTarget {
     private final Long piggyBankId;
     private final Long parentId;
+    private final String childName;
     private final String name;
 }

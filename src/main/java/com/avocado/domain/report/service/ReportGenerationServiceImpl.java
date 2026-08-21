@@ -110,17 +110,23 @@ public class ReportGenerationServiceImpl implements ReportGenerationService {
         notificationService.create(
                 childId,
                 NotificationType.SPENDING_REPORT_CREATED,
-                String.format("%d년 %d월 소비 리포트가 생성되었습니다.",
+                targetMonth.getMonthValue() + "월 리포트 도착",
+                String.format("%d년 %d월 소비 리포트가 생성되었어요.",
                         targetMonth.getYear(),
                         targetMonth.getMonthValue())
         );
 
         Long parentId = userMapper.selectParentIdByChildId(childId);
+
         if (parentId != null) {
+            String childName = userMapper.findNameById(childId)
+                    .orElse("아이");
+
             notificationService.create(
                     parentId,
                     NotificationType.SPENDING_REPORT_CREATED,
-                    String.format("자녀의 %d년 %d월 소비 리포트가 생성되었습니다.",
+                    childName + "의 " + targetMonth.getMonthValue() + "월 리포트 도착",
+                    String.format("%d년 %d월 소비 리포트가 생성되었어요.",
                             targetMonth.getYear(),
                             targetMonth.getMonthValue())
             );

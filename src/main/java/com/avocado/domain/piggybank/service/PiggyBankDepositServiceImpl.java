@@ -1,9 +1,6 @@
 package com.avocado.domain.piggybank.service;
 
-import com.avocado.domain.notification.domain.NotificationType;
-import com.avocado.domain.notification.service.NotificationService;
 import com.avocado.domain.transfer.service.TransferService;
-import com.avocado.domain.user.mapper.UserMapper;
 import com.avocado.global.exception.BusinessException;
 import com.avocado.global.response.code.ErrorCode;
 import com.avocado.domain.piggybank.domain.PiggyBank;
@@ -27,16 +24,16 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
     private final PiggyBankMapper piggyBankMapper;
     private final PiggyBankHistoryMapper piggyBankHistoryMapper;
     private final TransferService transferService;
-    private final NotificationService notificationService;
-    private final UserMapper userMapper;
     private final PiggyBankService piggyBankService;
 
     @Override
     public List<PiggyBankDepositResponseDto> getDeposits(Long piggyBankId, Long walletId) {
         PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
+
         if (piggyBank == null) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
         }
+
         if (!piggyBank.getWalletId().equals(walletId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
         }
@@ -61,6 +58,7 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
         }
 
         Long remaining = piggyBank.getTargetAmount() - piggyBank.getBalance();
+
         if (request.getAmount() > remaining) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET);
         }
@@ -72,29 +70,43 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
         String newStatus = goalReached ? "PENDING_ACHIEVE" : "ACTIVE";
 
         LocalDateTime now = LocalDateTime.now();
+
         LocalDateTime firstDepositedAt = piggyBank.getFirstDepositedAt() != null
                 ? piggyBank.getFirstDepositedAt()
                 : now;
-        LocalDateTime targetReachedAt = goalReached ? now : piggyBank.getTargetReachedAt();
 
-        piggyBankMapper.increaseBalance(piggyBankId, balanceAfter, newStatus, firstDepositedAt, targetReachedAt);
+        LocalDateTime targetReachedAt = goalReached
+                ? now
+                : piggyBank.getTargetReachedAt();
+
+        piggyBankMapper.increaseBalance(
+                piggyBankId,
+                balanceAfter,
+                newStatus,
+                firstDepositedAt,
+                targetReachedAt
+        );
 
         String traceId = UUID.randomUUID().toString();
-        piggyBankHistoryMapper.insertDeposit(piggyBankId, request.getAmount(), balanceBefore, balanceAfter, traceId);
+
+        piggyBankHistoryMapper.insertDeposit(
+                piggyBankId,
+                request.getAmount(),
+                balanceBefore,
+                balanceAfter,
+                traceId
+        );
 
         if (goalReached) {
             Long childId = piggyBankMapper.selectChildIdByPiggyBankId(piggyBankId);
+
             if (childId == null) {
                 throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
             }
 
-            notificationService.create(
-                    childId,
-                    NotificationType.PIGGY_BANK_ACHIEVED,
-                    String.format("%s 저금통 목표 금액을 달성했습니다.", piggyBank.getName())
-            );
-
-            // 이 입금으로 목표금액을 채운 시점에 이미 7일도 지나있었다면, 스케줄러를 기다리지 않고 바로 승격
+            // 이 입금으로 목표금액을 채운 시점에 이미 7일도 지나있었다면
+            // 스케줄러를 기다리지 않고 바로 ACHIEVE로 승격
+            // 실제 환급 + 성공 알림은 promote()에서 처리
             if (piggyBankService.promoteIfDue(piggyBankId)) {
                 newStatus = "ACHIEVE";
             }
@@ -135,13 +147,18 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
         }
 
         Long remaining = piggyBank.getTargetAmount() - piggyBank.getBalance();
+
         if (amount > remaining) {
             throw new BusinessException(ErrorCode.PIGGY_BANK_DEPOSIT_EXCEEDS_TARGET);
         }
 
-        // 지갑에서 저금할 금액 출금 — 같은 @Transactional 안에 묶여서
-        // 아래 적립 로직이 실패하면 출금도 같이 롤백됨
-        transferService.transferWalletToPiggyBank(childId, amount, traceId);
+        // 지갑에서 저금할 금액 출금
+        // 같은 @Transactional 안에 묶여 있어서 아래 적립 로직 실패 시 출금도 롤백
+        transferService.transferWalletToPiggyBank(
+                childId,
+                amount,
+                traceId
+        );
 
         Long balanceBefore = piggyBank.getBalance();
         Long balanceAfter = balanceBefore + amount;
@@ -150,23 +167,35 @@ public class PiggyBankDepositServiceImpl implements PiggyBankDepositService {
         String newStatus = goalReached ? "PENDING_ACHIEVE" : "ACTIVE";
 
         LocalDateTime now = LocalDateTime.now();
+
         LocalDateTime firstDepositedAt = piggyBank.getFirstDepositedAt() != null
                 ? piggyBank.getFirstDepositedAt()
                 : now;
-        LocalDateTime targetReachedAt = goalReached ? now : piggyBank.getTargetReachedAt();
 
-        piggyBankMapper.increaseBalance(piggyBankId, balanceAfter, newStatus, firstDepositedAt, targetReachedAt);
+        LocalDateTime targetReachedAt = goalReached
+                ? now
+                : piggyBank.getTargetReachedAt();
 
-        piggyBankHistoryMapper.insertDeposit(piggyBankId, amount, balanceBefore, balanceAfter, traceId);
+        piggyBankMapper.increaseBalance(
+                piggyBankId,
+                balanceAfter,
+                newStatus,
+                firstDepositedAt,
+                targetReachedAt
+        );
+
+        piggyBankHistoryMapper.insertDeposit(
+                piggyBankId,
+                amount,
+                balanceBefore,
+                balanceAfter,
+                traceId
+        );
 
         if (goalReached) {
-            notificationService.create(
-                    childId,
-                    NotificationType.PIGGY_BANK_ACHIEVED,
-                    String.format("%s 저금통 목표 금액을 달성했습니다.", piggyBank.getName())
-            );
-
-            // 이 입금으로 목표금액을 채운 시점에 이미 7일도 지나있었다면, 스케줄러를 기다리지 않고 바로 승격
+            // 이 입금으로 목표금액을 채운 시점에 이미 7일도 지나있었다면
+            // 스케줄러를 기다리지 않고 바로 ACHIEVE로 승격
+            // 실제 환급 + 성공 알림은 promote()에서 처리
             if (piggyBankService.promoteIfDue(piggyBankId)) {
                 newStatus = "ACHIEVE";
             }

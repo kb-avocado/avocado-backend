@@ -167,17 +167,29 @@ public class PiggyBankServiceImpl implements PiggyBankService {
         piggyBankMapper.insert(piggyBank);
         Long newId = piggyBankMapper.selectLastInsertId();
 
-        // 3) 부모에게 저금통 생성 알림
+        // 3) 아이에게 저금통 생성 알림
+        notificationService.create(
+                childId,
+                NotificationType.PIGGY_BANK_CREATED,
+                String.format("'%s' 저금통을 새로 만들었어요.", request.getName())
+        );
+
+// 4) 부모에게 저금통 생성 알림
         Long parentId = userMapper.selectParentIdByChildId(childId);
+
         if (parentId != null) {
+            String childName = userMapper.findNameById(childId)
+                    .orElse("아이");
+
             notificationService.create(
                     parentId,
                     NotificationType.PIGGY_BANK_CREATED,
-                    String.format("자녀가 '%s' 저금통을 만들었어요.", request.getName())
+                    childName + "의 새로운 저금통",
+                    String.format("'%s' 저금통을 새로 만들었어요.", request.getName())
             );
         }
 
-        // 4) 생성된 id로 상세 반환
+// 5) 생성된 id로 상세 반환
         return getDetail(newId, walletId);
     }
 
@@ -211,19 +223,34 @@ public class PiggyBankServiceImpl implements PiggyBankService {
             transferService.transferPiggyBankToWallet(childId, refund, traceId);  // 지갑 반영
             // 저금통 출금 이력 (같은 traceId로 지갑 거래와 연결, before=원금 after=0)
             piggyBankHistoryMapper.insertWithdrawal(piggyBankId, refund, refund, 0L, traceId);
-
+// 아이 알림
             notificationService.create(
                     childId,
                     NotificationType.PIGGY_BANK_REFUNDED,
-                    String.format("%s 저금통이 중도 해지되어 %,d원이 지갑으로 환급됐어요.", p.getName(), refund)
+                    "저금통에서 지갑으로",
+                    String.format(
+                            "%s 저금통의 %,d원이 지갑으로 돌아왔어요.",
+                            p.getName(),
+                            refund
+                    )
             );
 
+// 부모 알림
             Long parentId = userMapper.selectParentIdByChildId(childId);
+
             if (parentId != null) {
+                String childName = userMapper.findNameById(childId)
+                        .orElse("아이");
+
                 notificationService.create(
                         parentId,
                         NotificationType.PIGGY_BANK_REFUNDED,
-                        String.format("자녀의 %s 저금통이 중도 해지되어 %,d원이 환급됐어요.", p.getName(), refund)
+                        childName + "의 저금통 환급",
+                        String.format(
+                                "%s 저금통의 %,d원이 지갑으로 돌아갔어요.",
+                                p.getName(),
+                                refund
+                        )
                 );
             }
         }
@@ -266,14 +293,68 @@ public class PiggyBankServiceImpl implements PiggyBankService {
 
     // 승격(ACHIEVE) + 잔액 환급 공용 처리
     private void promote(Long piggyBankId, Long childId, Long balance) {
+        PiggyBank piggyBank = piggyBankMapper.selectById(piggyBankId);
+
+        if (piggyBank == null) {
+            throw new BusinessException(ErrorCode.PIGGY_BANK_NOT_FOUND);
+        }
+
+        // 저금통 최종 달성 처리
         piggyBankMapper.promoteById(piggyBankId);
 
         long refund = balance == null ? 0 : balance;
+
         if (refund > 0) {
             String traceId = UUID.randomUUID().toString();
+
+            // 저금통 잔액 0원 처리
             piggyBankMapper.zeroBalance(piggyBankId);
-            transferService.transferPiggyBankToWallet(childId, refund, traceId);
-            piggyBankHistoryMapper.insertWithdrawal(piggyBankId, refund, refund, 0L, traceId);
+
+            // 저금통 금액을 아이 지갑으로 반환
+            transferService.transferPiggyBankToWallet(
+                    childId,
+                    refund,
+                    traceId
+            );
+
+            // 저금통 출금 이력 기록
+            piggyBankHistoryMapper.insertWithdrawal(
+                    piggyBankId,
+                    refund,
+                    refund,
+                    0L,
+                    traceId
+            );
+
+            // 아이 알림
+            notificationService.create(
+                    childId,
+                    NotificationType.PIGGY_BANK_ACHIEVED,
+                    String.format(
+                            "'%s' 저금통 목표 금액을 달성하여 %,d원이 내 지갑으로 돌아왔어요.",
+                            piggyBank.getName(),
+                            refund
+                    )
+            );
+
+            // 부모 알림
+            Long parentId = userMapper.selectParentIdByChildId(childId);
+
+            if (parentId != null) {
+                String childName = userMapper.findNameById(childId)
+                        .orElse("아이");
+
+                notificationService.create(
+                        parentId,
+                        NotificationType.PIGGY_BANK_ACHIEVED,
+                        childName + "의 저금통 모으기 성공",
+                        String.format(
+                                "'%s' 저금통 목표 금액을 달성하여 아이 지갑으로 %,d원이 환급되었어요.",
+                                piggyBank.getName(),
+                                refund
+                        )
+                );
+            }
         }
     }
 

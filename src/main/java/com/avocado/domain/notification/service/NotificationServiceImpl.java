@@ -43,11 +43,27 @@ public class NotificationServiceImpl implements NotificationService {
             NotificationType type,
             String message
     ) {
+        create(
+                receiverId,
+                type,
+                type.getTitle(),
+                message
+        );
+    }
+
+    @Override
+    @Transactional
+    public void create(
+            Long receiverId,
+            NotificationType type,
+            String title,
+            String message
+    ) {
         // DB에 저장할 알림 객체 생성
         NotificationVo notification = NotificationVo.builder()
                 .receiverId(receiverId)
                 .type(type)
-                .title(type.getTitle())
+                .title(title)
                 .message(message)
                 .isRead(false)
                 .createdAt(LocalDateTime.now())

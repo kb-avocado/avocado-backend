@@ -71,10 +71,13 @@ public class FamilyServiceImpl implements FamilyService {
 
         Long requestId = createOrRevive(parent.getId(), childId);
 
+        String childName = userService.getUserName(childId);
+
         notificationService.create(
                 parent.getId(),
                 NotificationType.FAMILY_INVITE_RECEIVED,
-                String.format("%s님이 가족 연결을 요청했습니다.", userService.getUserName(childId))
+                childName + "의 가족 연결 요청",
+                String.format("%s님이 가족 연결을 요청했어요.", childName)
         );
 
         return FamilyRequestResponseDto.builder()
@@ -183,7 +186,7 @@ public class FamilyServiceImpl implements FamilyService {
             notificationService.create(
                     relation.getChildId(),
                     NotificationType.FAMILY_RELATION_APPROVED,
-                    String.format("%s님이 가족 연결을 승인했습니다.", relation.getParentName())
+                    String.format("%s님이 가족 연결을 승인했어요.", relation.getParentName())
             );
         }
 
@@ -251,10 +254,24 @@ public class FamilyServiceImpl implements FamilyService {
             );
         }
 
-        // 연결이 끝나야 아이가 서비스를 쓸 수 있다. 취소한 경우에는 PENDING으로 남는다.
         if (confirmed == FamilyRelationStatus.ACTIVE) {
             userService.activate(relation.getChildId());
             walletService.issueWallet(relation.getChildId());
+
+            // 아이에게 가족 연결 완료 알림
+            notificationService.create(
+                    relation.getChildId(),
+                    NotificationType.FAMILY_RELATION_APPROVED,
+                    String.format("%s님과 가족 연결이 완료됐어요.", relation.getParentName())
+            );
+
+            // 부모에게 가족 연결 완료 알림
+            notificationService.create(
+                    relation.getParentId(),
+                    NotificationType.FAMILY_RELATION_APPROVED,
+                    relation.getChildName() + "의 가족 연결 완료",
+                    String.format("%s님과 가족 연결이 완료됐어요.", relation.getChildName())
+            );
         }
 
         return FamilyRequestResponseDto.builder()

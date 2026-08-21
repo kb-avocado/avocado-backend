@@ -107,7 +107,8 @@ public class PiggyBankBonusServiceImpl implements PiggyBankBonusService {
             notificationService.create(
                     target.getParentId(),
                     NotificationType.PIGGY_BANK_BONUS_REMINDER,
-                    String.format("%s 저금통 보너스 지급을 기다리고 있어요.", target.getName())
+                    target.getChildName() + "의 보너스 지급 대기",
+                    String.format("%s 저금통의 보너스 지급을 기다리고 있어요.", target.getName())
             );
         }
 
