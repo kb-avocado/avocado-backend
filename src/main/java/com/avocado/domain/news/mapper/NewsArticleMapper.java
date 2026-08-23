@@ -45,11 +45,6 @@ public interface NewsArticleMapper {
             NewsArticle article
     );
 
-    // 현재 저장된 전체 기사 수
-    long countArticles();
-
-    // 가장 최근 뉴스 적재 시각
-    LocalDateTime findLatestCreatedAt();
 
     // =========================
     // 뉴스 조회 권한 검증용
