@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.avocado.domain.news.mapper.NewsArticleMapper">
 
-    <resultMap id="newsArticleResultMap" type="com.avocado.domain.news.domain.NewsArticle">
+    <resultMap
+            id="newsArticleResultMap"
+            type="com.avocado.domain.news.domain.NewsArticle"
+    >
         <id property="id" column="id"/>
         <result property="title" column="title"/>
         <result property="subtitle" column="subtitle"/>
@@ -14,63 +18,153 @@
 
     <!--
         completed 필터링을 위해 news_activities를 LEFT JOIN한다.
-        - completed = null  → 전체 (조건 없음)
-        - completed = true  → na.completed_at IS NOT NULL (활동완료)
-        - completed = false → na.completed_at IS NULL (진행중/미완료)
-        LEFT JOIN 조건에 child_id를 함께 걸어야, 해당 아이의 활동 기록이 없는 기사(activity 자체가 없는 경우)도
-        "진행중"으로 정상 집계된다.
+
+        - completed = null
+          → 전체
+
+        - completed = true
+          → 활동 완료
+
+        - completed = false
+          → 진행중 / 미완료
+
+        또한 화면에는 실제 발행일(published_at) 기준
+        최근 1년 이내의 기사만 노출한다.
+
+        LEFT JOIN 조건에 child_id를 함께 걸어야
+        해당 아이의 활동 기록 자체가 없는 기사도
+        진행중 기사로 정상 집계된다.
     -->
-    <select id="findList" resultMap="newsArticleResultMap">
-        SELECT a.id, a.title, a.subtitle, a.link, a.today_challenge, a.published_at, a.created_at
+    <select
+            id="findList"
+            resultMap="newsArticleResultMap"
+    >
+        SELECT
+        a.id,
+        a.title,
+        a.subtitle,
+        a.link,
+        a.today_challenge,
+        a.published_at,
+        a.created_at
+
         FROM news_articles a
+
         LEFT JOIN news_activities na
-        ON na.article_id = a.id AND na.child_id = #{childId}
+        ON na.article_id = a.id
+        AND na.child_id = #{childId}
+
         <where>
+            <!-- 최근 1년 이내에 발행된 기사만 조회 -->
+            AND a.published_at >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+
             <if test="completed != null and completed">
                 AND na.completed_at IS NOT NULL
             </if>
+
             <if test="completed != null and !completed">
                 AND na.completed_at IS NULL
             </if>
         </where>
-        ORDER BY a.published_at DESC, a.id DESC
-        LIMIT #{limit} OFFSET #{offset}
+
+        ORDER BY
+        a.published_at DESC,
+        a.id DESC
+
+        LIMIT #{limit}
+        OFFSET #{offset}
     </select>
 
-    <select id="countAll" resultType="long">
+    <!--
+        페이지네이션 전체 개수도
+        반드시 findList와 동일한 최근 1년 조건을 사용한다.
+    -->
+    <select
+            id="countAll"
+            resultType="long"
+    >
         SELECT COUNT(*)
+
         FROM news_articles a
+
         LEFT JOIN news_activities na
-        ON na.article_id = a.id AND na.child_id = #{childId}
+        ON na.article_id = a.id
+        AND na.child_id = #{childId}
+
         <where>
+            <!-- 최근 1년 이내에 발행된 기사만 집계 -->
+            AND a.published_at >= DATE_SUB(CURDATE(), INTERVAL 1 YEAR)
+
             <if test="completed != null and completed">
                 AND na.completed_at IS NOT NULL
             </if>
+
             <if test="completed != null and !completed">
                 AND na.completed_at IS NULL
             </if>
         </where>
     </select>
 
-    <select id="findById" resultMap="newsArticleResultMap">
-        SELECT id, title, subtitle, link, today_challenge, published_at, created_at
+    <!-- 뉴스 상세 조회 -->
+    <select
+            id="findById"
+            resultMap="newsArticleResultMap"
+    >
+        SELECT
+            id,
+            title,
+            subtitle,
+            link,
+            today_challenge,
+            published_at,
+            created_at
+
         FROM news_articles
+
         WHERE id = #{id}
     </select>
 
-    <select id="existsByLink" resultType="boolean">
+    <!-- RSS link 기준 중복 기사 확인 -->
+    <select
+            id="existsByLink"
+            resultType="boolean"
+    >
         SELECT EXISTS(
-            SELECT 1 FROM news_articles WHERE link = #{link}
+            SELECT 1
+            FROM news_articles
+            WHERE link = #{link}
         )
     </select>
 
-    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        INSERT INTO news_articles (title, subtitle, link, today_challenge, published_at, created_at)
-        VALUES (#{title}, #{subtitle}, #{link}, #{todayChallenge}, #{publishedAt}, #{createdAt})
+    <!-- 신규 RSS 기사 저장 -->
+    <insert
+            id="insert"
+            useGeneratedKeys="true"
+            keyProperty="id"
+    >
+        INSERT INTO news_articles (
+            title,
+            subtitle,
+            link,
+            today_challenge,
+            published_at,
+            created_at
+        )
+        VALUES (
+                   #{title},
+                   #{subtitle},
+                   #{link},
+                   #{todayChallenge},
+                   #{publishedAt},
+                   #{createdAt}
+               )
     </insert>
 
-    <!-- childId에 해당하는 회원이 자녀(CHILD) 유형으로 존재하는지 확인한다. -->
-    <select id="existsChildById" resultType="boolean">
+    <!-- childId에 해당하는 회원이 자녀(CHILD) 유형으로 존재하는지 확인 -->
+    <select
+            id="existsChildById"
+            resultType="boolean"
+    >
         SELECT EXISTS(
             SELECT 1
             FROM users
@@ -79,8 +173,11 @@
         )
     </select>
 
-    <!-- 로그인한 보호자와 조회 대상 자녀 사이에 활성 가족 관계가 있는지 확인한다. -->
-    <select id="existsActiveFamilyRelation" resultType="boolean">
+    <!-- 로그인한 보호자와 조회 대상 자녀 사이에 활성 가족 관계가 존재하는지 확인 -->
+    <select
+            id="existsActiveFamilyRelation"
+            resultType="boolean"
+    >
         SELECT EXISTS(
             SELECT 1
             FROM family_relations
@@ -90,15 +187,4 @@
         )
     </select>
 
-    <!-- 현재 저장된 전체 기사 수 -->
-    <select id="countArticles" resultType="long">
-        SELECT COUNT(*)
-        FROM news_articles
-    </select>
-
-    <!-- 가장 최근 우리 서비스 적재 시각 -->
-    <select id="findLatestCreatedAt" resultType="java.time.LocalDateTime">
-        SELECT MAX(created_at)
-        FROM news_articles
-    </select>
 </mapper>
