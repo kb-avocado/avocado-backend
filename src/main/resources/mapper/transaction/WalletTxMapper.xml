@@ -101,32 +101,40 @@
         AND wh.id = #{transactionId}
     </select>
 
-    <!--  선불지갑 거래 이력을 생성한다.  -->
+    <!-- 선불지갑 거래 이력을 생성한다. -->
     <insert id="insertWalletHistory"
             parameterType="com.avocado.domain.transaction.domain.WalletHistoryVo"
             useGeneratedKeys="true"
-            keyProperty="id"
-    >
+            keyProperty="id">
+
         INSERT INTO wallet_histories (
             wallet_id,
             trace_id,
             transaction_type,
             amount,
+            counterparty_wallet_id,
+            counterparty_name,
+            target_bank_code,
+            target_account_number,
             merchant_id,
             memo,
             status,
             failure_code
-        )
-        VALUES (
+        ) VALUES (
             #{walletId},
             #{traceId},
             #{transactionType},
             #{amount},
+            #{counterpartyWalletId},
+            #{counterpartyName},
+            #{targetBankCode},
+            #{targetAccountNumber},
             #{merchantId},
             #{memo},
             #{status},
             #{failureCode}
         )
+
     </insert>
 
     <!-- 선불지갑의 실제 잔액 변화를 원장에 기록한다. -->

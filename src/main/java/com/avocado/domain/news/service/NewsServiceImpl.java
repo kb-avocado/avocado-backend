@@ -110,13 +110,19 @@ public class NewsServiceImpl implements NewsService {
         }
 
         Long parentId = userMapper.selectParentIdByChildId(targetChildId);
+
         if (parentId != null) {
             NewsArticle article = newsArticleMapper.findById(newsId);
-            String title = (article != null) ? article.getTitle() : "뉴스";
+            String newsTitle = (article != null) ? article.getTitle() : "뉴스";
+
+            String childName = userMapper.findNameById(targetChildId)
+                    .orElse("아이");
+
             notificationService.create(
                     parentId,
                     NotificationType.NEWS_ACTIVITY_COMPLETED,
-                    String.format("자녀가 '%s' 뉴스 활동을 완료했어요.", title)
+                    childName + "의 신문 활동 완료",
+                    String.format("'%s' 신문 활동을 완료했어요.", newsTitle)
             );
         }
 

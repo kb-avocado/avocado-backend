@@ -64,7 +64,7 @@ public class PiggyBankCheerMessageServiceImpl implements PiggyBankCheerMessageSe
         notificationService.create(
                 childId,
                 NotificationType.CHEER_MESSAGE_RECEIVED,
-                request.getMessage()
+                String.format("'%s' 저금통에 새로운 응원 메시지가 도착했어요.", piggyBank.getName())
         );
 
         List<PiggyBankCheerMessageResponseDto> messages = piggyBankCheerMessageMapper.selectByPiggyBankId(piggyBankId);

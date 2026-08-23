@@ -21,6 +21,12 @@ public interface NotificationService {
             String message
     );
 
+    void create(
+            Long receiverId,
+            NotificationType type,
+            String title,
+            String message
+    );
     /**
      * 회원이 수신한 최근 7일 알림 목록을 페이지 단위로 조회한다.
      *
