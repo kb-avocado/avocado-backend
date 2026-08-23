@@ -176,12 +176,13 @@
 
 #### 시스템 아키텍처
 
-> 아키텍처 다이어그램 이미지 삽입  
-> 예: `![architecture](/path/to/image.png)`
+<img width="3840" height="2160" alt="아보카도-시스템아키텍처-4K" src="https://github.com/user-attachments/assets/54585606-d4e9-4ecb-a17e-54ff852e0c23" />
+
 
 #### ERD
 
-> ERD 이미지 삽입
+<img width="1801" height="1217" alt="아보카도-erd" src="https://github.com/user-attachments/assets/fb88a50a-7df1-4466-a8ca-e89aaff0b021" />
+
 
 <br/>
 
