@@ -90,4 +90,15 @@
         )
     </select>
 
+    <!-- 현재 저장된 전체 기사 수 -->
+    <select id="countArticles" resultType="long">
+        SELECT COUNT(*)
+        FROM news_articles
+    </select>
+
+    <!-- 가장 최근 우리 서비스 적재 시각 -->
+    <select id="findLatestCreatedAt" resultType="java.time.LocalDateTime">
+        SELECT MAX(created_at)
+        FROM news_articles
+    </select>
 </mapper>
