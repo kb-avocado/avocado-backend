@@ -10,18 +10,6 @@ pipeline {
             }
         }
 
-        stage('SSH Test') {
-            steps {
-                sshagent(credentials: ['avocado-backend-ssh']) {
-                    sh '''
-                        ssh -o StrictHostKeyChecking=no \
-                        ubuntu@172.31.37.52 \
-                        "hostname"
-                    '''
-                }
-            }
-        }
-
         stage('Transfer WAR') {
             steps {
                 sshagent(credentials: ['avocado-backend-ssh']) {
@@ -78,7 +66,8 @@ pipeline {
 
                             pgrep -f "org.apache.catalina.startup.Bootstrap" > /dev/null
 
-                            HTTP_CODE=$(curl -s -o /tmp/avocado-health-response.txt \
+                            HTTP_CODE=$(curl -s \
+                                -o /tmp/avocado-health-response.txt \
                                 -w "%{http_code}" \
                                 http://localhost:8080/)
 
