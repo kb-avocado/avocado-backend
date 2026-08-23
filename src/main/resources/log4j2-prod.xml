@@ -14,11 +14,13 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="com.avocado" level="debug" additivity="false">
+        <!-- 운영에서는 애플리케이션 INFO 이상 출력 -->
+        <Logger name="com.avocado" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
 
-        <Root level="info">
+        <!-- 외부 라이브러리는 WARN 이상만 출력 -->
+        <Root level="warn">
             <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
